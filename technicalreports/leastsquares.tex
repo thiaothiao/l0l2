@@ -1,0 +1,541 @@
+
+
+% This is a simple sample document.  For more complicated documents take a look in the exercise tab. Note that everything that comes after a % symbol is treated as comment and ignored when the code is compiled.
+
+\documentclass[fleqn]{report} % \documentclass{} is the first command in any LaTeX code.  It is used to define what kind of document you are creating such as an article or a book, and begins the document preamble
+
+\usepackage{amsmath} % \usepackage is a command that allows you to add functionality to your LaTeX code
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+%\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+
+
+\title{Technical report\\Sparsifying $l_2$ regularized least squares regression by biconjugate convex relaxation} % Sets article title
+\author{Mamadou THIAO} % Sets authors name
+\date{\today} % Sets date for date compiled
+\newtheorem{thm}{Proposition}[subsection]
+\newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
+\newtheorem{crly}{Corollary}[subsection]
+
+% The preamble ends with the command \begin{document}
+\begin{document} % All begin commands must be paired with an end command somewhere
+    \maketitle % creates title using information in preamble (title, author, date)
+    \tableofcontents
+    \section{Linear least squares} % creates a section
+\begin{equation}
+		\label{Ridge_Regularization}
+		(\text{RIDGE}^{\beta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2
+			+ \beta\left\|x\right\|_2^2\\
+			s.t.&\;x\in\mathbb{R}^n,\\
+		\end{array} 
+		\right.
+    \end{equation}
+		where $\beta> 0$ is a parameter.
+    \section{Sparsifying linear least squares} % creates a section
+We use a $l_0$ regularization approach to promote sparse solutions as expressed in the following problem
+		\begin{equation}
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \rho\left\|x\right\|_0 + \beta\left\|x\right\|^2_2  \\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+		where $\rho \geq 0$ is a parameter which controls the sparsity of the solutions. \\
+With $\delta := \sqrt{\ddfrac{\rho}{\beta}}$, we have $\rho = \beta\delta^2$. The previous problem  becomes
+\begin{equation}
+		\label{L0_L2_Regularized_Sparse_Approximation}
+		(\mathbb{P}^{\beta, \delta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta\delta^2\left\|x\right\|_0 + \beta\left\|x\right\|^2_2 \\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+
+		\section{Relaxation $(\mathbb{Q}^{\beta,\delta})$}
+Replacing $\left\|.\right\|_0 +\frac{1}{\delta^2} \left\|.\right\|^2_2$ by its tightest convex under approximation, its biconjugate, 
+		\[
+			\left(\left\|.\right\|_0 + \frac{1}{\delta^2} \left\|.\right\|_2^2\right)^{**}(x),
+		\]
+		see Le Thi et al., we obtain the following biconjugate relaxation (\textbf{B}i\textbf{C}onjugate \textbf{R}elaxation,  \textbf{BCR} )
+		\[
+		(\mathbb{Q}^{\beta,\delta})\left\{\begin{array}{ll}\min & F(x):=\left\|Ax-b\right\|^2_2 + \beta\delta^2\left(\left\|.\right\|_0 + \frac{1}{\delta^2}\left\|.\right\|_2^2\right)^{**}(x)\\
+		s.t.&\;x\in\mathbb{R}^n.
+		\end{array} \right.
+		\]
+$(\mathbb{Q}^{\beta,\delta})$ is a convex under approximation of $(\mathbb{P}^{\beta,\delta})$ and $(\mathbb{Q}^{\beta,\delta})$ solves $(\mathbb{P}^{\beta,\delta})$ when its solution satisfies particular global optimality conditions (see Le Thi et al.).
+		\[
+			\left(\left\|.\right\|_0 + \ddfrac{1}{\delta^2}\left\|.\right\|_2^2\right)^{**}(x) = \sum_{i}^{n}\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i),
+		\]
+\[
+\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i)=\ddfrac{1}{\delta^2} x_i^2  - \ddfrac{1}{\delta^2} \left[\left(\delta-\left|x_i\right|\right)^+\right]^2 +1=\left\{ \begin{array}{ll}
+ \ddfrac{1}{\delta^2}x_i^2 + 1 &\;\text{if}\;\left|x_i\right|\geq \delta.\\
+&\\
+ 2\ddfrac{1}{\delta}\left|x_i\right|& \text{otherwise}.
+\end{array}
+\right.
+\]
+\subsection{Optimality conditions for $(\mathbb{Q}^{\beta,\delta})$}
+The following  form for the optimality conditions are very useful for the theoretical study of the links between the biconjugate relaxation BCR, Ridge, Lasso and ElasticNet.
+\subsubsection{Optimality condition for $(\mathbb{Q}^{\beta,\delta})$}
+The optimality condition for the convex relaxation $(\mathbb{Q}^{\beta,\delta})$ is given by, Le Thi et al.
+\[
+	-2A^T(Ax-b)\in \beta\delta^2\partial \left(\left\|.\right\|_0 +  \ddfrac{1}{\delta^2} \left\|.\right\|_2^2\right)^{**}(x).
+\]
+As
+\[
+\partial\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i)=\left\{ \begin{array}{ll}
+\Bigg\{2\ddfrac{1}{\delta^2}  x_i\Bigg\}&\;\text{if}\; \left|x_i\right|\geq \delta,\\
+&\\
+\Bigg\{2\ddfrac{1}{\delta} \;\text{sign}(x_i)\Bigg\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta,\\
+&\\
+\Bigg[-2\ddfrac{1}{\delta} , 2\ddfrac{1}{\delta} \Bigg]&\;\text{if}\; x_i=0,
+\end{array}
+\right.
+\]
+the condition becomes
+\[
+\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)\;
+\left[A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\beta x_i\right\}&\;\text{if}\; \left|x_i\right|\geq\delta\\
+\left\{-\delta\beta\;\text{sign}(x_i)\right\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x_i=0.
+\end{array}
+\right.
+\]
+or
+\[
+\left[A^T(Ax-b) +\beta x\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{0\right\}&\;\text{if}\; \left|x_i\right|\geq\delta\\
+\left\{\beta x_i-\delta\beta\;\text{sign}(x_i)\right\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x_i=0.
+\end{array}
+\right.
+\]
+\begin{thm}
+$x=0$ will be an optimal solution for $(\mathbb{Q}^{\beta,\delta})$ if and only if $\left\|A^Tb\right\|_{\infty}\leq\delta\beta $.
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\\\\TO DO: study for the unicity or not of the solution!!!
+\begin{thm}If  $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta<
+\underset{i\in \text{supp}(x)}{\min}\left|x_i\right|$,\\ then $x$ is a solution for $(\mathbb{Q}^{\beta,\delta^{\prime}})$, for all $\delta^{\prime}$, $\delta\leq \delta^{\prime}\leq \underset{i\in \text{supp}(x)}{\min}\left|x_i\right|$.
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsection{Theoretical links with Ridge and Lasso}
+\subsubsection{Theoretical links with Ridge}
+Recall
+\begin{equation}
+		(\text{RIDGE}^{\beta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta\left\|x\right\|_2^2\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+Ridge optimality condition ($2A^T(Ax-b) + 2\beta x = 0$) can be written as
+\[
+\left(\underset{opt}{\text{RIDGE}^{\beta}}\right)
+\left[A^T(Ax-b)\right]_i\in 
+\left\{ 
+-\beta x_i\right\}.
+\]
+\begin{thm}A $\text{RIDGE}$ is always a $(\mathbb{Q}^{\beta,\delta})$.\\\\
+More precisely, assume $A$ has no null column,
+\begin{enumerate}
+\item If $x$ is a solution for $(\text{RIDGE}^{\beta})$,\\ then $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ for all $\delta\leq \underset{i}{\min}\left|x_i\right|$.
+\item If $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta\leq \underset{i}{\min}\left|x_i\right|$,\\ then $x$ is a solution for $(\text{RIDGE}^{\beta})$.
+\end{enumerate}
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\text{RIDGE}^{\beta}}\right)$ and $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsubsection{Theoretical links with Lasso}
+\begin{equation}
+		\label{Lasso_Regularization}
+		(\text{LASSO}^{\gamma})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \gamma\left\|x\right\|_1\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+Lasso optimality condition can be written as
+\[
+\left(\underset{opt}{\text{LASSO}^{\gamma}}\right)\;\left[A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\ddfrac{\gamma}{2}\;\text{sign}(x_i)\right\} &\;\text{if}\; x_i\neq 0\\
+\left[-\ddfrac{\gamma}{2}, \ddfrac{\gamma}{2}\right]&\;\text{if}\; x_i =0.
+\end{array}
+\right.
+\]
+\begin{thm} A $\text{LASSO}$ is always a $(\mathbb{Q}^{\beta,\delta})$.\\\\
+More precisely,
+\begin{enumerate}
+\item If $x$ is a solution for $(\text{LASSO}^{\gamma})$,\\ then  $x$ is a solution for $(\mathbb{Q}^{\ddfrac{\gamma}{2\delta},\delta})$ for all $\delta\geq
+\underset{i\in\text{supp}(x)}{\max}\left|x_i\right|$.
+\item If $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta\geq\underset{i\in\text{supp}(x)}{\max}\left|x_i\right|$, \\ then $x$ is a solution for $(\text{LASSO}^{2\delta\beta})$.
+\end{enumerate}
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\text{LASSO}^{\gamma}}\right)$ and $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsubsection{From Ridge to Lasso. How navigate $(\mathbb{Q}^{\beta,\delta})$}
+Consider $(\text{RIDGE}^{\beta})$, for a $\beta>0$. (Assume $A$ has no null column)\\ Define 
+\[
+\delta_{\text{RIDGE}^{\beta}}:=\underset{i\in\text{supp}(x^{\text{RIDGE}^{\beta}})}{\min} \left|x^{\text{RIDGE}^{\beta}}_i\right|.
+\]
+Let us analyze $\delta$s values.\\
+\\
+We already have $x^{\text{RIDGE}^{\beta}}$ solution of  $(\mathbb{Q}^{\beta,\delta})$ for all $\delta\leq\delta_{\text{RIDGE}^{\beta}}$.\\\\
+We will consider $\delta_{\text{RIDGE}^{\beta}} > \delta$.\\
+\\
+From inequality $F(x^{\mathbb{Q}^{\beta,\delta}}) \leq F(0)$, we deduce
+\[
+  \left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq\left\|x^{\mathbb{Q}^{\beta,\delta}}\right\|_{1}  \leq\ddfrac{1}{2\delta\beta}F(0),\forall\;i.
+\]
+So it suffices to constrain $\ddfrac{1}{2\delta\beta}F(0)\leq \delta$ to ensure $\left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq \delta,$ for all $i$.\\\\
+So $x^{\mathbb{Q}^{\beta,\delta}}$ is a solution of $( \text{LASSO}^{2\delta\beta})$,  for all $\delta > \max\left\{\sqrt{\ddfrac{1}{2\beta}F(0)},  \delta_{\text{RIDGE}^{\beta}}\right\}$.\\
+\\
+Define 
+\[
+\delta_{\text{RIDGE}^{\beta},\text{LASSO}} :=\inf\left\{\delta  >  \delta_{\text{RIDGE}^{\beta}}:\;x^{\mathbb{Q}^{\beta,\delta}}\; \text{is a solution of }( \text{LASSO}^{2\delta\beta})\right\}.
+\]
+We also have necessarily  
+\[\rho_{\text{RIDGE}^{\beta},\text{LASSO}}\leq\max\left\{\sqrt{\ddfrac{1}{2\beta}F(0)},  \delta_{\text{RIDGE}^{\beta}}\right\}.
+\]
+\begin{thm} 
+\begin{enumerate}
+\item When $\delta$ moves from $ \delta_{\text{RIDGE}^{\beta}}$ to $\delta_{\text{RIDGE}^{\beta},\text{LASSO}}$ , $(\mathbb{Q}^{\beta,\delta})$ moves from $\text{RIDGE}$ to $\text{LASSO}$.
+\begin{itemize}
+\item before $ \delta_{\text{RIDGE}^{\beta}}$, $(\mathbb{Q}^{\beta,\delta})$ is a $\text{RIDGE}$,
+\item after $ \delta_{\text{RIDGE}^{\beta},\text{LASSO}}$, $(\mathbb{Q}^{\beta,\delta})$ is a $\text{LASSO}$.
+\end{itemize}
+\item When $\delta$ moves strictly between $ \delta_{\text{RIDGE}^{\beta}}$ and $\delta_{\text{RIDGE}^{\beta},\text{LASSO}}$ , $(\mathbb{Q}^{\beta,\delta})$ cannot be a $\text{RIDGE}$ nor a $\text{LASSO}$.\\
+The components of $x^{\mathbb{Q}^{\beta,\delta} }$ satisfy $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$
+\[
+\left[A^T(Ax^{\mathbb{Q}^{\beta,\delta}}-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\beta x^{\mathbb{Q}^{\beta,\delta}}_i\right\}&\;\text{if}\; \left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\geq \delta\\
+\left\{-\delta\beta\;\text{sign}(x^{\mathbb{Q}^{\beta,\delta}}_i)\right\} &\;\text{if}\; 0<\left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x^{\mathbb{Q}^{\beta,\delta}}_i=0.
+\end{array}
+\right.
+\]
+\end{enumerate}
+\end{thm}
+The second point of the previous proposition highlights the mixing role (on the components of $x$) played by $(\mathbb{Q}^{\beta,\delta} )$. The first line of the optimality condition is for RIDGE, with $\beta$, and the followings are for LASSO,  with $\gamma:=2\delta\beta$. The value $\delta=\ddfrac{\gamma}{2\beta}$ defines a trade-off line on the coordinates value.
+\subsection{Mixing roles: $(\mathbb{Q}^{\beta,\delta} )$  vs $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$}
+\subsubsection{Theoretical links with ElasticNet}
+\begin{equation}
+		\label{ElasticNet_Regularization}
+		(\text{ELASTICNET}^{\beta^{\prime},\gamma})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta^{\prime}\left\|x\right\|_2^2 + \gamma\left\|x\right\|_1\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+ElasticNet optimality condition can be written as
+\[
+\left(\underset{opt}{\text{ELASTICNET}^{\beta^{\prime},\gamma}}\right)\;\left[2A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-2\beta^{\prime} x_i -\gamma\;\text{sign}(x_i)\right\} &\;\text{if}\; x_i\neq 0\\
+\left[-\gamma,  \gamma\right]&\;\text{if}\; x_i =0.
+\end{array}
+\right.
+\]
+\begin{thm} $x$ is a common solution for $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$ and $(\mathbb{Q}^{\beta,\delta} )$ if and only if 
+$x$ is a solution of $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$ or $(\mathbb{Q}^{\beta,\delta} )$ and 
+one of the following conditions holds:
+\begin{enumerate}
+    \item there exists $C_1$, such that
+\[\left|x_i\right|=C_1,\forall\;i,\;x_i\neq0,
+\]
+\[C_1 \geq \delta,\;\beta=\beta^{\prime} + \ddfrac{\gamma}{2C_1}.
+\]
+    \item there exists $C_2$, such that
+\[\left|x_i\right|=C_2,\forall\;i,\;x_i\neq0,
+\]
+\[C_2 \leq \delta,\;\delta\beta=\ddfrac{\gamma}{2}+\beta^{\prime} C_2.
+\]
+    \item there exist $C_1$ and $C_2$, $C_2 \leq C_1$, such that
+\[\left|x_i\right|=C_1\;\text{or}\;C_2,\forall\;i,\;x_i\neq0,
+\]
+\[ \delta = \ddfrac{C_1(\gamma+2\beta^{\prime} C_2)}{\gamma+2\beta^{\prime} C_1},\;\delta\beta=\ddfrac{\gamma}{2}+\beta^{\prime} C_2.
+\]
+\end{enumerate}\end{thm}
+\begin{proof}
+    Use $\left(\underset{opt}{\text{ELASTICNET}^{\beta^{\prime},\gamma}}\right)$,  $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}} \right)$ and compare solutions.
+\end{proof}
+\section{Solving $(\mathbb{Q}^{\beta,\delta})$}
+Let us denote by $x^{\beta}(\delta)$ a solution for $(\mathbb{Q}^{\beta,\delta})$.
+\begin{thm} Let $\beta>0$ and fixed.\\
+$x^{\beta}(\delta)$ is a piecewise linear function (TO DO why not mapping? think of it!!!) with respect to $\delta\geq 0$.
+\end{thm}
+\begin{proof} ...
+\end{proof}
+\subsection{Computing a new solution from a known one}
+Here we will consider that we have $(\mathbb{Q}^{\beta,\underline{\delta}})$, $\underline{\delta}>0$ and a corresponding solution $\underline{x}:=x^{\beta}(\underline{\delta})$.\\
+\\
+Let us define the following partition of the indices $i$, $i=1,..., n$.
+\[
+\begin{array}{l}
+\underline{\mathbb{K}}_0:=\left\{i:\;\left|\underline{x}_i\right|>\underline{\delta} \right\},\\
+\underline{\mathbb{K}}_1:=\left\{i:\;\left|\underline{x}_i\right|=\underline{\delta} , \text{Type 1}\right\},\\
+\underline{\mathbb{K}}_2:=\left\{i:\;\left|\underline{x}_i\right|=\underline{\delta} , \text{Type 2}\right\},\\
+\underline{\mathbb{K}}_3:=\left\{i:\;0<\left|\underline{x}_i\right|<\underline{\delta} \right\},\\
+\underline{\mathbb{K}}_4:=\left\{i:\;\underline{x}_i=0,\;\left|\left[A^T(A\underline{x} -b)\right]_i\right|=\underline{\delta} \beta , \text{Type 1}\right\},\\
+\underline{\mathbb{K}}_5:=\left\{i:\;\underline{x}_i=0,\;\left|\left[A^T(A\underline{x} -b)\right]_i\right|=\underline{\delta} \beta , \text{Type 2}\right\},\\
+\underline{\mathbb{K}}_6:=\left\{i:\;\underline{x}_i=0,\;0<\left|\left[A^T(A\underline{x} -b)\right]_i\right|<\underline{\delta} \beta \right\},\\
+\underline{\mathbb{K}}_7:=\left\{i:\;\underline{x}_i=0,\;\left[A^T(A\underline{x} -b)\right]_i=0\right\},\\
+\underline{M}:=\text{diag}(\underline{\theta}),\\
+\underline{\theta}_i:=\text{sign}(\underline{x}_i)
+\left\{
+\begin{array}{ll}
++1& \text{if}\;\underline{x}_i >0,\\
+- 1& \text{if}\;\underline{x}_i <0,\\
+- \text{sign}(\left[A^T(A\underline{x} -b)\right]_i)& \text{if}\;\left[A^T(A\underline{x} -b)\right]_i\neq0,\\
++1& \text{otherwise}.
+\end{array}
+\right.
+\end{array} 
+\]
+The following polyhedra contains $u:=\left|\underline{x}\right|$ and $\delta := \underline{\delta}$, so is nonempty.
+\[
+\begin{array}{lrrrrll}
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_0\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_1\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_2\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_3\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{red}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_4\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_5\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_6\\
+(A^TA\underline{M})_iu&&-\beta\underline{\theta}_i\textcolor{green}{s_i}&&+\beta\underline{\theta}_iw_i&=(A^Tb)_i&i\in\underline{\mathbb{K}}_7\\
+u_i&&&-\textcolor{green}{t_i}&&=\delta&i\in\underline{\mathbb{K}}_0\\
+u_i&&&-\textcolor{red}{t_i}&&=\delta&i\in\underline{\mathbb{K}}_1\\
+u_i&&&+\textcolor{red}{t_i}&&=\delta&i\in\underline{\mathbb{K}}_2\\
+u_i&&&+\textcolor{green}{t_i}&&=\delta&i\in\underline{\mathbb{K}}_3\\
+u_i&&&+\textcolor{green}{t_i}&&=\delta&i\in\underline{\mathbb{K}}_4\\
+&&s_i&&+\textcolor{red}{w_i}&=\delta&i\in\underline{\mathbb{K}}_5\\
+&&s_i&&+\textcolor{green}{w_i}&=\delta&i\in\underline{\mathbb{K}}_6\\
+&&s_i&&+\textcolor{green}{w_i}&=\delta&i\in\underline{\mathbb{K}}_7\\
+&&&&&\\
+u\geq0&\delta\geq0&s\geq0&t\geq0&w\geq0&.\\
+\end{array} 
+\]
+For $x:=\underline{M}u$,
+\[
+\left[A^T(Ax -b)+\beta x\right]_i = \left\{
+\begin{array}{lll}
+0&0&i\in\underline{\mathbb{K}}_0\\
+0&0&i\in\underline{\mathbb{K}}_1\\
+-\beta\underline{\theta}_it_i&\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_2\\
+-\beta\underline{\theta}_it_i&\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_3\\
+-\beta\underline{\theta}_it_i&\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_4\\
+-\beta\underline{\theta}_is_i&-(\delta\beta - w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_5\\
+-\beta\underline{\theta}_is_i&-(\delta\beta - w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_6\\
+\beta\underline{\theta}_is_i-\beta\underline{\theta}_iw_i&-(-\delta\beta + 2w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_7\\
+\end{array} 
+\right.
+\]
+\begin{thm}$x:=\underline{M}u$ satisfies $(\mathbb{Q}^{\beta,\delta})$ optimality conditions for $\delta$ sufficently near $\underline{\delta}$.
+\end{thm}
+\begin{proof} ...
+\end{proof}
+\\
+\\
+\subsubsection{How to choose $\delta$?}
+Our goal is to maximize $\left|\delta -\underline{\delta}\right|$ while keeping the polyhedral constraints valid.\\\\
+Two cases $\delta:=\underline{\delta}-\gamma$ or $\delta:=\underline{\delta}+\gamma$, $\gamma\geq0$. The first one will be used when starting from zero solution. The second one will be from Ridge solution.\\\\
+Define $\tau$,
+\[
+\tau:=\left\{
+\begin{array}{ll}
++1& \text{when starting from zero solution},\\
+-1&  \text{when starting from Ridge solution}.
+\end{array}
+ \right.
+\]
+So $\delta:=\underline{\delta}-\tau\gamma$, in all cases.\\
+\\
+We will maximize $\left|\delta -\underline{\delta}\right|=\left|-\tau\gamma\right|=\gamma$, over the previous polyhedra with green and red ones as basis, in all cases.
+\[
+\begin{array}{lrrrrll}
+\text{max}\;\gamma&&&&&&\\
+&&&&&&\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_0\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_1\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_2\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_3\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{red}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_4\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_5\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_6\\
+(A^TA\underline{M})_iu&&-\beta\underline{\theta}_i\textcolor{green}{s_i}&&+\beta\underline{\theta}_iw_i&=(A^Tb)_i&i\in\underline{\mathbb{K}}_7\\
+u_i&+\tau\gamma&&-\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_0\\
+u_i&+\tau\gamma&&-\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_1\\
+u_i&+\tau\gamma&&+\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_2\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_3\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_4\\
+&\tau\gamma&+s_i&&+\textcolor{red}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_5\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_6\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_7\\
+&&&&&\\
+u\geq0&\gamma\geq0&s\geq0&t\geq0&w\geq0&.\\
+\end{array} 
+\]
+After Gauss elimination, for each row with 0 value on the right hand side and a nonnegative one on the $\gamma$ column, do as follow
+\[
+\begin{array}{l}
+\text{if}\;i\in\underline{\mathbb{K}}_1\Rightarrow\;\underline{\mathbb{K}}_1:=\underline{\mathbb{K}}_1\setminus\left\{i\right\},\;\underline{\mathbb{K}}_2:=\underline{\mathbb{K}}_2\cup\left\{i\right\}\\
+\text{if}\;i\in\underline{\mathbb{K}}_2\Rightarrow\;\underline{\mathbb{K}}_2:=\underline{\mathbb{K}}_2\setminus\left\{i\right\},\;\underline{\mathbb{K}}_1:=\underline{\mathbb{K}}_1\cup\left\{i\right\}\\
+\text{if}\;i\in\underline{\mathbb{K}}_4\Rightarrow\;\underline{\mathbb{K}}_4:=\underline{\mathbb{K}}_4\setminus\left\{i\right\},\;\underline{\mathbb{K}}_5:=\underline{\mathbb{K}}_5\cup\left\{i\right\}\\
+\text{if}\;i\in\underline{\mathbb{K}}_5\Rightarrow\;\underline{\mathbb{K}}_5:=\underline{\mathbb{K}}_5\setminus\left\{i\right\},\;\underline{\mathbb{K}}_4:=\underline{\mathbb{K}}_4\cup\left\{i\right\}\\
+\end{array} 
+\]
+and perform another Gauss elimination.\\\\
+
+\begin{thm}At most 2 eliminations are performed to reach optimality.
+\end{thm}
+\begin{proof} ...
+\end{proof}
+\\
+\\
+\begin{thm}Let $\beta>0$, fixed.
+\begin{itemize}
+\item $\underline{x}:=0$ is a solution for  $(\mathbb{Q}^{\beta,\delta})$, 
+\[\text{for all} \;\delta\geq \delta^0:=\ddfrac{1}{\beta}\left\|A^Tb\right\|_{\infty}.\]
+\item $\underline{x}:=x^{Ridge^{\beta}}$ is a solution for  $(\mathbb{Q}^{\beta,\delta})$, 
+\[\text{for all} \;\delta\leq\delta^{Ridge^{\beta}}:=\text{min}_{x^{Ridge^{\beta}}_i\neq 0}\left|x^{Ridge^{\beta}}_i\right|.\]
+\item From  $\underline{\delta}:=\delta^0$ and $\underline{x}:=0$, repeating the process until Ridge solution is attained gives us the full path and solutions for  $(\mathbb{Q}^{\beta,\delta})$, $\delta\geq0$ variying. Ridge solution is attained whenever 
+$\underline{\delta}=\text{min}_{i=1,...,n}\left|\underline{x}_i\right|$. (Assuming  matrix $A$ has no zero column)
+\item From  $\underline{\delta}:=\delta^{Ridge^{\beta}}$ and $\underline{x}:=x^{Ridge^{\beta}}$, repeating the process until zero solution is attained gives us the full path and solutions for  $(\mathbb{Q}^{\beta,\delta})$, $\delta\geq0$ variying. Zero solution is attained whenever 
+$\underline{\delta}=\delta^0$.
+\end{itemize}
+\end{thm}
+\begin{proof} ...
+\end{proof}
+\\
+\\
+\begin{center}
+\begin{tabular}{c||ccccc||c||c|}
+%\hline
+&$\underline{\mathbb{K}}_0$&$\underline{\mathbb{K}}_1$&$\underline{\mathbb{K}}_2$&$\underline{\mathbb{K}}_3$&$\underline{\mathbb{K}}_4$&$\gamma^1\prime$&$b^1\prime$\\[0.5ex]
+\hline\hline
+$\underline{\mathbb{K}}_0$&?&?&?&?&?&$\gamma^1$&$b^1$\\
+\hline
+$\underline{\mathbb{K}}_1$&?&?&?&?&?&$\gamma^1$&$b^1$\\
+\hline
+$\underline{\mathbb{K}}_2$&?&?&?$-\beta M_{K_2}$&?&?&$\gamma^1-\beta M_{K_2}\gamma^2$&$b^1-\beta M_{K_2}b^2$\\
+\hline
+$\underline{\mathbb{K}}_3$&?&?&?&?$-\beta M_{K_3}$&?&$\gamma^1-\beta M_{K_3}\gamma^2$&$b^1-\beta M_{K_3}b^2$\\
+\hline
+$\underline{\mathbb{K}}_4$&?&?&?&?&?$-\beta M_{K_4}$&$\gamma^1-\beta M_{K_4}\gamma^2$&$b^1-\beta M_{K_4}b^2$\\
+\hline
+$\underline{\mathbb{K}}_5$&?&?&?&?&?&$\gamma^1$&$b^1$\\
+\hline
+$\underline{\mathbb{K}}_6$&?&?&?&?&?&$\gamma^1$&$b^1$\\
+\hline
+$\underline{\mathbb{K}}_7$&?&?&?&?&?&$\gamma^1-\beta M_{K_3}\gamma^3$&$b^1-\beta M_{K_3}b^3$\\
+\hline\hline
+&&&&&&$\gamma^2\prime$&$b^2\prime$\\[0.5ex]
+\hline
+$\underline{\mathbb{K}}_0$&$I_{K_0}$&0&0&0&0&$\gamma^2$&$b^2$\\
+\hline
+$\underline{\mathbb{K}}_1$&0&$I_{K_1}$&0&0&0&$\gamma^2$&$b^2$\\
+\hline
+$\underline{\mathbb{K}}_2$&0&0&$I_{K_2}$&0&0&$\gamma^2$&$b^2$\\
+\hline
+$\underline{\mathbb{K}}_3$&0&0&0&$I_{K_3}$&0&$\gamma^2$&$b^2$\\
+\hline
+$\underline{\mathbb{K}}_4$&0&0&0&0&$I_{K_4}$&$\gamma^2$&$b^2$\\
+\hline\hline
+&&&&&&$\gamma^3\prime$&$b^3\prime$\\[0.5ex]
+\hline
+$\underline{\mathbb{K}}_5$&0&0&0&0&0&$\gamma^3$&$b^3$\\
+\hline
+$\underline{\mathbb{K}}_6$&0&0&0&0&0&$\gamma^3$&$b^3$\\
+\hline
+$\underline{\mathbb{K}}_7$&0&0&0&0&0&$\gamma^3$&$b^3$\\
+\hline
+\end{tabular}
+\end{center}
+We denote by $\gamma\prime\prime$ and $b\prime\prime$ the columns corresponding to $\gamma$ and right hand side $b$ after Gauss elimination.\\\\
+Define a diagonal matrix $D^1$ by
+\[
+D^1_{ii}:=\left\{
+\begin{array}{ll}
+-1& \text{if}\;i\in\underline{\mathbb{K}}_0\cup\underline{\mathbb{K}}_1,\\
++1&  \text{otherwise}.
+\end{array}
+ \right.
+\]
+\begin{center}
+\begin{tabular}{c||ccccc||c||c|}
+%\hline
+&$\underline{\mathbb{K}}_0$&$\underline{\mathbb{K}}_1$&$\underline{\mathbb{K}}_2$&$\underline{\mathbb{K}}_3$&$\underline{\mathbb{K}}_4$&$\gamma^1\prime\prime\prime$&$b^1\prime\prime\prime$\\[0.5ex]
+\hline\hline
+$\underline{\mathbb{K}}_0$&$I_{K_0}$&0&0&0&0&$\gamma^1\prime\prime$&$b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_1$&0&$I_{K_1}$&0&0&0&$\gamma^1\prime\prime$&$b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_2$&0&0&$I_{K_2}$&0&0&$\gamma^1\prime\prime$&$b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_3$&0&0&0&$I_{K_3}$&0&$\gamma^1\prime\prime$&$b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_4$&0&0&0&0&$I_{K_4}$&$\gamma^1\prime\prime$&$b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_5$&0&0&0&0&0&$\ddfrac{1}{\beta} M_{K_5}\gamma^1\prime\prime$&$\ddfrac{1}{\beta} M_{K_5}b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_6$&0&0&0&0&0&$\ddfrac{1}{\beta} M_{K_6}\gamma^1\prime\prime$&$\ddfrac{1}{\beta} M_{K_6}b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_7$&0&0&0&0&0&$-\ddfrac{1}{2\beta} M_{K_7}\gamma^1\prime\prime$&$-\ddfrac{1}{2\beta} M_{K_7}b^1\prime\prime$\\
+\hline\hline
+&&&&&&$\gamma^2\prime\prime\prime$&$b^2\prime\prime\prime$\\[0.5ex]
+\hline
+$\underline{\mathbb{K}}_0$&0&0&0&0&0&$D^1(\gamma^2\prime\prime-\gamma^1\prime\prime)$&$D^1(b^2\prime\prime-b^1\prime\prime)$\\
+\hline
+$\underline{\mathbb{K}}_1$&0&0&0&0&0&$D^1(\gamma^2\prime\prime-\gamma^1\prime\prime)$&$D^1(b^2\prime\prime-b^1\prime\prime)$\\
+\hline
+$\underline{\mathbb{K}}_2$&0&0&0&0&0&$D^1(\gamma^2\prime\prime-\gamma^1\prime\prime)$&$D^1(b^2\prime\prime-b^1\prime\prime)$\\
+\hline
+$\underline{\mathbb{K}}_3$&0&0&0&0&0&$D^1(\gamma^2\prime\prime-\gamma^1\prime\prime)$&$D^1(b^2\prime\prime-b^1\prime\prime)$\\
+\hline
+$\underline{\mathbb{K}}_4$&0&0&0&0&0&$D^1(\gamma^2\prime\prime-\gamma^1\prime\prime)$&$D^1(b^2\prime\prime-b^1\prime\prime)$\\
+\hline\hline
+&&&&&&$\gamma^3\prime\prime\prime$&$b^3\prime\prime\prime$\\[0.5ex]
+\hline
+$\underline{\mathbb{K}}_5$&0&0&0&0&0&$\gamma^3\prime\prime-\ddfrac{1}{\beta} M_{K_5}\gamma^1\prime\prime$&$b^3\prime\prime-\ddfrac{1}{\beta} M_{K_5}b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_6$&0&0&0&0&0&$\gamma^3\prime\prime-\ddfrac{1}{\beta} M_{K_6}\gamma^1\prime\prime$&$b^3\prime\prime-\ddfrac{1}{\beta} M_{K_6}b^1\prime\prime$\\
+\hline
+$\underline{\mathbb{K}}_7$&0&0&0&0&0&$\gamma^3\prime\prime+\ddfrac{1}{2\beta} M_{K_7}\gamma^1\prime\prime$&$b^3\prime\prime+\ddfrac{1}{2\beta} M_{K_7}b^1\prime\prime$\\
+\hline
+\end{tabular}
+\end{center}
+\section{Sparse Principal Component}
+Consider a covariance matrix $Q$.\\\\ 
+Writing $Q = A^TA$ and $b := A\alpha$, we can see that 
+\[\left\|Ax-b\right\|^2_2=(x-\alpha)^TQ(x-\alpha),
+\]
+\[
+A^T(Ax-b)=Q(x-\alpha)
+\]
+and 
+\[
+A^Tb = Q\alpha.
+\]
+\section{Conclusion}
+\end{document} % This is the end of the document
