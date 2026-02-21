@@ -3,10 +3,8 @@
 
 #include <future>
 #include <cmath>
-#include <functional>
-#include <execution>
-#include <numeric>
 #include <atomic>
+#include <algorithm>
 #include <concepts>
 #include <utility>
 
@@ -19,7 +17,7 @@ namespace l0l2
         /*! \brief Cyclical Coordinate Descent Regressor Model concept.
         */
         template <class ModelImplementationType>
-        concept ModelLike = requires()//requires(ModelImplementationType impl)
+        concept ModelLike = requires()
         {
             {
                 ModelImplementationType::stepJ(typename ModelImplementationType::Param{},
@@ -27,7 +25,7 @@ namespace l0l2
                     typename ModelImplementationType::Scalar{})
             } ->std::convertible_to<typename ModelImplementationType::Scalar>;
 
-            //TODO add constraint for compute duality gap
+            //TODO add constraint for duality gap computations
         };
 
         /*! \brief Cyclical Coordinate Descent Regressor class.
@@ -49,17 +47,6 @@ namespace l0l2
               \param tolerance covergence tolerance on the coordinates changes.
               \param maximumNumberOfIterations maximum number of iterations allowed.
             */
-            /*CyclicalCoordinateDescent(
-                Scalar delta,
-                Scalar beta,
-                Strategy strategy = Strategy::FromZeroSolution,
-                Scalar tolerance = static_cast<Scalar>(1e-4),
-                unsigned int maximumNumberOfIterations = 10000U)
-                :m_Param{ delta, beta, strategy, tolerance, maximumNumberOfIterations },
-                m_FromBothConverged{}
-            {
-            }*/
-
             CyclicalCoordinateDescent(const Param& param)
                 :m_Param{param},
                 m_FromBothConverged{}
@@ -68,31 +55,21 @@ namespace l0l2
 
             /*! \brief Fit full path solutions.
                \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
                \param vectData contiguous data container representing target vector.
                \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
                \return a solution in the format CDSolution.
              */
             CDSolution<Scalar> fit(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
-                bool matrixIsCovariance);
-
-            CDSolution<Scalar> fitt(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance);
 
         private:
             CDSolution<Scalar>  fitFrom(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
+                const Matrix<Scalar>& matData,
                 bool matrixIsCovariance,
-                const Scalar* vectDataPtr,
-                ContiguousDataContainer<Scalar>&& w0);
+                const Vector<Scalar>& vectDataPtr,
+                Vector<Scalar>&& w0);
 
             const Param m_Param;
 
@@ -132,7 +109,6 @@ namespace l0l2
                     tolerance{ toleranceInput },
                     maximumNumberOfIterations{ maximumNumberOfIterationsInput },
                     deltaBeta{ deltaInput * betaInput }
-                    //to optimize
                 {
                 }
 
@@ -167,10 +143,9 @@ namespace l0l2
             {
             }
 
-            ContiguousDataContainer<Scalar> fit(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            Vector<Scalar> fit(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 unsigned int maxNumberOfIterations = 100000U) const;
 
@@ -179,398 +154,72 @@ namespace l0l2
         };
 
         template<std::floating_point ScalarType>
-        ContiguousDataContainer<typename L2RegressorPCG<ScalarType>::Scalar>
+        Vector<typename L2RegressorPCG<ScalarType>::Scalar>
             L2RegressorPCG<ScalarType>::fit(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 unsigned int maxNumberOfIterations) const
         {
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
-            using Index = Index;
 
-            const auto n = numberOfColumns;
-            const auto m = numberOfRows;
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
-            auto x = ContiguousDataContainer(n, static_cast<Scalar>(0));
-            auto xPtr = x.data();
+            Vector x = Vector::Zero(n);
 
-            if (matrixIsCovariance)
+            const Vector M = matrixIsCovariance ?
+                static_cast<Vector>(matData.diagonal().array() + m_Beta)
+                : static_cast<Vector>(matData.cwiseAbs2().colwise().sum().transpose().array() + m_Beta);
+
+            Vector r = matrixIsCovariance ?
+                static_cast<Vector>(matData * (vectData - x) + m_Beta * x)
+                : static_cast<Vector>(matData.transpose() * (vectData - matData * x) + m_Beta * x);
+
+            Vector p = r.cwiseQuotient(M);
+
+            Scalar r0dotz0 = r.dot(p);
+
             {
-                //const auto& alpha = vectData;
-                //const auto alphaPtr = alpha.data();
-                const auto alphaPtr = vectDataPtr;
+                const Vector w = matrixIsCovariance ?
+                    static_cast<Vector>(matData * p + m_Beta * p)
+                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
+                
+                const Scalar alphaValue = r0dotz0 / p.dot(w);
 
-                const auto& Q = matData;
-                const auto QPtr = Q.data();
+                x += alphaValue * p;
+                r -= alphaValue * w;
+            }
 
-                ContiguousDataContainer M(n, m_Beta);
-                auto mPtr = M.data();
-#pragma omp parallel for
-                for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
-                    mPtr[i] += QPtr[i * m + i];
-                }
+            int iter = 0;
+            while (r.norm() > Utils::epsilon)
+            {
+                const Vector z = r.cwiseQuotient(M);// Mzk = rk
 
-                ContiguousDataContainer r(m);
-                auto rPtr = r.data();
-#pragma omp parallel for
-                for (Index i = 0; i < m; ++i)
-                {//Not auto vectorized
-                    const auto QPtrRowi = QPtr + i * m;
+                const Scalar rdotz = r.dot(z);
 
-                    auto total = m_Beta * xPtr[i];
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        // qij == qji
-                        total += QPtrRowi[j] * (alphaPtr[j] - xPtr[j]);
-                    }
+                p = (rdotz / r0dotz0) * p + z;
 
-                    rPtr[i] = total;
-                }
+                const Vector w = matrixIsCovariance ?
+                    static_cast<Vector>(matData * p + m_Beta * p)
+                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
 
-                auto p = r;
-                auto pPtr = p.data();
-#pragma omp simd
-                for (Index j = 0; j < n; ++j)
-                {//Vectorized
-                    pPtr[j] /= mPtr[j];
-                }
+                const Scalar alphaValue = rdotz / p.dot(w);
 
-                auto r0dotz0 = static_cast<Scalar>(0);
-#pragma omp simd
-                for (Index j = 0; j < n; ++j)
-                {//Vectorized
-                    r0dotz0 += rPtr[j] * pPtr[j];
-                }
+                x += alphaValue * p;
+                r -= alphaValue * w;
 
+                r0dotz0 = rdotz;
+
+                ++iter;
+
+                if (iter > maxNumberOfIterations)
                 {
-                    ContiguousDataContainer w(m);
-                    auto wPtr = w.data();
-#pragma omp parallel for
-                    for (Index i = 0; i < m; ++i)
-                    {//Not auto vectorized
-                        // TODO optimize vectorization
-                        const auto QPtrRowi = QPtr + i * m;
-
-                        auto total = m_Beta * pPtr[i];
-#pragma omp simd
-                        for (Index j = 0; j < n; ++j)
-                        {//Vectorized
-                            // qij == qji
-                            total += QPtrRowi[j] * pPtr[j];
-                        }
-
-                        wPtr[i] = total;
-                    }
-
-                    auto pdotw = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        pdotw += pPtr[j] * wPtr[j];
-                    }
-
-                    const Scalar alphaValue = r0dotz0 / pdotw;
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        xPtr[j] += alphaValue * pPtr[j];
-                    }
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        rPtr[j] -= alphaValue * wPtr[j];
-                    }
-                }
-
-                unsigned int iter = 0U;
-                while (norm(r) > Utils::epsilon)
-                {
-                    auto z = r;
-                    auto zPtr = z.data();
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        zPtr[j] /= mPtr[j];
-                    }
-
-                    auto rdotz = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        rdotz += rPtr[j] * zPtr[j];
-                    }
-
-                    const auto rdotzOverr0dotz0 = rdotz / r0dotz0;
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        pPtr[j] = rdotzOverr0dotz0 * pPtr[j] + zPtr[j];
-                    }
-
-                    ContiguousDataContainer w(m);
-                    auto wPtr = w.data();
-#pragma omp parallel for
-                    for (Index i = 0; i < m; ++i)
-                    {//Not auto vectorized
-                        // TODO optimize vectorization
-                        const auto QPtrRowi = QPtr + i * m;
-
-                        auto total = m_Beta * pPtr[i];
-#pragma omp simd
-                        for (Index j = 0; j < n; ++j)
-                        {//Vectorized
-                            // qij == qji
-                            total += QPtrRowi[j] * pPtr[j];
-                        }
-
-                        wPtr[i] = total;
-                    }
-
-                    auto pdotw = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        pdotw += pPtr[j] * wPtr[j];
-                    }
-
-                    const Scalar alphaValue = rdotz / pdotw;
-
-                    r0dotz0 = rdotz;
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        xPtr[j] += alphaValue * pPtr[j];
-                    }
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        rPtr[j] -= alphaValue * wPtr[j];
-                    }
-
-                    ++iter;
-
-                    if (iter > maxNumberOfIterations)
-                    {
-                        //std::cout << "\nMax iter attained\n";
-                        break;
-                    }
+                    break;
                 }
             }
-            else
-            {
-                //const auto& b = vectData;
-                //const auto bPtr = b.data();
-                const auto bPtr = vectDataPtr;
-
-                const auto& A = matData;
-                const auto APtr = A.data();
-
-                ContiguousDataContainer M(n);
-                auto mPtr = M.data();
-#pragma omp parallel for
-                for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
-                    const auto APtrColj = APtr + j * m;
-                    auto total = m_Beta;
-#pragma omp simd
-                    for (Index i = 0; i < m; ++i)
-                    {//Vectorized
-                        total += APtrColj[i] * APtrColj[i];
-                    }
-
-                    mPtr[j] = total;
-                }
-
-                ContiguousDataContainer r(n);
-                auto rPtr = r.data();
-                {
-                    //auto bMinusAx = b;
-                    ContiguousDataContainer bMinusAx(vectDataPtr, vectDataPtr + m);
-                    auto bMinusAxPtr = bMinusAx.data();
-#pragma omp parallel for
-                    for (Index i = 0; i < m; ++i)
-                    {//Not auto vectorized
-                        for (Index j = 0; j < n; ++j)
-                        {//Not auto vectorized
-                            bMinusAxPtr[i] -= APtr[j * m + i] * xPtr[j];
-                        }
-                    }
-
-#pragma omp parallel for
-                    for (Index i = 0; i < n; ++i)
-                    {//Not auto vectorized
-                        const auto APtrColi = APtr + i * m;
-                        auto total = m_Beta * xPtr[i];
-#pragma omp simd
-                        for (Index j = 0; j < m; ++j)
-                        {//Vectorized
-                            total += APtrColi[j] * bMinusAxPtr[j];
-                        }
-
-                        rPtr[i] = total;
-                    }
-                }
-
-                auto p = r;
-                auto pPtr = p.data();
-#pragma omp simd
-                for (Index i = 0; i < n; ++i)
-                {//Vectorized
-                    pPtr[i] /= mPtr[i];
-                }
-
-                auto r0dotz0 = static_cast<Scalar>(0);
-#pragma omp simd
-                for (Index j = 0; j < n; ++j)
-                {//Vectorized
-                    r0dotz0 += rPtr[j] * pPtr[j];
-                }
-
-                {
-                    ContiguousDataContainer w(n);
-                    auto wPtr = w.data();
-                    {
-                        auto Ap = ContiguousDataContainer(m, static_cast<Scalar>(0));
-                        auto ApPtr = Ap.data();
-#pragma omp parallel for
-                        for (Index i = 0; i < m; ++i)
-                        {//Not auto vectorized
-                            for (Index j = 0; j < n; ++j)
-                            {//Not auto vectorized
-                                ApPtr[i] += APtr[j * m + i] * pPtr[j];
-                            }
-                        }
-#pragma omp parallel for
-                        for (Index i = 0; i < n; ++i)
-                        {//Not auto vectorized
-                            const auto APtrColi = APtr + i * m;
-                            auto total = m_Beta * pPtr[i];
-#pragma omp simd
-                            for (Index j = 0; j < m; ++j)
-                            {//Vectorized
-                                total += APtrColi[j] * ApPtr[j];
-                            }
-
-                            wPtr[i] = total;
-                        }
-                    }
-
-                    auto pdotw = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        pdotw += pPtr[j] * wPtr[j];
-                    }
-
-                    const Scalar alphaValue = r0dotz0 / pdotw;
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        xPtr[j] += alphaValue * pPtr[j];
-                    }
-
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        rPtr[j] -= alphaValue * wPtr[j];
-                    }
-                }
-
-                unsigned int iter = 0;
-                while (norm(r) > Utils::epsilon)
-                {
-                    auto z = r;
-                    auto zPtr = z.data();
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        zPtr[j] /= mPtr[j];
-                    }
-
-                    auto rdotz = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        rdotz += rPtr[j] * zPtr[j];
-                    }
-
-                    const auto rdotzOverr0dotz0 = rdotz / r0dotz0;
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        pPtr[j] = rdotzOverr0dotz0 * pPtr[j] + zPtr[j];
-                    }
-
-                    {
-                        ContiguousDataContainer w(n);
-                        auto wPtr = w.data();
-                        {
-                            auto Ap = ContiguousDataContainer(m, static_cast<Scalar>(0));
-                            auto ApPtr = Ap.data();
-#pragma omp parallel for
-                            for (Index i = 0; i < m; ++i)
-                            {//Not auto vectorized
-                                for (Index j = 0; j < n; ++j)
-                                {//Not auto vectorized
-                                    ApPtr[i] += APtr[j * m + i] * pPtr[j];
-                                }
-                            }
-#pragma omp parallel for
-                            for (Index i = 0; i < n; ++i)
-                            {//Not auto vectorized
-                                const auto APtrColi = APtr + i * m;
-                                auto total = m_Beta * pPtr[i];
-#pragma omp simd
-                                for (Index j = 0; j < m; ++j)
-                                {//Vectorized
-                                    total += APtrColi[j] * ApPtr[j];
-                                }
-
-                                wPtr[i] = total;
-                            }
-                        }
-
-                        auto pdotw = static_cast<Scalar>(0);
-#pragma omp simd
-                        for (Index j = 0; j < n; ++j)
-                        {//Vectorized
-                            pdotw += pPtr[j] * wPtr[j];
-                        }
-
-                        const Scalar alphaValue = rdotz / pdotw;
-
-                        r0dotz0 = rdotz;
-#pragma omp simd
-                        for (Index j = 0; j < n; ++j)
-                        {//Vectorized
-                            xPtr[j] += alphaValue * pPtr[j];
-                        }
-#pragma omp simd
-                        for (Index j = 0; j < n; ++j)
-                        {//Vectorized
-                            rPtr[j] -= alphaValue * wPtr[j];
-                        }
-                    }
-
-                    ++iter;
-
-                    if (iter > maxNumberOfIterations)
-                    {
-                        //std::cout << "\nMax iter attained\n";
-                        break;
-                    }
-                }
-            }
+            
             return x;
         }
 
@@ -587,103 +236,34 @@ namespace l0l2
         template <ModelLike ModelImplementationType>
         CDSolution<typename ModelImplementationType::Scalar>
             CyclicalCoordinateDescent<ModelImplementationType>::fitFrom(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
+                const Matrix<Scalar>& matData,
                 bool matrixIsCovariance,
-                const Scalar* vectDataPtr,
-                ContiguousDataContainer<Scalar>&& w0)
+                const Vector<Scalar>& vectData,
+                Vector<Scalar>&& w0)
         {
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
             using CDSolution = CDSolution<Scalar>;
 
-            const auto m = numberOfRows;
-            const auto n = numberOfColumns;
-
-            const auto matDataPtr = matData.data();
-            //const auto vectDataPtr = vectData.data();
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
             CDSolution solution{ n };
             solution.x = std::move(w0);// be carefull with rvalue reference. w0 is moved!
 
-            auto weightsPtr = solution.x.data();
+            auto& x = solution.x;
             auto& numberOfIterations = solution.numberOfIterations;
             auto& globalChange = solution.globalChange;
             auto& dualityGap = solution.dualityGap;
             auto& status = solution.status;
 
-            //ContiguousDataContainer R = matrixIsCovariance ? (M * (warmStart ? (v - m_Weights) : v))
-            //    : (warmStart ? v - M * m_Weights : v); 
+            Vector R = matrixIsCovariance 
+                ? static_cast<Vector>(matData * (vectData - x))
+                : static_cast<Vector>(vectData - matData * x);
 
-            //ContiguousDataContainer R = matrixIsCovariance ? (M * (v - m_Weights))
-            //    : (v - M * m_Weights); 
-            // 
-            // TODO optimize m_Weights == 0 case
-            ContiguousDataContainer R(m);
-            if (matrixIsCovariance)
-            {
-#pragma omp parallel for
-                for (Index i = 0; i < m; ++i)
-                {//Not auto vectorized
-                    const auto matDataPtrRowi = matDataPtr + i * m;
-                    auto total = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        //M.coeff(i, j)==M.coeff(j,i) ==> matDataPtr[j*m + i] == matDataPtr[i*m + j]
-                        //R[i] += matDataPtr[i*m + j] * (v[j] - weightsPtr[j]);
-                        total += matDataPtrRowi[j] * (vectDataPtr[j] - weightsPtr[j]);
-                    }
+            const auto zJs = matrixIsCovariance ? static_cast<Vector>(matData.diagonal())
+                : static_cast<Vector>(matData.colwise().squaredNorm().transpose());
 
-                    R[i] = total;
-                }
-            }
-            else
-            {
-#pragma omp parallel for
-                for (Index i = 0; i < m; ++i)
-                {//Not auto vectorized
-                    //const auto matDataPtrRowi = matDataPtr + i*m;
-                    auto total = vectDataPtr[i];
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        total -= matDataPtr[j * m + i] * weightsPtr[j];
-                    }
-
-                    R[i] = total;
-                }
-            }
-
-            ContiguousDataContainer zJs(n);// , static_cast<Scalar>(0));
-            auto zJsPtr = zJs.data();
-
-            if (matrixIsCovariance)
-            {
-#pragma omp parallel for
-                for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
-                    zJsPtr[j] = matDataPtr[j * m + j];
-                }
-            }
-            else
-            {
-#pragma omp parallel for
-                for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
-                    const auto matDataPtrColj = matDataPtr + j * m;
-                    auto total = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index i = 0; i < m; ++i)
-                    {//Vectorized
-                        //zJs[j] += matDataPtr[j*m + i] * matDataPtr[j*m + i];
-                        //zJsPtr[j] += matDataPtrColj[i] * matDataPtrColj[i];
-                        total += matDataPtrColj[i] * matDataPtrColj[i];
-                    }
-
-                    zJsPtr[j] = total;
-                }
-            }
-
-            numberOfIterations = 0;
+            numberOfIterations = 0U;
 
             while (true)
             {
@@ -692,54 +272,32 @@ namespace l0l2
                 // cyclical part
                 for (Index j = 0; j < n; ++j)
                 {//Not auto vectorized
-                    const auto zJ = zJsPtr[j];
+                    const auto zJ = zJs[j];
 
                     if (zJ == static_cast<Scalar>(0))
                     {
                         continue;
                     }
 
-                    const auto oldWeightJ = weightsPtr[j];
+                    const auto oldxJ = x[j];
 
-                    //const auto uJ = matrixIsCovariance ? R[j] + zJ * oldWeightJ : M.col(j).dot(R) + zJ * oldWeightJ;
-                    auto uJ = zJ * oldWeightJ;
-                    if (matrixIsCovariance)
+                    const auto uJ = matrixIsCovariance ? R[j] + zJ * oldxJ : matData.col(j).dot(R) + zJ * oldxJ;
+
+                    const auto newxJ = ModelImplementation::stepJ(m_Param, zJ, uJ);
+
+                    x[j] = newxJ;
+
+                    const auto xsDiff = oldxJ - newxJ;
+
+                    if (xsDiff != static_cast<Scalar>(0))
                     {
-                        uJ += R[j];
-                    }
-                    else
-                    {
-                        const auto matDataPtrColj = matDataPtr + j * m;
-#pragma omp simd
-                        for (Index i = 0; i < m; ++i)
-                        {//Vectorized
-                            //uJ += matDataPtr[j*m + i] * R[i];
-                            uJ += matDataPtrColj[i] * R[i];
-                        }
-                        //uJ += M.col(j).dot(R);
-                    }
+                        R += xsDiff * matData.col(j);
 
-                    const auto newWeightJ = ModelImplementation::stepJ(m_Param, zJ, uJ);
+                        const auto xJChange = std::abs(xsDiff);
 
-                    weightsPtr[j] = newWeightJ;
-
-                    const auto weightsDiff = oldWeightJ - newWeightJ;
-
-                    if (weightsDiff != static_cast<Scalar>(0))
-                    {
-                        //R += weightsDiff * M.col(j);
-                        const auto matDataPtrColj = matDataPtr + j * m;
-#pragma omp simd
-                        for (Index i = 0; i < m; ++i)
-                        {//Vectorized
-                            R[i] += weightsDiff * matDataPtrColj[i];
-                        }
-
-                        const auto weightJChange = std::abs(weightsDiff);
-
-                        if (weightJChange > globalChange)
+                        if (xJChange > globalChange)
                         {
-                            globalChange = weightJChange;
+                            globalChange = xJChange;
                         }
                     }
                 }
@@ -776,33 +334,24 @@ namespace l0l2
         }
 
         template <ModelLike ModelImplementationType>
-        inline CDSolution<typename ModelImplementationType::Scalar>
-            CyclicalCoordinateDescent<ModelImplementationType>::fit(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
-                bool matrixIsCovariance)
-        {
-            return fitt(matData, numberOfRows, numberOfColumns, vectData.data(), matrixIsCovariance);
-        }
-
-        template <ModelLike ModelImplementationType>
         CDSolution<typename ModelImplementationType::Scalar>
-            CyclicalCoordinateDescent<ModelImplementationType>::fitt(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            CyclicalCoordinateDescent<ModelImplementationType>::fit(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
             using L2Regressor = L2RegressorPCG<Scalar>;
+
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
             if (m_Param.strategy != Strategy::FromBothSolutions)
             {
-                return fitFrom(matData, numberOfRows, numberOfColumns, matrixIsCovariance, vectDataPtr,
+                return fitFrom(matData, matrixIsCovariance, vectData,
                     m_Param.strategy == Strategy::FromZeroSolution
-                    ? ContiguousDataContainer(numberOfColumns, static_cast<Scalar>(0))
-                    : L2Regressor(m_Param.beta).fit(matData, numberOfRows, numberOfColumns, vectDataPtr, matrixIsCovariance));
+                    ? Vector::Zero(n)
+                    : L2Regressor(m_Param.beta).fit(matData,vectData, matrixIsCovariance));
             }
             else
             {
@@ -810,15 +359,15 @@ namespace l0l2
 
                 auto fromZeroFuture =
                     std::async(std::launch::async, &CyclicalCoordinateDescent::fitFrom, this,
-                        matData, numberOfRows, numberOfColumns,
+                        matData,
                         matrixIsCovariance,
-                        vectDataPtr,
-                        ContiguousDataContainer(numberOfColumns, static_cast<Scalar>(0)));
+                        vectData,
+                        Vector::Zero(n));
 
-                auto fromL2Solution = fitFrom(matData, numberOfRows, numberOfColumns,
+                auto fromL2Solution = fitFrom(matData,
                     matrixIsCovariance,
-                    vectDataPtr,
-                    L2Regressor(m_Param.beta).fit(matData, numberOfRows, numberOfColumns, vectDataPtr, matrixIsCovariance));
+                    vectData,
+                    L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance));
 
                 auto fromZeroSolution = fromZeroFuture.get();
 

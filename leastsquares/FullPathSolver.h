@@ -11,7 +11,6 @@
 #include <utility>
 #include <cmath>
 #include <execution>
-#include <functional>
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
@@ -57,16 +56,6 @@ namespace l0l2
               \param beta l2 regularization parameter.
               \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
             */
-            /*FullPathSolver(
-                Scalar delta,
-                Scalar beta,
-                Strategy strategy = Strategy::FromZeroSolution) :
-                m_Param{ delta, beta,  strategy },
-                m_DeltaFromZeroSolution{ std::numeric_limits<Scalar>::max() },
-                m_DeltaFromL2Solution{ static_cast<Scalar>(0) }
-            {
-            }*/
-
             FullPathSolver(const Param& param) :
                 m_Param{ param },
                 m_DeltaFromZeroSolution{ std::numeric_limits<Scalar>::max() },
@@ -76,8 +65,6 @@ namespace l0l2
 
             /*! \brief Fit full path solutions.
                \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
                \param vectData contiguous data container representing target vector.
                \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
                \param beta l2 regularization parameter.
@@ -85,62 +72,26 @@ namespace l0l2
                \return a list of solutions generating entire piecewise linear path solutions
              */
             static std::list<Solution<Scalar>>
-                fitAll(const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                    Index numberOfRows, Index numberOfColumns,
-                    const ContiguousDataContainer<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Scalar beta,
-                    Strategy strategy = Strategy::FromZeroSolution);
-
-            /*! \brief Fit full path solutions.
-               \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
-               \param vectData contiguous data pointer representing target vector.
-               \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
-               \param beta l2 regularization parameter.
-               \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
-               \return a list of solutions generating entire piecewise linear path solutions
-             */
-            static std::list<Solution<Scalar>>
-                fittAll(const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                    Index numberOfRows, Index numberOfColumns,
-                    const Scalar* vectDataPtr,
+                fitAll(const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar beta,
                     Strategy strategy = Strategy::FromZeroSolution);
 
             /*! \brief Fit one solution.
-               \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
+               \param matData contiguous data container representing matrix in column major layout..
                \param vectData contiguous data container representing target vector.
                \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
                \return a solution corresponding to the regularization parameters.
              */
-            Solution<Scalar>  fit(const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
-                bool matrixIsCovariance);
-
-            /*! \brief Fit one solution.
-               \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
-               \param vectDataPtr contiguous data pointer representing target vector.
-               \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
-               \return a solution corresponding to the regularization parameters.
-             */
-            Solution<Scalar>  fitt(const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            Solution<Scalar>  fit(const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance);
 
         private:
             std::list<Solution<Scalar>> solve(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance, bool fromZeroSolution);
 
             const Param m_Param;
@@ -161,10 +112,9 @@ namespace l0l2
             {
             }
 
-            ContiguousDataContainer<Scalar> fit(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            Vector<Scalar> fit(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const;
 
         private:
@@ -172,129 +122,51 @@ namespace l0l2
         };
 
         template<std::floating_point ScalarType>
-        ContiguousDataContainer<typename L2RegressorGauss<ScalarType>::Scalar>
+        Vector<typename L2RegressorGauss<ScalarType>::Scalar>
             L2RegressorGauss<ScalarType>::fit(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
         {// TODO optimize
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
+            using Matrix = Matrix<Scalar>;
+            using RMMatrix = RMMatrix<Scalar>;
             using Utils = Utils<Scalar>;
-            using Index = Index;
 
-            const auto n = numberOfColumns;
-            const auto m = numberOfRows;
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
-            const auto& MatData = matData;// MatDataPtr[j*numberOfRows + i]
-            const auto MatDataPtr = MatData.data();
+            auto ATA = matrixIsCovariance
+                ? static_cast<RMMatrix>(matData)
+                : static_cast<RMMatrix>(matData.transpose() * matData);
 
-            ContiguousDataContainer ATA(n * n);// ATAPtr[i*numberOfColumns + j]
-            auto ATAPtr = ATA.data();
+            auto ATb = matrixIsCovariance
+                ? static_cast<Vector>(matData * vectData)
+                : static_cast<Vector>(matData.transpose() * vectData);
 
-            ContiguousDataContainer ATb(n);
-            auto ATbPtr = ATb.data();
+            ATA.diagonal().array() += m_Beta;
 
-            if (matrixIsCovariance)
-            {
-                const auto alphaPtr = vectDataPtr;// vectData.data();
-
-#pragma omp parallel for
-                for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
-                    const auto MatDataPtrColi = MatDataPtr + i * n;
-                    auto ATAPtrRowi = ATAPtr + i * n;
-
-                    auto total = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index j = 0; j < n; ++j)
-                    {//Vectorized
-                        //qij == qji
-                        total += MatDataPtrColi[j] * alphaPtr[j];
-
-                        ATAPtrRowi[j] = MatDataPtrColi[j];// TODO exploit matrix symmetry
-                    }
-
-                    ATbPtr[i] = total;
-                }
-            }
-            else
-            {
-                const auto bPtr = vectDataPtr;//vectData.data();
-#pragma omp parallel for
-                for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
-                    const auto MatDataPtrColj = MatDataPtr + j * m;
-                    auto total = static_cast<Scalar>(0);
-#pragma omp simd
-                    for (Index i = 0; i < m; ++i)
-                    {//Vectorized
-                        total += bPtr[i] * MatDataPtrColj[i];
-                    }
-
-                    ATbPtr[j] = total;
-                }
-
-                // A.transpose(A)
-#pragma omp parallel for
-                for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
-                    const auto MatDataPtrColi = MatDataPtr + i * m;
-                    auto ATAPtrRowi = ATAPtr + i * n;
-                    for (Index j = i; j < n; ++j)
-                    {//Not auto vectorized
-                        const auto MatDataPtrColj = MatDataPtr + j * m;
-                        auto coeffij = static_cast<Scalar>(0);
-#pragma omp simd
-                        for (Index k = 0; k < m; ++k)
-                        {//Vectorized
-                            coeffij += MatDataPtrColi[k] * MatDataPtrColj[k];
-                        }
-
-                        ATAPtrRowi[j] = coeffij;
-                        ATAPtr[j * n + i] = coeffij;
-                    }
-                }
-            }
-
-#pragma omp parallel for
             for (Index i = 0; i < n; ++i)
-            {//Not auto vectorized
-                ATAPtr[i * n + i] += m_Beta;
-            }
-
-            // do not parallelize
-            for (Index i = 0; i < n; ++i)
-            {//Not auto vectorized
+            {
                 const auto pivotRowIndex = i;
                 const auto pivotColumnIndex = i;
 
-                auto ATAPtrpivotRowIndex = ATAPtr + pivotRowIndex * n;
+                const auto pivotCoeff = ATA.coeff(pivotRowIndex, pivotColumnIndex);
 
-                const auto pivotCoeff = ATAPtrpivotRowIndex[pivotColumnIndex];
-#pragma omp simd
-                for (Index j = 0; j < n; ++j)
-                {//Vectorized
-                    ATAPtrpivotRowIndex[j] /= pivotCoeff;
-                }
+                ATA.row(pivotRowIndex) /= pivotCoeff;
 
-                ATbPtr[pivotRowIndex] /= pivotCoeff;
-#pragma omp parallel for
+                ATb[pivotRowIndex] /= pivotCoeff;
+
                 for (Index rowIndex = 0; rowIndex < n; ++rowIndex)
-                {//Not auto vectorized
+                {
                     if (pivotRowIndex != rowIndex)
                     {
-                        const auto value = ATAPtr[rowIndex * n + pivotColumnIndex];
+                        const auto value = ATA.coeff(rowIndex, pivotColumnIndex);
                         if (std::abs(value) > Utils::epsilon)
                         {
-                            auto ATAPtrrowIndex = ATAPtr + rowIndex * n;
-#pragma omp simd
-                            for (Index j = 0; j < n; ++j)
-                            {//Vectorized
-                                ATAPtrrowIndex[j] -= value * ATAPtrpivotRowIndex[j];
-                            }
+                            ATA.row(rowIndex) -= value * ATA.row(pivotRowIndex);
 
-                            ATbPtr[rowIndex] -= value * ATbPtr[pivotRowIndex];
+                            ATb[rowIndex] -= value * ATb[pivotRowIndex];
                         }
                     }
                 }
@@ -315,9 +187,8 @@ namespace l0l2
             }
 
             Solution<Scalar> run(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 const Solution<Scalar>& solutionYaay,
                 const Solution<Scalar>& solutionMaam,
                 bool matrixIsCovariance,
@@ -347,42 +218,41 @@ namespace l0l2
         {
             using Scalar = ScalarType;
             using Utils = Utils<Scalar>;
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
-
-            const auto solutionMaamxPtr = solutionMaam.x.data();
-            const auto solutionMaamdelta = solutionMaam.delta;
-
-            const auto solutionYaayxPtr = solutionYaay.x.data();
-            const auto solutionYaaygradPtr = solutionYaay.grad.data();
-            const auto solutionYaaydelta = solutionYaay.delta;
-
-            auto indices = std::vector<ConstraintsType>(numberOfColumns, ConstraintsType::K0);
-            auto xSigns = ContiguousDataContainer(numberOfColumns);
-
-            auto xSignsPtr = xSigns.data();
-
-            auto indicesPtr = indices.data();
+            using Vector = Vector<Scalar>;
 
             const auto n = numberOfColumns;
+
+            const auto& solutionMaamx = solutionMaam.x;
+            const auto solutionMaamdelta = solutionMaam.delta;
+
+            const auto& solutionYaayx = solutionYaay.x;
+            const auto& solutionYaaygrad = solutionYaay.grad;
+            const auto solutionYaaydelta = solutionYaay.delta;
+
+            std::vector<ConstraintsType> indices(n);
+            auto indicesPtr = indices.data();
+
+            Vector xSigns(n);
+
 #pragma omp parallel for
             for (Index i = 0; i < n; ++i)
             {//Not auto vectorized
                 // TODO optimize
-                if (std::abs(solutionYaayxPtr[i]) <= Utils::epsilon)
+                if (std::abs(solutionYaayx[i]) <= Utils::epsilon)
                 {
-                    const auto gradi = solutionYaaygradPtr[i];
+                    const auto gradi = solutionYaaygrad[i];
                     if (std::abs(gradi) > Utils::epsilon)
                     {
-                        xSignsPtr[i] = -Utils::sign(gradi);
+                        xSigns[i] = -Utils::sign(gradi);
                     }
                     else
                     {
-                        xSignsPtr[i] = static_cast<Scalar>(1);
+                        xSigns[i] = static_cast<Scalar>(1);
                     }
                 }
                 else
                 {
-                    xSignsPtr[i] = Utils::sign(solutionYaayxPtr[i]);
+                    xSigns[i] = Utils::sign(solutionYaayx[i]);
                 }
             }
 
@@ -390,8 +260,8 @@ namespace l0l2
 #pragma omp parallel for
             for (Index i = 0; i < n; ++i)
             {//Not auto vectorized
-                const auto absXMaami = std::abs(solutionMaamxPtr[i]);
-                const auto absXYaayi = std::abs(solutionYaayxPtr[i]);
+                const auto absXMaami = std::abs(solutionMaamx[i]);
+                const auto absXYaayi = std::abs(solutionYaayx[i]);
 
                 if (std::abs(absXYaayi - solutionYaaydelta) <= Utils::epsilon)
                 {
@@ -418,7 +288,7 @@ namespace l0l2
                 }
                 else// absXYaayi <= Utils::epsilon case
                 {
-                    const auto absGradi = std::abs(solutionYaaygradPtr[i]);
+                    const auto absGradi = std::abs(solutionYaaygrad[i]);
 
                     if (std::abs(absGradi - deltaYaayBeta) <= Utils::epsilon)
                     {//critical
@@ -442,7 +312,7 @@ namespace l0l2
                 }
             }
 
-            return std::pair<std::vector <ConstraintsType>, ContiguousDataContainer>
+            return std::pair<std::vector<ConstraintsType>, Vector>
             {std::move(indices), std::move(xSigns)};
         }
 
@@ -465,9 +335,8 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Solution<typename FullPathStep<ScalarType>::Scalar>
             FullPathStep<ScalarType>::run(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 const Solution<Scalar>& solutionYaay,
                 const Solution<Scalar>& solutionMaam,
                 bool matrixIsCovariance,
@@ -475,35 +344,29 @@ namespace l0l2
         {
             using Solution = Solution<Scalar>;
             using Utils = Utils<Scalar>;
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
-            using Index = Index;
+            using Matrix = Matrix<Scalar>;
+            using RMMatrix = RMMatrix<Scalar>;
+            using Vector = Vector<Scalar>;
 
-            auto [indices, xSigns] = updateSizesAndSigns(m_Beta, solutionYaay, solutionMaam, numberOfColumns);
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
-            const auto& MatData = matData; //MatData[j*numberOfRows + i]
-            const auto MatDataPtr = MatData.data();
+            auto [indices, xSigns] = updateSizesAndSigns(m_Beta, solutionYaay, solutionMaam, n);
 
             const auto& VectData = vectData;
 
-            const auto xSignsPtr = xSigns.data();
-
             auto indicesPtr = indices.data();
 
-            const auto n = numberOfColumns;
-            const auto m = numberOfRows;
+            RMMatrix AData;
 
-            ContiguousDataContainer AData;
+            const auto numberOfConstraints = 2 * n;
 
-            const auto m_NumberOfConstraints = 2 * n;
-
-            auto m_NbWs = computeNbWs(numberOfColumns, indices);
+            auto m_NbWs = computeNbWs(n, indices);
             auto m_NbTs = n - m_NbWs;
 
-            ContiguousDataContainer b(m_NumberOfConstraints, static_cast<Scalar>(0));
-            auto bPtr = b.data();
+            Vector b = Vector::Zero(numberOfConstraints);
 
-            ContiguousDataContainer gamma(m_NumberOfConstraints, static_cast<Scalar>(0));
-            auto gammaPtr = gamma.data();
+            Vector gamma = Vector::Zero(numberOfConstraints);
 
             const auto solutionYaaydelta = solutionYaay.delta;
 
@@ -512,13 +375,10 @@ namespace l0l2
             std::unordered_map<Index, Index> indicesMap;
 
             std::vector<Index> tIndicesMap(n, static_cast<Index>(-1));
-            auto tIndicesMapPtr = tIndicesMap.data();
 
             std::vector<Index> wIndicesMap(n, static_cast<Index>(-1));
-            auto wIndicesMapPtr = wIndicesMap.data();
 
             std::vector<Index> pivots(n, static_cast<Index>(-1));
-            auto pivotsPtr = pivots.data();
 
             auto presolveDone = false;
 
@@ -530,8 +390,8 @@ namespace l0l2
 
                 indicesMap.clear();// TODO is it necessary to clear all
 
-                //tIndicesMapPtr reset values to -1;// TODO is it necessary to clear all
-                //wIndicesMapPtr reset values to -1;
+                //tIndicesMap reset values to -1;// TODO is it necessary to clear all
+                //wIndicesMap reset values to -1;
                 //sIndicesMap reset values to -1;
                 //pivots reset values to -1;
                 std::fill(std::execution::par,
@@ -554,73 +414,29 @@ namespace l0l2
                     }
                 }
 
-                const auto nA = static_cast<Index>(indicesMap.size());
-                const auto mA = n;
-
-                AData = ContiguousDataContainer(mA * nA);//ADataPtr[i*nA + j]
-                auto ADataPtr = AData.data();
-
-                if (matrixIsCovariance)
                 {
-                    // TODO parallelize map for loop
+                    const auto nA = static_cast<Index>(indicesMap.size());
+                    const auto mA = n;
+
+                    AData = RMMatrix(mA, nA);
+
                     for (const auto& [j, idx] : indicesMap)
-                    {//Not auto vectorized
-                        const auto MatDataPtrColj = MatDataPtr + j * m;
-                        for (Index k = 0; k < mA; ++k)
-                        {//Not auto vectorized
-                            ADataPtr[k * nA + idx] = MatDataPtrColj[k];
-                        }
+                    {
+                        AData.col(idx) = matrixIsCovariance ? 
+                            static_cast<Vector>(matData.col(j))
+                            : static_cast<Vector>(matData.transpose() * matData.col(j));
 
-                        ADataPtr[j * nA + idx] += m_Beta;
+                        AData.coeffRef(j, idx) += m_Beta;
 
-                        const auto xsignsj = xSignsPtr[j];
-
-                        for (Index i = 0; i < mA; ++i)
-                        {//Not auto vectorized
-                            ADataPtr[i * nA + idx] *= xsignsj;
-                        }
-                    }
-                }
-                else
-                {// TODO parallelize map for loop
-                    for (const auto& [j, idx] : indicesMap)
-                    {//Not auto vectorized
-                        const auto MatDataPtrj = MatDataPtr + j * m;
-
-                        for (Index k = 0; k < n; ++k)
-                        {//Not auto vectorized
-                            const auto MatDataPtrk = MatDataPtr + k * m;
-                            auto value = static_cast<Scalar>(0);
-                            for (Index l = 0; l < m; ++l)
-                            {//Vectorized
-                                value += MatDataPtrk[l] * MatDataPtrj[l];
-                            }
-
-                            ADataPtr[k * nA + idx] = value;
-                        }
-
-                        ADataPtr[j * nA + idx] += m_Beta;
-
-                        const auto xsignsj = xSignsPtr[j];
-
-                        for (Index i = 0; i < mA; ++i)
-                        {//Not auto vectorized
-                            ADataPtr[i * nA + idx] *= xsignsj;
-                        }
-                    }
+                        AData.col(idx) *= xSigns[j];
+                    }                    
                 }
 
-                //gamma.setZero();
-                std::fill(std::execution::par,
-                    gamma.begin(), gamma.end(), static_cast<Scalar>(0));// TODO optimize
+                gamma.setZero();
 
-                //b.setZero();
-                std::fill(std::execution::par,
-                    b.begin(), b.end(), static_cast<Scalar>(0));// TODO optimize
+                b.setZero();
 
-                //b.head(n) = VectData;// ATb or Qalpha
-                std::copy(std::execution::par,
-                    VectData.cbegin(), VectData.cend(), b.begin());// TODO optimize
+                b.head(n) = VectData;// ATb or Qalpha// TODO optimize
 
                 Index jT = 0;
                 Index jW = 0;
@@ -636,15 +452,15 @@ namespace l0l2
                     {
                         const auto tIndex = jStartSlacksT + jT;
 
-                        gammaPtr[tIndex] = tau;
+                        gamma[tIndex] = tau;
 
-                        bPtr[tIndex] = solutionYaaydelta;
+                        b[tIndex] = solutionYaaydelta;
 
-                        tIndicesMapPtr[i] = tIndex;
+                        tIndicesMap[i] = tIndex;
 
                         ++jT;
 
-                        pivotsPtr[i] = indicesMap.at(i);
+                        pivots[i] = indicesMap.at(i);
 
                         break;
                     }
@@ -652,15 +468,15 @@ namespace l0l2
                     {
                         const auto tIndex = jStartSlacksT + jT;
 
-                        gammaPtr[tIndex] = tau;
+                        gamma[tIndex] = tau;
 
-                        bPtr[tIndex] = solutionYaaydelta;
+                        b[tIndex] = solutionYaaydelta;
 
-                        tIndicesMapPtr[i] = tIndex;
+                        tIndicesMap[i] = tIndex;
 
                         ++jT;
 
-                        pivotsPtr[i] = indicesMap.at(i);
+                        pivots[i] = indicesMap.at(i);
 
                         break;
                     }
@@ -668,15 +484,15 @@ namespace l0l2
                     {
                         const auto tIndex = jStartSlacksT + jT;
 
-                        gammaPtr[tIndex] = tau;
+                        gamma[tIndex] = tau;
 
-                        bPtr[tIndex] = solutionYaaydelta;
+                        b[tIndex] = solutionYaaydelta;
 
-                        tIndicesMapPtr[i] = tIndex;
+                        tIndicesMap[i] = tIndex;
 
                         ++jT;
 
-                        pivotsPtr[i] = indicesMap.at(i);
+                        pivots[i] = indicesMap.at(i);
 
                         break;
                     }
@@ -684,15 +500,15 @@ namespace l0l2
                     {
                         const auto tIndex = jStartSlacksT + jT;
 
-                        gammaPtr[tIndex] = tau;
+                        gamma[tIndex] = tau;
 
-                        bPtr[tIndex] = solutionYaaydelta;
+                        b[tIndex] = solutionYaaydelta;
 
-                        tIndicesMapPtr[i] = tIndex;
+                        tIndicesMap[i] = tIndex;
 
                         ++jT;
 
-                        pivotsPtr[i] = indicesMap.at(i);
+                        pivots[i] = indicesMap.at(i);
 
                         break;
                     }
@@ -700,15 +516,15 @@ namespace l0l2
                     {
                         const auto tIndex = jStartSlacksT + jT;
 
-                        gammaPtr[tIndex] = tau;
+                        gamma[tIndex] = tau;
 
-                        bPtr[tIndex] = solutionYaaydelta;
+                        b[tIndex] = solutionYaaydelta;
 
-                        tIndicesMapPtr[i] = tIndex;
+                        tIndicesMap[i] = tIndex;
 
                         ++jT;
 
-                        pivotsPtr[i] = indicesMap.at(i);
+                        pivots[i] = indicesMap.at(i);
 
                         break;
                     }
@@ -717,12 +533,12 @@ namespace l0l2
                         const auto sIndex = jStartSlacksS + jS;
                         const auto wIndex = jStartSlacksW + jW;
 
-                        gammaPtr[wIndex] = tau;
+                        gamma[wIndex] = tau;
 
-                        bPtr[wIndex] = solutionYaaydelta;
+                        b[wIndex] = solutionYaaydelta;
 
                         //sIndicesMap[i] = sIndex;
-                        wIndicesMapPtr[i] = wIndex;
+                        wIndicesMap[i] = wIndex;
 
                         ++jS;
                         ++jW;
@@ -734,12 +550,12 @@ namespace l0l2
                         const auto sIndex = jStartSlacksS + jS;
                         const auto wIndex = jStartSlacksW + jW;
 
-                        gammaPtr[wIndex] = tau;
+                        gamma[wIndex] = tau;
 
-                        bPtr[wIndex] = solutionYaaydelta;
+                        b[wIndex] = solutionYaaydelta;
 
                         //sIndicesMap[i] = sIndex;
-                        wIndicesMapPtr[i] = wIndex;
+                        wIndicesMap[i] = wIndex;
 
                         ++jS;
                         ++jW;
@@ -751,12 +567,12 @@ namespace l0l2
                         const auto sIndex = jStartSlacksS + jS;
                         const auto wIndex = jStartSlacksW + jW;
 
-                        gammaPtr[wIndex] = tau;
+                        gamma[wIndex] = tau;
 
-                        bPtr[wIndex] = solutionYaaydelta;
+                        b[wIndex] = solutionYaaydelta;
 
                         //sIndicesMap[i] = sIndex;
-                        wIndicesMapPtr[i] = wIndex;
+                        wIndicesMap[i] = wIndex;
 
                         ++jS;
                         ++jW;
@@ -786,43 +602,46 @@ namespace l0l2
                     }
                     case ConstraintsType::K2:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        const auto betaTimesSigni = m_Beta * xSignsPtr[i];
+                        const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
-                        gammaPtr[i] -= betaTimesSigni * gammaPtr[tIndex];
+                        gamma[i] -= betaTimesSigni * gamma[tIndex];
 
-                        bPtr[i] -= betaTimesSigni * bPtr[tIndex];
+                        b[i] -= betaTimesSigni * b[tIndex];
 
                         break;
                     }
                     case ConstraintsType::K3:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        const auto betaTimesSigni = m_Beta * xSignsPtr[i];
+                        const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
-                        gammaPtr[i] -= betaTimesSigni * gammaPtr[tIndex];
+                        gamma[i] -= betaTimesSigni * gamma[tIndex];
 
-                        bPtr[i] -= betaTimesSigni * bPtr[tIndex];
+                        b[i] -= betaTimesSigni * b[tIndex];
 
                         break;
                     }
                     case ConstraintsType::K4:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        const auto betaTimesSigni = m_Beta * xSignsPtr[i];
+                        const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
+                        AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
-                        gammaPtr[i] -= betaTimesSigni * gammaPtr[tIndex];
+                        gamma[i] -= betaTimesSigni * gamma[tIndex];
 
-                        bPtr[i] -= betaTimesSigni * bPtr[tIndex];
+                        b[i] -= betaTimesSigni * b[tIndex];
 
                         break;
                     }
@@ -836,13 +655,13 @@ namespace l0l2
                     }
                     case ConstraintsType::K7:
                     {
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
 
-                        const auto betaTimesSigni = m_Beta * xSignsPtr[i];
+                        const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        gammaPtr[i] -= betaTimesSigni * gammaPtr[wIndex];
+                        gamma[i] -= betaTimesSigni * gamma[wIndex];
 
-                        bPtr[i] -= betaTimesSigni * bPtr[wIndex];
+                        b[i] -= betaTimesSigni * b[wIndex];
 
                         break;
                     }
@@ -855,43 +674,34 @@ namespace l0l2
                 for (Index i = 0; i < n; ++i)
                 {//Not auto vectorized
                     const auto pivotRowIndex = i;
-                    const auto pivotColumnIndex = pivotsPtr[i];
+                    const auto pivotColumnIndex = pivots[i];
 
                     if (pivotColumnIndex == static_cast<Index>(-1))
                     {
                         continue;
                     }
 
-                    auto ADataPtrpivotRowIndex = ADataPtr + pivotRowIndex * nA;
-                    const auto pivotCoeff = ADataPtrpivotRowIndex[pivotColumnIndex];
-#pragma omp simd
-                    for (Index j = 0; j < nA; ++j)
-                    {//Vectorized
-                        ADataPtrpivotRowIndex[j] /= pivotCoeff;
-                    }
+                    const auto pivotCoeff = AData.coeff(pivotRowIndex, pivotColumnIndex);
 
-                    gammaPtr[pivotRowIndex] /= pivotCoeff;
+                    AData.row(pivotRowIndex) /= pivotCoeff;
 
-                    bPtr[pivotRowIndex] /= pivotCoeff;
+                    gamma[pivotRowIndex] /= pivotCoeff;
+
+                    b[pivotRowIndex] /= pivotCoeff;
 
 #pragma omp parallel for
                     for (Index rowIndex = 0; rowIndex < n; ++rowIndex)
-                    {//Not auto vectorized
+                    {
                         if (pivotRowIndex != rowIndex)
                         {
-                            auto ADataPtrrowIndex = ADataPtr + rowIndex * nA;
-                            const auto value = ADataPtrrowIndex[pivotColumnIndex];
+                            const auto value = AData.coeff(rowIndex, pivotColumnIndex);
                             if (std::abs(value) > Utils::epsilon)
                             {
-#pragma omp simd
-                                for (Index j = 0; j < nA; ++j)
-                                {//Vectorized
-                                    ADataPtrrowIndex[j] -= value * ADataPtrpivotRowIndex[j];
-                                }
+                                AData.row(rowIndex) -= value * AData.row(pivotRowIndex);
 
-                                gammaPtr[rowIndex] -= value * gammaPtr[pivotRowIndex];
+                                gamma[rowIndex] -= value * gamma[pivotRowIndex];
 
-                                bPtr[rowIndex] -= value * bPtr[pivotRowIndex];
+                                b[rowIndex] -= value * b[pivotRowIndex];
                             }
                         }
                     }
@@ -899,114 +709,114 @@ namespace l0l2
 
 #pragma omp parallel for
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto idxType = indicesPtr[i];
 
                     switch (idxType)
                     {
                     case ConstraintsType::K0:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        gammaPtr[tIndex] -= gammaPtr[i];
+                        gamma[tIndex] -= gamma[i];
 
-                        bPtr[tIndex] -= bPtr[i];
+                        b[tIndex] -= b[i];
 
-                        gammaPtr[tIndex] *= static_cast<Scalar>(-1);
+                        gamma[tIndex] *= static_cast<Scalar>(-1);
 
-                        bPtr[tIndex] *= static_cast<Scalar>(-1);
+                        b[tIndex] *= static_cast<Scalar>(-1);
 
                         break;
                     }
                     case ConstraintsType::K1:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        gammaPtr[tIndex] -= gammaPtr[i];
+                        gamma[tIndex] -= gamma[i];
 
-                        bPtr[tIndex] -= bPtr[i];
+                        b[tIndex] -= b[i];
 
-                        gammaPtr[tIndex] *= static_cast<Scalar>(-1);
+                        gamma[tIndex] *= static_cast<Scalar>(-1);
 
-                        bPtr[tIndex] *= static_cast<Scalar>(-1);
+                        b[tIndex] *= static_cast<Scalar>(-1);
 
                         break;
                     }
                     case ConstraintsType::K2:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        gammaPtr[tIndex] -= gammaPtr[i];
+                        gamma[tIndex] -= gamma[i];
 
-                        bPtr[tIndex] -= bPtr[i];
+                        b[tIndex] -= b[i];
 
                         break;
                     }
                     case ConstraintsType::K3:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        gammaPtr[tIndex] -= gammaPtr[i];
+                        gamma[tIndex] -= gamma[i];
 
-                        bPtr[tIndex] -= bPtr[i];
+                        b[tIndex] -= b[i];
 
                         break;
                     }
                     case ConstraintsType::K4:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        gammaPtr[tIndex] -= gammaPtr[i];
+                        gamma[tIndex] -= gamma[i];
 
-                        bPtr[tIndex] -= bPtr[i];
+                        b[tIndex] -= b[i];
 
                         break;
                     }
                     case ConstraintsType::K5:
                     {
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
 
-                        const auto signiOverBeta = xSignsPtr[i] / m_Beta;
+                        const auto signiOverBeta = xSigns[i] / m_Beta;
 
-                        gammaPtr[i] *= signiOverBeta;
+                        gamma[i] *= signiOverBeta;
 
-                        bPtr[i] *= signiOverBeta;
+                        b[i] *= signiOverBeta;
 
-                        gammaPtr[wIndex] -= gammaPtr[i];
+                        gamma[wIndex] -= gamma[i];
 
-                        bPtr[wIndex] -= bPtr[i];
+                        b[wIndex] -= b[i];
 
                         break;
                     }
                     case ConstraintsType::K6:
                     {
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
 
-                        const auto signiOverBeta = xSignsPtr[i] / m_Beta;
+                        const auto signiOverBeta = xSigns[i] / m_Beta;
 
-                        gammaPtr[i] *= signiOverBeta;
+                        gamma[i] *= signiOverBeta;
 
-                        bPtr[i] *= signiOverBeta;
+                        b[i] *= signiOverBeta;
 
-                        gammaPtr[wIndex] -= gammaPtr[i];
+                        gamma[wIndex] -= gamma[i];
 
-                        bPtr[wIndex] -= bPtr[i];
+                        b[wIndex] -= b[i];
 
                         break;
                     }
                     case ConstraintsType::K7:
                     {
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
 
-                        const auto minusSigniOver2Beta = -xSignsPtr[i] / (static_cast<Scalar>(2) * m_Beta);
+                        const auto minusSigniOver2Beta = -xSigns[i] / (static_cast<Scalar>(2) * m_Beta);
 
-                        gammaPtr[i] *= minusSigniOver2Beta;
+                        gamma[i] *= minusSigniOver2Beta;
 
-                        bPtr[i] *= minusSigniOver2Beta;
+                        b[i] *= minusSigniOver2Beta;
 
-                        gammaPtr[wIndex] -= gammaPtr[i];
+                        gamma[wIndex] -= gamma[i];
 
-                        bPtr[wIndex] -= bPtr[i];
+                        b[wIndex] -= b[i];
 
                         break;
                     }
@@ -1024,9 +834,9 @@ namespace l0l2
                     {
                     case ConstraintsType::K1:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        if (bPtr[tIndex] <= Utils::epsilon && gammaPtr[tIndex] > static_cast<Scalar>(0))
+                        if (b[tIndex] <= Utils::epsilon && gamma[tIndex] > static_cast<Scalar>(0))
                         {
                             indicesPtr[i] = ConstraintsType::K2;
 
@@ -1037,9 +847,9 @@ namespace l0l2
                     }
                     case ConstraintsType::K2:
                     {
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
 
-                        if (bPtr[tIndex] <= Utils::epsilon && gammaPtr[tIndex] > static_cast<Scalar>(0))
+                        if (b[tIndex] <= Utils::epsilon && gamma[tIndex] > static_cast<Scalar>(0))
                         {
                             indicesPtr[i] = ConstraintsType::K1;
 
@@ -1050,7 +860,7 @@ namespace l0l2
                     }
                     case ConstraintsType::K4:
                     {
-                        if (bPtr[i] <= Utils::epsilon && gammaPtr[i] > static_cast<Scalar>(0))
+                        if (b[i] <= Utils::epsilon && gamma[i] > static_cast<Scalar>(0))
                         {
                             indicesPtr[i] = ConstraintsType::K5;
 
@@ -1061,9 +871,9 @@ namespace l0l2
                     }
                     case ConstraintsType::K5:
                     {
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
 
-                        if (bPtr[wIndex] <= Utils::epsilon && gammaPtr[wIndex] > static_cast<Scalar>(0))
+                        if (b[wIndex] <= Utils::epsilon && gamma[wIndex] > static_cast<Scalar>(0))
                         {
                             indicesPtr[i] = ConstraintsType::K4;
 
@@ -1079,11 +889,9 @@ namespace l0l2
 
                 presolveDone = !bHasZeros;
 
-                m_NbWs = computeNbWs(numberOfColumns, indices);
+                m_NbWs = computeNbWs(n, indices);
                 m_NbTs = n - m_NbWs;
             }
-
-            //[m_NumberOfConstraints, m_NbTs, m_NbWs] = computeNbWs(numberOfColumns, indices);
 
             Solution solutionNew{ n };
 
@@ -1091,12 +899,12 @@ namespace l0l2
             auto minimum = std::numeric_limits<Scalar>::max();
             auto aPivotRowIndex = static_cast<Index>(-1);
             {
-                for (Index i = 0; i < m_NumberOfConstraints; ++i)
+                for (Index i = 0; i < numberOfConstraints; ++i)
                 {//Not auto vectorized
-                    const auto value = gammaPtr[i];// m_PositiveValues[i];
+                    const auto value = gamma[i];// m_PositiveValues[i];
                     if (value > Utils::epsilon)//&& std::abs(m_B.get()[i]) > Utils::epsilon)
                     {
-                        const auto itemValue = bPtr[i] / value;
+                        const auto itemValue = b[i] / value;
                         if (itemValue < minimum)
                         {
                             minimum = itemValue;
@@ -1109,15 +917,15 @@ namespace l0l2
 
             if (static_cast<Index>(-1) != aPivotRowIndex)
             {
-                const auto gammaSol = bPtr[aPivotRowIndex] / gammaPtr[aPivotRowIndex];
+                const auto gammaSol = b[aPivotRowIndex] / gamma[aPivotRowIndex];
 
                 solutionNew.delta = solutionYaaydelta - tau * gammaSol;
 
-                auto solutionNewxPtr = solutionNew.x.data();
-                auto solutionNewgradPtr = solutionNew.grad.data();
+                auto& solutionNewx = solutionNew.x;
+                auto& solutionNewgrad = solutionNew.grad;
 #pragma omp parallel for
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto idxType = indicesPtr[i];
 
                     switch (idxType)
@@ -1126,7 +934,7 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            solutionNewxPtr[i] = bPtr[i] - gammaPtr[i] * gammaSol;
+                            solutionNewx[i] = b[i] - gamma[i] * gammaSol;
                         }
 
                         break;
@@ -1135,7 +943,7 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            solutionNewxPtr[i] = bPtr[i] - gammaPtr[i] * gammaSol;
+                            solutionNewx[i] = b[i] - gamma[i] * gammaSol;
                         }
 
                         break;
@@ -1144,15 +952,15 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            solutionNewxPtr[i] = bPtr[i] - gammaPtr[i] * gammaSol;
+                            solutionNewx[i] = b[i] - gamma[i] * gammaSol;
                         }
 
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
                         if (tIndex != aPivotRowIndex)
                         {
-                            const auto Ti = bPtr[tIndex] - gammaPtr[tIndex] * gammaSol;
+                            const auto Ti = b[tIndex] - gamma[tIndex] * gammaSol;
 
-                            solutionNewgradPtr[i] = -m_Beta * xSignsPtr[i] * Ti;
+                            solutionNewgrad[i] = -m_Beta * xSigns[i] * Ti;
                         }
 
                         break;
@@ -1161,15 +969,15 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            solutionNewxPtr[i] = bPtr[i] - gammaPtr[i] * gammaSol;
+                            solutionNewx[i] = b[i] - gamma[i] * gammaSol;
                         }
 
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
                         if (tIndex != aPivotRowIndex)
                         {
-                            const auto Ti = bPtr[tIndex] - gammaPtr[tIndex] * gammaSol;
+                            const auto Ti = b[tIndex] - gamma[tIndex] * gammaSol;
 
-                            solutionNewgradPtr[i] = -m_Beta * xSignsPtr[i] * Ti;
+                            solutionNewgrad[i] = -m_Beta * xSigns[i] * Ti;
                         }
 
                         break;
@@ -1178,15 +986,15 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            solutionNewxPtr[i] = bPtr[i] - gammaPtr[i] * gammaSol;
+                            solutionNewx[i] = b[i] - gamma[i] * gammaSol;
                         }
 
-                        const auto tIndex = tIndicesMapPtr[i];
+                        const auto tIndex = tIndicesMap[i];
                         if (tIndex != aPivotRowIndex)
                         {
-                            const auto Ti = bPtr[tIndex] - gammaPtr[tIndex] * gammaSol;
+                            const auto Ti = b[tIndex] - gamma[tIndex] * gammaSol;
 
-                            solutionNewgradPtr[i] = -m_Beta * xSignsPtr[i] * Ti;
+                            solutionNewgrad[i] = -m_Beta * xSigns[i] * Ti;
                         }
 
                         break;
@@ -1196,9 +1004,9 @@ namespace l0l2
                         if (i != aPivotRowIndex)
                         {
                             //const auto sIndex = sIndicesMap.at(i);
-                            const auto Si = bPtr[i] - gammaPtr[i] * gammaSol;
+                            const auto Si = b[i] - gamma[i] * gammaSol;
 
-                            solutionNewgradPtr[i] = -m_Beta * xSignsPtr[i] * Si;
+                            solutionNewgrad[i] = -m_Beta * xSigns[i] * Si;
                         }
 
                         break;
@@ -1208,9 +1016,9 @@ namespace l0l2
                         if (i != aPivotRowIndex)
                         {
                             //const auto sIndex = sIndicesMap.at(i);
-                            const auto Si = bPtr[i] - gammaPtr[i] * gammaSol;
+                            const auto Si = b[i] - gamma[i] * gammaSol;
 
-                            solutionNewgradPtr[i] = -m_Beta * xSignsPtr[i] * Si;
+                            solutionNewgrad[i] = -m_Beta * xSigns[i] * Si;
                         }
 
                         break;
@@ -1220,17 +1028,17 @@ namespace l0l2
                         if (i != aPivotRowIndex)
                         {
                             //const auto sIndex = sIndicesMap.at(i);
-                            const auto Si = bPtr[i] - gammaPtr[i] * gammaSol;
+                            const auto Si = b[i] - gamma[i] * gammaSol;
 
-                            solutionNewgradPtr[i] += m_Beta * xSignsPtr[i] * Si;
+                            solutionNewgrad[i] += m_Beta * xSigns[i] * Si;
                         }
 
-                        const auto wIndex = wIndicesMapPtr[i];
+                        const auto wIndex = wIndicesMap[i];
                         if (wIndex != aPivotRowIndex)
                         {
-                            const auto Wi = bPtr[wIndex] - gammaPtr[wIndex] * gammaSol;
+                            const auto Wi = b[wIndex] - gamma[wIndex] * gammaSol;
 
-                            solutionNewgradPtr[i] -= m_Beta * xSignsPtr[i] * Wi;
+                            solutionNewgrad[i] -= m_Beta * xSigns[i] * Wi;
                         }
 
                         break;
@@ -1241,11 +1049,7 @@ namespace l0l2
                 }
 
                 // update signs
-#pragma omp simd
-                for (Index i = 0; i < n; ++i)
-                {//Vectorized
-                    solutionNewxPtr[i] *= xSignsPtr[i];
-                }
+                solutionNewx.array() *= xSigns.array();
 
                 return solutionNew;
             }
@@ -1258,31 +1062,16 @@ namespace l0l2
         }
 
         template<std::floating_point ScalarType>
-        inline std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAll(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
-                bool matrixIsCovariance,
-                Scalar beta,
-                Strategy strategy)
-        {
-            return fittAll(matData, numberOfRows, numberOfColumns,
-                vectData.data(), matrixIsCovariance, beta, strategy);
-        }
-
-        template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fittAll(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            FullPathSolver<ScalarType>::fitAll(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar beta,
                 Strategy strategy)
         {
             using Solution = Solution<Scalar>;
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
 
             FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy} };
@@ -1290,8 +1079,8 @@ namespace l0l2
             if (strategy != Strategy::FromBothSolutions)
             {
                 return regressor.solve(
-                    matData, numberOfRows, numberOfColumns,
-                    vectDataPtr,
+                    matData,
+                    vectData,
                     matrixIsCovariance,
                     strategy == Strategy::FromZeroSolution);
             }
@@ -1299,21 +1088,21 @@ namespace l0l2
             {
                 auto fromZeroFuture =
                     std::async(std::launch::async, &FullPathSolver::solve, &regressor,
-                        matData, numberOfRows, numberOfColumns,
-                        vectDataPtr,
+                        matData,
+                        vectData,
                         matrixIsCovariance,
                         true);
 
                 auto fromL2SolutionResults = regressor.solve(
-                    matData, numberOfRows, numberOfColumns,
-                    vectDataPtr,
+                    matData,
+                    vectData,
                     matrixIsCovariance,
                     false);
 
                 auto fromZeroSolutionResults = fromZeroFuture.get();
 
                 for (auto it = fromL2SolutionResults.begin(); it != fromL2SolutionResults.end(); ++it)
-                {//Not auto vectorized
+                {
                     if (it->delta < fromZeroSolutionResults.back().delta - Utils::epsilon)
                     {
                         fromZeroSolutionResults.push_back(std::move(*it));
@@ -1325,22 +1114,10 @@ namespace l0l2
         }
 
         template<std::floating_point ScalarType>
-        inline Solution<typename FullPathSolver<ScalarType>::Scalar>
-            FullPathSolver<ScalarType>::fit(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const ContiguousDataContainer<Scalar>& vectData,
-                bool matrixIsCovariance)
-        {
-            return fitt(matData, numberOfRows, numberOfColumns, vectData.data(), matrixIsCovariance);
-        }
-
-        template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
-            FullPathSolver<ScalarType>::fitt(
-                const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            FullPathSolver<ScalarType>::fit(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
             using Solution = Solution<Scalar>;
@@ -1358,7 +1135,7 @@ namespace l0l2
 
             if (m_Param.strategy != Strategy::FromBothSolutions)
             {
-                auto results = solve(matData, numberOfRows, numberOfColumns, vectDataPtr, matrixIsCovariance,
+                auto results = solve(matData, vectData, matrixIsCovariance,
                     m_Param.strategy == Strategy::FromZeroSolution);
                 if (!results.empty())
                 {
@@ -1373,14 +1150,14 @@ namespace l0l2
             {
                 auto fromZeroFuture =
                     std::async(std::launch::async, &FullPathSolver::solve, this,
-                        matData, numberOfRows, numberOfColumns,
-                        vectDataPtr,
+                        matData,
+                        vectData,
                         matrixIsCovariance,
                         true);
 
                 auto fromL2SolutionResults = solve(
-                    matData, numberOfRows, numberOfColumns,
-                    vectDataPtr,
+                    matData,
+                    vectData,
                     matrixIsCovariance,
                     false);
 
@@ -1398,17 +1175,17 @@ namespace l0l2
                 }
             }
 
-            if (!minBoundSolution.x.empty() && !maxBoundSolution.x.empty())
+            if (minBoundSolution.x.size()!= 0 && maxBoundSolution.x.size() != 0)
             {
                 // interval found. minBoundSolution.delta <= delta <= maxBoundSolution.delta
                 auto& deltaMin = minBoundSolution.delta;
                 const auto deltaMax = maxBoundSolution.delta;
 
-                const auto maxBoundSolutionxPtr = maxBoundSolution.x.data();
-                const auto maxBoundSolutiongradPtr = maxBoundSolution.grad.data();
+                const auto& maxBoundSolutionx = maxBoundSolution.x;
+                const auto& maxBoundSolutiongrad = maxBoundSolution.grad;
 
-                auto minBoundSolutionxPtr = minBoundSolution.x.data();
-                auto minBoundSolutiongradPtr = minBoundSolution.grad.data();
+                auto& minBoundSolutionx = minBoundSolution.x;
+                auto& minBoundSolutiongrad = minBoundSolution.grad;
 
                 const auto diff = deltaMax - deltaMin;
                 const auto alpha = (diff > Utils::epsilon)
@@ -1418,16 +1195,11 @@ namespace l0l2
 
                 const auto n = static_cast<Index>(minBoundSolution.x.size());
 
-                deltaMin *= oneMinusAlpha;
-                deltaMin += alpha * deltaMax;
-#pragma omp simd
-                for (Index i = 0; i < n; ++i)
-                {//Vectorized
-                    minBoundSolutionxPtr[i] = oneMinusAlpha * minBoundSolutionxPtr[i]
-                        + alpha * maxBoundSolutionxPtr[i];
-                    minBoundSolutiongradPtr[i] = oneMinusAlpha * minBoundSolutiongradPtr[i]
-                        + alpha * maxBoundSolutiongradPtr[i];
-                }
+                deltaMin = oneMinusAlpha * deltaMin + alpha * deltaMax;
+
+                minBoundSolutionx = oneMinusAlpha * minBoundSolutionx + alpha * maxBoundSolutionx;
+
+                minBoundSolutiongrad = oneMinusAlpha * minBoundSolutiongrad + alpha * maxBoundSolutiongrad;
 
                 return minBoundSolution;
             }
@@ -1439,54 +1211,31 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::solve(const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            FullPathSolver<ScalarType>::solve(const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance, bool fromZeroSolution)
         {
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
+            using Vector = Vector<Scalar>;
             using Solution = Solution<Scalar>;
             using Utils = Utils<Scalar>;
             using L2Regressor = L2RegressorGauss<Scalar>;
             using FullPathStep = FullPathStep<Scalar>;
 
-            const auto n = numberOfColumns;
-            const auto m = numberOfRows;
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
             const auto tau = fromZeroSolution ? static_cast<Scalar>(1) : static_cast<Scalar>(-1);
 
             std::list<Solution> results;
 
-            const auto ADataPtr = matData.data();
-
-            const auto bDataPtr = vectDataPtr;// vectData.data();
-
-            //const auto ATb = m_Mat.transpose(vectData);// same as Q\alpha
-            ContiguousDataContainer ATb(n);
-            auto ATbPtr = ATb.data();
-#pragma omp parallel for
-            for (Index j = 0; j < n; ++j)
-            {//Not auto vectorized
-                const auto ADataPtrColj = ADataPtr + j * m;
-                //ATbPtr[j] = static_cast<Scalar>(0);
-                auto total = static_cast<Scalar>(0);
-#pragma omp simd
-                for (Index i = 0; i < m; ++i)
-                {//Vectorized
-                    //ATbPtr[j] += bDataPtr[i] * ADataPtrColj[i];
-                    total += bDataPtr[i] * ADataPtrColj[i];
-                }
-
-                ATbPtr[j] = total;
-            }
+            const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
 
             if (fromZeroSolution)
             {
-                const auto deltaZero = lpNormInfinity(ATb) / m_Param.beta;//ATb.lpNormInfinity() / m_Beta;
+                const auto deltaZero = ATb.lpNorm<Eigen::Infinity>() / m_Param.beta;
 
                 results.emplace_back(std::numeric_limits<Scalar>::max(),//static_cast<Scalar>(2) * deltaZero,
-                    ContiguousDataContainer(n, static_cast<Scalar>(0)),
-                    opposite(ATb));
+                    Vector::Zero(n), -ATb);
 
                 results.emplace_back(deltaZero,
                     results.back().x,
@@ -1559,7 +1308,7 @@ namespace l0l2
             {
                 Solution solutionBar{ n };
 
-                solutionBar.x = L2Regressor(m_Param.beta).fit(matData, m, n, vectDataPtr, matrixIsCovariance);
+                solutionBar.x = L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance);
 
                 solutionBar.delta = std::numeric_limits<Scalar>::max();
                 for (Index i = 0; i < n; ++i)
@@ -1654,7 +1403,7 @@ namespace l0l2
 
                     const auto step = FullPathStep(m_Param.beta);
 
-                    auto solutionNew = step.run(matData, m, n,
+                    auto solutionNew = step.run(matData,
                         ATb,
                         solutionYaay,
                         solutionMaam,
@@ -1816,8 +1565,8 @@ namespace l0l2
                 const auto& solutionLast = fromZeroSolution ? results.back() : results.front();
 
                 {
-                    const auto fullPathDone = (!fromZeroSolution) && norm(solutionLast.x) <= Utils::epsilon
-                        || fromZeroSolution && componentwiseAbsMinCoeff(solutionLast.x) >= solutionLast.delta - Utils::epsilon;
+                    const auto fullPathDone = (!fromZeroSolution) && solutionLast.x.norm() <= Utils::epsilon
+                        || fromZeroSolution && solutionLast.x.cwiseAbs().minCoeff() >= solutionLast.delta - Utils::epsilon;
 
                     if (fullPathDone)
                     {
@@ -1930,7 +1679,7 @@ namespace l0l2
                                 }
 
                                 // TODO try to optimize using minmax and avoid abs
-                                const auto fullPathDone = componentwiseAbsMinCoeff(results.back().x)// cwiseAbs().minCoeff()
+                                const auto fullPathDone = results.back().x.cwiseAbs().minCoeff()
                                     >= results.back().delta - Utils::epsilon;
 
                                 if (fullPathDone)
@@ -2011,7 +1760,7 @@ namespace l0l2
                                 return results;
                             }
 
-                            const auto fullPathDone = norm(results.front().x) <= Utils::epsilon;
+                            const auto fullPathDone = results.front().x.norm() <= Utils::epsilon;
 
                             if (fullPathDone)
                             {
@@ -2020,12 +1769,6 @@ namespace l0l2
                         }
                     }
                 }
-
-                // TODO to remove. just for debug
-                //if (numberIters == 1)
-                //{
-                //   break;
-                //}
             }
 
             return results;

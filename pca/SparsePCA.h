@@ -1,12 +1,12 @@
 #ifndef L0L2_SPARSE_PCA_H
 #define L0L2_SPARSE_PCA_H
 
-#include <concepts>
 #include <iostream>
 #include <algorithm>
 #include <vector>
 #include <utility>
 #include <future>
+#include <limits>
 #include <concepts>
 
 #include <Eigen/Dense>
@@ -27,12 +27,11 @@ namespace l0l2
         {
             {
                 ModelImplementationType::fitRegressor(
-                    ContiguousDataContainer<typename ModelImplementationType::Scalar>{},
-                    Index{}, Index{},
-                    ContiguousDataContainer<typename ModelImplementationType::Scalar>{}.data(),
+                    Matrix<typename ModelImplementationType::Scalar>{},
+                    Vector<typename ModelImplementationType::Scalar>{},
                     bool{},
                     typename ModelImplementationType::Param{})
-            } ->std::convertible_to<ContiguousDataContainer<typename ModelImplementationType::Scalar>>;
+            } ->std::convertible_to<Vector<typename ModelImplementationType::Scalar>>;
         };
 
         // General implementation
@@ -56,9 +55,8 @@ namespace l0l2
             {
             }
 
-            ContiguousDataContainer<Scalar> run(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
+            Matrix<Scalar> run(
+                const Matrix<Scalar>& matData,
                 bool matrixIsCovariance);
 
         private:
@@ -104,10 +102,9 @@ namespace l0l2
             {
             }
 
-            static ContiguousDataContainer<Scalar> fitRegressor(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            static Vector<Scalar> fitRegressor(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 const Param& param);
         };
@@ -146,41 +143,35 @@ namespace l0l2
             {
             }
 
-            static ContiguousDataContainer<Scalar> fitRegressor(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+            static Vector<Scalar> fitRegressor(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 const Param& param);
         };
 
         template <SPCAModelLike ModelImplementationType>
-        ContiguousDataContainer<typename SPCA<ModelImplementationType>::Scalar>
+        Matrix<typename SPCA<ModelImplementationType>::Scalar>
             SPCA<ModelImplementationType>::run(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
+                const Matrix<Scalar>& matData,
                 bool matrixIsCovariance)
         {
-            using Vector = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+            using Vector = Vector<Scalar>;
+            using Matrix = Matrix<Scalar>;
 
-            using Matrix = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
-
-            using ContiguousDataContainer = ContiguousDataContainer<Scalar>;
-            //using Vector = Vector<Scalar>;
-            //using Matrix = Matrix<Scalar>;
-
-            Eigen::Map<const Matrix> X(matData.data(), numberOfRows, numberOfColumns);
+            const auto n = static_cast<Index>(matData.cols());
+            const auto m = static_cast<Index>(matData.rows());
 
             Matrix alpha;
 
             if (matrixIsCovariance)
             {
-                Matrix alphaTmp(numberOfColumns, m_Param.nbComponents);
+                Matrix alphaTmp(n, m_Param.nbComponents);
 
-                Eigen::SelfAdjointEigenSolver<Matrix> es(static_cast<Matrix>(X));
+                Eigen::SelfAdjointEigenSolver<Matrix> es(matData);
 
-                const auto eigenValues = es.eigenvalues();
-                const auto eigenVectors = es.eigenvectors();
+                const auto& eigenValues = es.eigenvalues();
+                const auto& eigenVectors = es.eigenvectors();
 
                 Index j = 0;
                 Scalar previousEigenValue = std::numeric_limits<Scalar>::max();
@@ -194,7 +185,7 @@ namespace l0l2
                             break;
                         }
 
-                        alphaTmp.col(j) = eigenVectors.col(idx).real();
+                        alphaTmp.col(j) = eigenVectors.col(idx);
                         ++j;
                     }
                 }
@@ -203,9 +194,9 @@ namespace l0l2
             }
             else
             {
-                Eigen::JacobiSVD<Matrix, Eigen::ComputeThinV> svd(X);
+                Eigen::JacobiSVD<Matrix, Eigen::ComputeThinV> svd(matData);
 
-                alpha = svd.matrixV()(Eigen::seqN(0, X.cols()), Eigen::seqN(0, m_Param.nbComponents));
+                alpha = svd.matrixV()(Eigen::seqN(0, n), Eigen::seqN(0, m_Param.nbComponents));
             }
 
             const auto multipleJobs = m_NbJobs > 1U;
@@ -214,7 +205,7 @@ namespace l0l2
             //Eigen::ThreadPool threadPool(4); // Example: 4 threads
 
             dp::thread_pool pool(multipleJobs ? m_NbJobs : 0);
-            std::vector<std::future<ContiguousDataContainer>> futures;
+            std::vector<std::future<Vector>> futures;
 
             if (multipleJobs)
             {
@@ -234,11 +225,10 @@ namespace l0l2
                     for (Index j = 0; j < alpha.cols(); ++j)
                     {
                         futures.push_back(pool.enqueue(ModelImplementation::fitRegressor,
-                            matData, numberOfRows, numberOfColumns,
-                            (matrixIsCovariance
+                            matData,
+                            matrixIsCovariance
                                 ? static_cast<Vector>(alpha.col(j))
-                                : static_cast<Vector>(X * alpha.col(j))
-                                ).data(),
+                                : static_cast<Vector>(matData * alpha.col(j)),
                             matrixIsCovariance, m_Param));
                     }
                 }
@@ -248,23 +238,13 @@ namespace l0l2
                 {// TODO optimize using move and swaps
                     const Vector oldWeights = result.col(j);
 
-                    const auto resultj = multipleJobs ? futures[j].get()
+                    //const auto resultj 
+                    result.col(j) = multipleJobs ? futures[j].get()
                         : ModelImplementation::fitRegressor(matData,
-                            numberOfRows, numberOfColumns,
-                            (matrixIsCovariance
+                            matrixIsCovariance
                                 ? static_cast<Vector>(alpha.col(j))
-                                : static_cast<Vector>(X * alpha.col(j))
-                                ).data(),
+                                : static_cast<Vector>(matData * alpha.col(j)),
                             matrixIsCovariance, m_Param);
-
-                    const auto resultjPtr = resultj.data();
-                    auto resultColjPtr = result.data() + j * result.rows();
-
-#pragma omp simd
-                    for (Index i = 0; i < resultNbRows; ++i)
-                    {//TODO optimize
-                        resultColjPtr[i] = resultjPtr[i];
-                    }
 
                     changes = std::max(changes, (oldWeights - result.col(j)).norm());
                 }
@@ -276,8 +256,8 @@ namespace l0l2
                 }
 
                 Eigen::JacobiSVD<Matrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd
-                (matrixIsCovariance ? static_cast<Matrix>(X * result)
-                    : static_cast<Matrix>(X.transpose() * (X * result)));
+                (matrixIsCovariance ? static_cast<Matrix>(matData * result)
+                    : static_cast<Matrix>(matData.transpose() * (matData * result)));
 
                 for (Index j = 0; j < m_Param.nbComponents; ++j)
                 {
@@ -297,40 +277,34 @@ namespace l0l2
                 }
             }
 
-#pragma omp parallel for
-            for (Index j = 0; j < resultNbColumns; ++j)
-            {
-                result.col(j).normalize();
-            }
+            result.colwise().normalize();
 
-            return ContiguousDataContainer(result.data(), result.data() + result.cols() * result.rows());
+            return result;
         }
 
         template<std::floating_point ScalarType>
-        inline ContiguousDataContainer<typename L0L2SPCAModelImplementation<ScalarType>::Scalar>
+        inline Vector<typename L0L2SPCAModelImplementation<ScalarType>::Scalar>
             L0L2SPCAModelImplementation<ScalarType>::fitRegressor(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 const Param& param)
         {
             return Regressor(param.regressorParam)
-                .fitt(matData, numberOfRows, numberOfColumns, vectDataPtr, matrixIsCovariance)
+                .fit(matData, vectData, matrixIsCovariance)
                 .x;
         }
 
         template<std::floating_point ScalarType>
-        inline ContiguousDataContainer<typename FullPathL0L2SPCAModelImplementation<ScalarType>::Scalar>
+        inline Vector<typename FullPathL0L2SPCAModelImplementation<ScalarType>::Scalar>
             FullPathL0L2SPCAModelImplementation<ScalarType>::fitRegressor(
-                const ContiguousDataContainer<Scalar>& matData,
-                Index numberOfRows, Index numberOfColumns,
-                const Scalar* vectDataPtr,
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 const Param& param)
         {
             return Regressor(param.regressorParam).
-                fitt(matData, numberOfRows, numberOfColumns, vectDataPtr, matrixIsCovariance)
+                fit(matData, vectData, matrixIsCovariance)
                 .x;
         }
 
