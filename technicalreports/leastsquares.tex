@@ -134,6 +134,124 @@ $x=0$ will be an optimal solution for $(\mathbb{Q}^{\beta,\delta})$ if and only 
 \begin{proof}
     Direct use of $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
 \end{proof}
+\subsection{Dual of $(\mathbb{Q}^{\beta,\delta})$}
+Lagrangian dual of $(\text{DCR}^{\rho, \mu})$ is 
+\[
+		(\text{DUAL}^{\rho, \mu})\;\left\{\begin{array}{ll}
+\max & G(\nu):=-\ddfrac{1}{4}\left\|\nu\right\|^2_2 - b^T\nu - \rho(\left\|.\right\|_0 + \mu^2 \left\|.\right\|_2^2)^{*}(-\ddfrac{A^T\nu}{\rho})\\
+		s.t.&\;\nu\in\mathbb{R}^m.
+		\end{array} \right.
+		\]
+With 
+		\[
+			(\left\|.\right\|_0 + \mu^2 \left\|.\right\|_2^2)^{*}(z) = \sum_{i}^{m}(\left|.\right|_0 + \mu^2 \left|.\right|_2^2)^{*}(z_i),
+		\]
+\[
+			(\left|.\right|_0 + \mu^2 \left|.\right|_2^2)^{*}(z_i) = (\ddfrac{1}{4\mu^2}z_i^2 - 1)^+=\left\{ \begin{array}{ll}
+\ddfrac{1}{4\mu^2}z_i^2 - 1 &\;\text{if}\; \left|z_i\right|\geq 2\mu\\
+0& \text{otherwise}.
+\end{array}
+\right.
+		\]
+
+Weak duality holds. As Slater's conditition is satisfied, strong duality holds for $(\text{DCR}^{\rho, \mu})$.\\
+This formulation will help to find a dual feasible efficiently!
+\subsubsection{Optimality condition for $(\text{DUAL}^{\rho, \mu})$}
+The optimality condition for the convex program $(\text{DUAL}^{\rho, \mu})$ is given by,
+\[
+	\ddfrac{1}{2}\nu+b\in A\partial (\left\|.\right\|_0 + \mu^2 \left\|.\right\|_2^2)^{*}(-\ddfrac{A^T\nu}{\rho}).
+\]
+As
+\[
+\partial (\left\|.\right\|_0 + \mu^2 \left\|.\right\|_2^2)^{*}(z_i)=\left\{ \begin{array}{ll}
+\left\{\ddfrac{1}{2\mu^2}z_i\right\}&\;\text{if}\; \left|z_i\right|> 2\mu\\
+\left\{0\right\} &\;\text{if}\; \left|z_i\right|< 2\mu\\
+\left[0, \ddfrac{1}{\mu}\right]&\;\text{if}\; z_i= 2\mu,\\
+\left[-\ddfrac{1}{\mu}, 0\right]&\;\text{if}\; z_i= -2\mu,
+\end{array}
+\right.
+\]
+the condition becomes
+\[
+\left(\underset{opt}{\text{DUAL}^{\rho, \mu}}\right)\;
+\ddfrac{1}{2}\nu+b = Ay,\; 
+y_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\ddfrac{1}{2\rho\mu^2}\left[A^T\nu\right]_i\right\}&\;\text{if}\; \left|\left[A^T\nu\right]_i\right|> 2\rho\mu\\
+\left\{0\right\} &\;\text{if}\; \left|\left[A^T\nu\right]_i\right|< 2\rho\mu\\
+\left[0, \ddfrac{1}{\mu}\right]&\;\text{if}\; \left[A^T\nu\right]_i= -2\rho\mu,\\
+\left[-\ddfrac{1}{\mu}, 0\right]&\;\text{if}\; \left[A^T\nu\right]_i= 2\rho\mu.
+\end{array}
+\right.
+\]
+\subsubsection{Finding a dual feasible from a primal feasible}
+The previous primal and dual optimality conditions show that if $x$ is a primal solution then $\nu=Ax-b$ is a dual solution.\\ 
+Therefore for an arbitray feasible primal point $x$ we define a dual feasible point $\nu = s\nu_0$,  $\nu_0 = (Ax-b)$. The scalar $s$ will be the argmax of the following 1D convex program:
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 - b^T\nu_0 s - \rho(\left\|.\right\|_0 + \mu^2 \left\|.\right\|_2^2)^{*}(-\ddfrac{A^T\nu_0}{\rho}s)\\
+		s.t.&\;s\in\mathbb{R},
+		\end{array} \right.
+		\]
+say 
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 - b^T\nu_0 s - \rho\sum_{i=1}^{n} (\ddfrac{\left[A^T\nu_0\right]_i^2}{4\mu^2\rho^2}s^2 - 1)^+\\
+		s.t.&\;s\in\mathbb{R}.
+		\end{array} \right.
+		\]
+This is a piecewise 1D quadratic convex program. A solution will have necessarily the opposite sign of $b^T\nu_0$.\\
+ We will first solve 
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 + \left|b^T\nu_0\right| s - \rho\sum_{i=1}^{n} (\ddfrac{\left[A^T\nu_0\right]_i^2}{4\mu^2\rho^2}s^2 - 1)^+\\
+		s.t.&\;s\geq0,
+		\end{array} \right.
+		\]
+and then update the sign of $s$.\\
+Define 
+\[\theta_i= \ddfrac{\left|\left[A^T\nu_0\right]_i\right|}{2\mu\rho} .\]
+Let us consider the set with distinct and ordered elements $\gamma_j$
+\[
+		\left\{\ddfrac{1}{\theta_i}:\;\theta_i\neq 0,\;i=1,...,n \right\} \cup  \left\{0,+\infty \right\}= \left\{\gamma_j:\;j=1,...,p \right\}.
+\]
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 + \left|b^T\nu_0\right| s - \rho\sum_{i=1,\theta_i\neq 0, \ddfrac{1}{\theta_i}\leq\gamma_j}^{n} \theta_i^2 (s^2 - \ddfrac{1}{\theta_i^2 })^+\\
+		s.t.&\;s\in\left[\gamma_j, \gamma_{j+1}\right],
+		\end{array} \right.
+		\]
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 + \left|b^T\nu_0\right| s - \rho\sum_{i=1,\theta_i\neq 0, \ddfrac{1}{\theta_i}\leq\gamma_j}^{n} \theta_i^2 (s^2 - \ddfrac{1}{\theta_i^2 })\\
+		s.t.&\;s\in\left[\gamma_j, \gamma_{j+1}\right].
+		\end{array} \right.
+		\]
+So we will solve the following sequence of 1D convex quadratic programs
+\[
+\left\{
+\begin{array}{ll}		
+\max & -\left[\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 + \rho\sum_{i=1,\theta_i\neq 0, \ddfrac{1}{\theta_i}\leq\gamma_j}^{n} \theta_i^2\right] s^2 + \left|b^T\nu_0\right| s + \rho\sum_{i=1,\theta_i\neq 0, \ddfrac{1}{\theta_i}\leq\gamma_j}^{n} 1\\
+		s.t.&\;s\in\left[\gamma_j, \gamma_{j+1}\right].
+		\end{array} \right.
+		\]
+\[
+		a<0, \;\left\{\max a s^2 +b s+c:\;s\in\left[\gamma_j, \gamma_{j+1}\right]\right\}\leftrightarrow
+s=\left\{
+\begin{array}{ll}
+\gamma_j& \text{if}\;-\ddfrac{b}{2a} < \gamma_j,\\
+\gamma_{j+1}& \text{if}\;-\ddfrac{b}{2a} > \gamma_{j+1},\\
+-\ddfrac{b}{2a}& \text{otherwise}.
+\end{array}
+ \right.
+\]
+The sequence is solved efficiently using it's incremental nature.
+\subsubsection{Duality gap}
+$G(\nu)$ lower bounds $F(x)$ and the corresponding duality gap
+\[
+\eta := F(x) - G(\nu)
+\]
+is always nonnegative from weak duality. $x$ is no more than $\eta$-suboptimal. At the optimum the gap is zero from strong duality.
 \subsection{Theoretical links with Ridge and Lasso}
 \subsubsection{Theoretical links with Ridge}
 Recall
@@ -287,7 +405,79 @@ $x^{\beta}(\delta)$ is a piecewise linear function (TO DO why not mapping? think
 \end{thm}
 \begin{proof} ...
 \end{proof}
-\subsection{Computing a new solution from a known one}
+\subsection{Cyclical coordinate descent for solving $(\mathbb{Q}^{\beta,\delta})$}
+\begin{algorithm}[H]
+        \caption{A cyclical coordinate descent for $(\mathbb{Q}^{\beta,\delta})$}
+        \label{alg:cda}
+        \begin{algorithmic}[1] % [1] adds line numbering
+	  \State Precompute $z_j := \sum_{i}^{m}A_{i,j}^2 =\left\|A_{.,j}\right\|^2_2$
+            \State Initialize $\hat{x} := 0$, (or something else)
+	 \While{ not converged}
+		\For{$j=1, ..., n$}
+			\State Compute $\alpha_j := \sum_{i}^{m}A_{i,j}(b_i - \sum_{k\neq j} \hat{x}_k A_{i,k}),$
+			\State  and set 
+\[
+\hat{x}_j := 
+\left\{ \begin{array}{ll}
+0& \left|\alpha_j\right|\leq \delta\beta,\\
+\ddfrac{\alpha_j - \delta\beta\text{sign}(\alpha_j)}{ z_j} & \delta\beta <\left|\alpha_j\right|\leq \delta\beta +\delta z_j,\\
+\ddfrac{\alpha_j}{\beta + z_j} &\delta\beta +\delta z_j \leq \left|\alpha_j\right|.
+\end{array}
+\right.
+\]
+           	 \EndFor
+	\EndWhile
+            \State \Return $\hat{x}$
+        \end{algorithmic}
+    \end{algorithm}
+\subsection{Interior point method}
+We will consider the convex quadratic form of $(\mathbb{Q}^{\beta,\delta})$, see Le Thi et al.
+
+\[
+	\left\{\begin{array}{ll}
+\min & \left\|Ax-b\right\|^2_2 + \beta\delta\left\| s + \delta v\right\|_2^2 - 2\beta\delta^2 e^Tv\\
+		s.t.&\;-s_i\leq x_i\leq s_i,\;0\leq v_i, i=1,...n.
+		\end{array} \right.
+		\]
+Logarithmic barrier for the bounds
+\[
+\Phi(x, s, v) = -\sum_{i}^{n}log(s_i+x_i)-\sum_{i}^{n}log(s_i-x_i)-\sum_{i}^{n}log(v_i).
+\]
+\[
+\text{dom}\;\Phi = \left\{\left(\begin{array}{l}
+x\\
+s\\
+v\\
+\end{array}\right) : -s_i< x_i< s_i,\; 0<v_i,\; i=1,...n.
+		     \right\}.
+\]
+The central path consists of the unique minimizer $(x(t),s(t), v(t))$ of the convex function 
+\[
+\phi_t(x, s, v) =t\left[ \left\|Ax-b\right\|^2_2 + \beta\left\| s + \delta v\right\|_2^2 - 2\beta\delta^2 e^Tv\right] + \Phi(x, s, v).
+\]
+
+Newton method is used to minimize $\phi_t$, i.e, the search direction is computed as the exact solution to Newton system
+\[
+H\left(\begin{array}{l}
+\Delta x\\
+\Delta s\\
+\Delta v\\
+\end{array}\right) = -g.
+\]
+The Hessian 
+\[
+H =\nabla^2\phi_t(x, s, v),
+\]
+and the gradient 
+\[
+g =\nabla\phi_t(x, s, v),
+\]
+at the current iterate $(x, s, v)$.\\
+...
+
+\subsection{Entire path direct solutions}
+This is a first approach that allow entire path solutions computation using Gauss eliminations. LARS like algorithm is also under progress!
+\subsubsection{Computing a new solution from a known one}
 Here we will consider that we have $(\mathbb{Q}^{\beta,\underline{\delta}})$, $\underline{\delta}>0$ and a corresponding solution $\underline{x}:=x^{\beta}(\underline{\delta})$.\\
 \\
 Let us define the following partition of the indices $i$, $i=1,..., n$.
