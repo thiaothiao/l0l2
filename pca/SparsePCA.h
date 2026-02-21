@@ -170,8 +170,8 @@ namespace l0l2
 
                 Eigen::SelfAdjointEigenSolver<Matrix> es(matData);
 
-                const auto eigenValues = es.eigenvalues();
-                const auto eigenVectors = es.eigenvectors();
+                const auto& eigenValues = es.eigenvalues();
+                const auto& eigenVectors = es.eigenvectors();
 
                 Index j = 0;
                 Scalar previousEigenValue = std::numeric_limits<Scalar>::max();
