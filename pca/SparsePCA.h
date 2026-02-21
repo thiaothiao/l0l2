@@ -277,11 +277,7 @@ namespace l0l2
                 }
             }
 
-#pragma omp parallel for
-            for (Index j = 0; j < resultNbColumns; ++j)
-            {
-                result.col(j).normalize();// .colwise().normalize()?
-            }
+            result.colwise().normalize();
 
             return result;
         }
