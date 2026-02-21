@@ -3,26 +3,29 @@
 
 #include <ios>
 #include <string>
-#include <vector>
 #include <limits>
 #include <cstdint>
 #include <cmath>
-#include <execution>
-#include <functional>
 #include <sstream>
 #include <iomanip>
 #include <concepts>
 
-
+#include <Eigen/Dense>
 
 namespace l0l2
 {
 	namespace linearmodel
 	{
-		using Index = int;
+		using Index = Eigen::Index;
 
 		template<std::floating_point ScalarType>
-		using ContiguousDataContainer = std::vector<ScalarType>;
+		using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
+
+		template<std::floating_point ScalarType>
+		using Matrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+
+		template<std::floating_point ScalarType>
+		using RMMatrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 		enum class CDStatus : std::uint8_t
 		{
@@ -49,16 +52,15 @@ namespace l0l2
 			static Scalar sign(Scalar value);
 
 			static Scalar objectiveValue(
-				const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-				Index numberOfRows, Index numberOfColumns,
-				const ContiguousDataContainer<Scalar>& vectData,
+				const Matrix<Scalar>& matData,
+				const Vector<Scalar>& vectData,
 				bool matrixIsCovariance,
 				Scalar beta,
 				Scalar delta,
-				const ContiguousDataContainer<Scalar>& x);
+				const Vector<Scalar>& x);
 
 			static std::string print(std::streamsize size,
-				const ContiguousDataContainer<Scalar>& other);
+				const Vector<Scalar>& other);
 		};
 
 		template<std::floating_point ScalarType>
@@ -69,8 +71,8 @@ namespace l0l2
 			const static std::streamsize streamSize;
 
 			Solution(Scalar deltaInput = std::numeric_limits<Scalar>::max(),
-				const ContiguousDataContainer<Scalar>& xInput = {},
-				const ContiguousDataContainer<Scalar>& gradInput = {}) :
+				const Vector<Scalar>& xInput = {},
+				const Vector<Scalar>& gradInput = {}) :
 				delta{ deltaInput },
 				x{ xInput },
 				grad{ gradInput }
@@ -79,8 +81,8 @@ namespace l0l2
 
 			Solution(Index n) :
 				delta{ std::numeric_limits<Scalar>::max() },
-				x{ ContiguousDataContainer<Scalar>(n, static_cast<Scalar>(0)) },
-				grad{ ContiguousDataContainer<Scalar>(n, static_cast<Scalar>(0)) }
+				x{ Vector<Scalar>::Zero(n) },
+				grad{ Vector<Scalar>::Zero(n) }
 			{
 			}
 
@@ -95,8 +97,8 @@ namespace l0l2
 			std::string toString() const;
 
 			Scalar delta;
-			ContiguousDataContainer<Scalar> x;
-			ContiguousDataContainer<Scalar> grad;
+			Vector<Scalar> x;
+			Vector<Scalar> grad;
 		};
 
 		template<std::floating_point ScalarType>
@@ -111,7 +113,7 @@ namespace l0l2
 				globalChange{ static_cast<Scalar>(0) },
 				dualityGap{ static_cast<Scalar>(0) },
 				status{ CDStatus::Unknown },
-				x{ ContiguousDataContainer<Scalar>(n, static_cast<Scalar>(0)) }
+				x{ Vector<Scalar>::Zero(n) }
 			{
 			}
 
@@ -127,67 +129,8 @@ namespace l0l2
 			Scalar globalChange;
 			Scalar dualityGap;
 			CDStatus status;
-			ContiguousDataContainer<Scalar> x;
+			Vector<Scalar> x;
 		};
-
-		template<std::floating_point ScalarType>
-		inline ScalarType squaredNorm(const ContiguousDataContainer<ScalarType>& v)
-		{
-			return std::transform_reduce(std::execution::par,
-				v.cbegin(), v.cend(), static_cast<ScalarType>(0), std::plus{},
-				[](auto val) { return val * val; });
-		}
-
-		template<std::floating_point ScalarType>
-		inline ScalarType norm(const ContiguousDataContainer<ScalarType>& v)
-		{
-			return std::sqrt(squaredNorm(v));
-		}
-
-		template<std::floating_point ScalarType>
-		ContiguousDataContainer<ScalarType>
-			opposite(const ContiguousDataContainer<ScalarType>& aVec)
-		{
-			auto result = aVec;
-
-			std::for_each(std::execution::par, result.begin(), result.end(),
-				[](ScalarType& v) { v = -v; });
-
-			return result;
-		}
-
-		template<std::floating_point ScalarType>
-		ScalarType componentwiseAbsMinCoeff(const ContiguousDataContainer<ScalarType>& v)
-		{
-			// TODO optimize
-			const auto min = std::min_element(std::execution::par, // parallel not implemented in c++20
-				v.begin(), v.end(),
-				[](auto a, auto b) { return std::abs(a) < std::abs(b); });
-
-			if (min != v.end())
-			{
-				return std::abs(*min);
-			}
-
-			// empty vector
-			return std::numeric_limits<ScalarType>::max();
-		}
-
-		template<std::floating_point ScalarType>
-		ScalarType lpNormInfinity(const ContiguousDataContainer<ScalarType>& v)// use anonimuous namespace
-		{//TODO optimize
-			const auto max = std::max_element(std::execution::par, // parallel not implemented in c++20
-				v.begin(), v.end(),
-				[](auto a, auto b) { return std::abs(a) < std::abs(b); });
-
-			if (max != v.end())
-			{
-				return std::abs(*max);
-			}
-
-			// empty vector
-			return std::numeric_limits<ScalarType>::min();
-		}
 
 		template<std::floating_point ScalarType>
 		inline Utils<ScalarType>::Scalar Utils<ScalarType>::sign(Scalar value)
@@ -197,42 +140,33 @@ namespace l0l2
 
 		template<std::floating_point ScalarType>
 		Utils<ScalarType>::Scalar Utils<ScalarType>::objectiveValue(
-			const ContiguousDataContainer<Scalar>& matData/*colmajor*/,
-			Index numberOfRows, Index numberOfColumns,
-			const ContiguousDataContainer<Scalar>& vectData,
+			const Matrix<Scalar>& matData/*colmajor*/,
+			const Vector<Scalar>& vectData,
 			bool matrixIsCovariance,
 			Scalar beta,
 			Scalar delta,
-			const ContiguousDataContainer<Scalar>& x)
+			const Vector<Scalar>& x)
 		{
-			const auto n = numberOfColumns;
-			const auto m = numberOfRows;
+			using Index = Index;
 
-			const auto APtr = matData.data();
-			const auto xPtr = x.data();
+			const auto n = static_cast<Index>(matData.cols());
+			const auto m = static_cast<Index>(matData.rows());
 
-			auto bMinusAx = vectData;
-			auto bMinusAxPtr = bMinusAx.data();
-#pragma omp parallel for
-			for (Index i = 0; i < m; ++i)
-			{//Not auto vectorized
-				for (Index j = 0; j < n; ++j)
-				{//Not auto vectorized
-					bMinusAxPtr[i] -= APtr[j * m + i] * xPtr[j];
-				}
-			}
-
+			const auto twoDeltaBeta = static_cast<Scalar>(2) * delta * beta;
 			const auto betaSquaredDelta = beta * delta * delta;
-			auto objVal = squaredNorm(bMinusAx);
+
+			auto objVal = matrixIsCovariance
+				? (vectData - x).dot(matData * (vectData - x))
+				: (vectData - matData * x).squaredNorm();
 			for (Index j = 0; j < n; ++j)
 			{
-				if (std::abs(xPtr[j]) >= delta)
+				if (std::abs(x[j]) >= delta)
 				{
-					objVal += beta * xPtr[j] * xPtr[j] + betaSquaredDelta;
+					objVal += beta * x[j] * x[j] + betaSquaredDelta;
 				}
 				else
 				{
-					objVal += static_cast<Scalar>(2) * delta * beta * std::abs(xPtr[j]);
+					objVal += twoDeltaBeta * std::abs(x[j]);
 				}
 			}
 
@@ -241,7 +175,7 @@ namespace l0l2
 
 		template<std::floating_point ScalarType>
 		std::string Utils<ScalarType>::print(std::streamsize size,
-			const ContiguousDataContainer<Scalar>& other)
+			const Vector<Scalar>& other)
 		{
 			std::stringstream out;
 
@@ -268,31 +202,28 @@ namespace l0l2
 
 			const auto n = static_cast<Index>(x.size());
 
-			const auto vPtr = grad.data();
-			const auto xPtr = x.data();
-
 			const auto deltaBeta = delta * beta;
 			////////#pragma omp parallel for
 			for (Index i = 0; i < n; ++i)
 			{//Not auto vectorized
-				if (std::abs(xPtr[i]) <= Utils::epsilon)
+				if (std::abs(x[i]) <= Utils::epsilon)
 				{
-					if (std::abs(vPtr[i]) - deltaBeta > Utils::epsilon)
+					if (std::abs(grad[i]) - deltaBeta > Utils::epsilon)
 					{
 						return false;
 					}
 				}
-				else if (std::abs(xPtr[i]) < delta)
+				else if (std::abs(x[i]) < delta)
 				{
-					const auto err = vPtr[i] - beta * xPtr[i] + deltaBeta * Utils::sign(xPtr[i]);
+					const auto err = grad[i] - beta * x[i] + deltaBeta * Utils::sign(x[i]);
 					if (std::abs(err) > Utils::epsilon)
 					{
 						return false;
 					}
 				}
-				else //if (std::abs(xPtr[i]) >= delta)
+				else //if (std::abs(x[i]) >= delta)
 				{
-					if (std::abs(vPtr[i]) > Utils::epsilon)
+					if (std::abs(grad[i]) > Utils::epsilon)
 					{
 						return false;
 					}
@@ -339,14 +270,6 @@ namespace l0l2
 
 			return out.str();
 		}
-
-		const std::streamsize Solution<float>::streamSize = 7;
-		const float Utils<float>::epsilon = 1e-6f;
-		const std::streamsize CDSolution<float>::streamSize = 7;
-
-		const std::streamsize Solution<double>::streamSize = 9;
-		const double Utils<double>::epsilon = 1e-8;
-		const std::streamsize CDSolution<double>::streamSize = 9;
 	}
 }
 

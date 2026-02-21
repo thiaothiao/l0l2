@@ -5,7 +5,7 @@
 #include <list>
 #include <fstream>
 #include <string>
-#include <tuple>
+#include <utility>
 #include <execution>
 #include <iomanip>
 #include <algorithm>
@@ -15,90 +15,110 @@
 #include "SparsePCA.h"
 #include "Utils.h"
 
-template<std::floating_point Scalar>
-static void save(Scalar beta,
-    const std::list<l0l2::linearmodel::Solution<Scalar>>& results,
-    const std::string& filename)
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
+const std::streamsize l0l2::linearmodel::Solution<float>::streamSize = 7;
+const float l0l2::linearmodel::Utils<float>::epsilon = 1e-6f;
+const std::streamsize l0l2::linearmodel::CDSolution<float>::streamSize = 7;
+
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
+const std::streamsize l0l2::linearmodel::Solution<double>::streamSize = 9;
+const double l0l2::linearmodel::Utils<double>::epsilon = 1e-8;
+const std::streamsize l0l2::linearmodel::CDSolution<double>::streamSize = 9;
+
+namespace
 {
-    std::ofstream file;
-    file.open(filename);
 
-    for (auto it = results.begin(); it != results.end(); ++it)
+    template<std::floating_point Scalar>
+    static void save(Scalar beta,
+        const std::list<l0l2::linearmodel::Solution<Scalar>>& results,
+        const std::string& filename)
     {
-        const auto& result = *it;
+        std::ofstream file;
+        file.open(filename);
 
-        file << result.toString();
-
-        if (result.isValidFor(beta))
+        for (auto it = results.begin(); it != results.end(); ++it)
         {
-            file << " OK\n";
-        }
-        else
-        {
-            file << " NOK! Failed.\n";
-        }
-    }
+            const auto& result = *it;
 
-    file.close();
-}
+            file << result.toString();
 
-template<std::floating_point Scalar>
-static void saveMatrix(const typename l0l2::linearmodel::ContiguousDataContainer<Scalar>& mat,
-    typename l0l2::linearmodel::Index m,
-    typename l0l2::linearmodel::Index n,
-    const std::string& filename)
-{
-    std::ofstream file;
-    file.open(filename);
-
-    file << std::fixed << std::setprecision(10);
-
-    using Index = typename l0l2::linearmodel::Index;
-
-    for (Index i = 0; i < m; ++i)
-    {
-        for (Index j = 0; j < n - 1; ++j)
-        {
-            file << mat[j * m + i] << ";";
+            if (result.isValidFor(beta))
+            {
+                file << " OK\n";
+            }
+            else
+            {
+                file << " NOK! Failed.\n";
+            }
         }
 
-        file << mat[(n - 1) * m + i] << "\n";
+        file.close();
     }
 
-    file.close();
-}
-
-template<std::floating_point Scalar>
-static void saveVector(const typename l0l2::linearmodel::ContiguousDataContainer<Scalar>& vect,
-    const std::string& filename)
-{
-    std::ofstream file;
-    file.open(filename);
-
-    file << std::fixed << std::setprecision(10);
-
-    using Index = typename l0l2::linearmodel::Index;
-
-    const auto n = static_cast<Index>(vect.size());
-
-    for (Index j = 0; j < n; ++j)
+    template<std::floating_point Scalar>
+    static void saveMatrix(const typename l0l2::linearmodel::Matrix<Scalar>& mat,
+        const std::string& filename)
     {
-        file << vect[j] << "\n";
+        using Index = l0l2::linearmodel::Index;
+
+        const auto n = static_cast<Index>(mat.cols());
+        const auto m = static_cast<Index>(mat.rows());
+
+        std::ofstream file;
+        file.open(filename);
+
+        file << std::fixed << std::setprecision(10);
+
+        using Index = typename l0l2::linearmodel::Index;
+
+        for (Index i = 0; i < m; ++i)
+        {
+            for (Index j = 0; j < n - 1; ++j)
+            {
+                file << mat.coeff(i, j) << ";";
+            }
+
+            file << mat.coeff(i, n - 1) << "\n";
+        }
+
+        file.close();
     }
 
-    //file << vect[n-1] << "\n";
+    template<std::floating_point Scalar>
+    static void saveVector(const typename l0l2::linearmodel::Vector<Scalar>& vect,
+        const std::string& filename)
+    {
+        std::ofstream file;
+        file.open(filename);
 
-    file.close();
-}
+        file << std::fixed << std::setprecision(10);
 
-template<std::floating_point Scalar>
-static auto simulatedData()
-{
-    using ContiguousDataContainer = l0l2::linearmodel::ContiguousDataContainer<Scalar>;
-    using Index = l0l2::linearmodel::Index;
+        using Index = typename l0l2::linearmodel::Index;
 
-    ContiguousDataContainer AData = {
-        -0.20123884, -0.00541008, -0.05698505, 0.33191139, 0.08332175, -0.47482827,
+        const auto n = static_cast<Index>(vect.size());
+
+        for (Index j = 0; j < n; ++j)
+        {
+            file << vect[j] << "\n";
+        }
+
+        //file << vect[n-1] << "\n";
+
+        file.close();
+    }
+
+    template<std::floating_point Scalar>
+    static auto simulatedData()
+    {
+        using Matrix = l0l2::linearmodel::Matrix<Scalar>;
+        using Vector = l0l2::linearmodel::Vector<Scalar>;
+        using Index = l0l2::linearmodel::Index;
+
+        Matrix AData(8, 20);
+        AData <<
+            -0.20123884, -0.00541008, -0.05698505, 0.33191139, 0.08332175, -0.47482827,
             0.20920801, -0.23443386, -0.23639715, -0.34962213, 0.1838184, 0.31660181,
             -0.16392842, 0.39081651, -0.30187818, -0.46938336, 0.37761492, 0.22743553,
             0.04088092, -0.36854184, -0.08633262, 0.27872878, 0.08390135, -0.31736857,
@@ -124,350 +144,319 @@ static auto simulatedData()
             0.2442959, -0.15330935, 0.07766426, -0.33164707, -0.46202829, 0.3171767,
             0.31246483, -0.31156433, -0.1269376, 0.24419212, -0.31375223, -0.0862022,
             -0.26899469, 0.15362293, 0.26437473, 0.33487916, -0.28778714, 0.46196657,
-            -0.23885965, 0.36377019, -0.37312558, -0.12909779 };
+            -0.23885965, 0.36377019, -0.37312558, -0.12909779;
 
-    //ContiguousDataContainer bData = { -0.30532599, -0.20403296, -0.88080627, -0.79558313,
-    //    -0.11683895, -0.71092457, -0.05647609, -0.09459329 };
+        //ContiguousDataContainer bData = { -0.30532599, -0.20403296, -0.88080627, -0.79558313,
+        //    -0.11683895, -0.71092457, -0.05647609, -0.09459329 };
 
-    ContiguousDataContainer alphaData = {
-        0.0000000000, 0.1271706223, -0.6133915186, 0.0000000000, 0.0000000000, -0.0402539149,
+        Vector alphaData(20);
+        alphaData <<
+            0.0000000000, 0.1271706223, -0.6133915186, 0.0000000000, 0.0000000000, -0.0402539149,
             0.0000000000, 0.7919247746, 0.6456801295, 0.4932096303, 0.0000000000, 0.0000000000,
             0.4210028350, 0.0270699188, -0.3920102417, -0.9700308442, -0.8171941042, -0.2710959315,
-            -0.7053743005, -0.6682027578
-    };
+            -0.7053743005, -0.6682027578;
 
-    const auto numberOfRows = static_cast<Index>(8);
-
-    const Index numberOfColumns = static_cast<Index>(20);
-
-    return std::tuple<ContiguousDataContainer, Index, Index, ContiguousDataContainer>
-        (std::move(AData), numberOfRows, numberOfColumns, std::move(alphaData));
-}
-
-template<std::floating_point ScalarType>
-static auto run(const l0l2::linearmodel::ContiguousDataContainer<ScalarType>& AData,//AData[j*numberOfRows + i]
-    l0l2::linearmodel::Index m,
-    l0l2::linearmodel::Index n,
-    const l0l2::linearmodel::ContiguousDataContainer<ScalarType>& alpha,
-    bool matrixIsCovariance,
-    ScalarType beta,
-    ScalarType delta)
-{
-    using Scalar = ScalarType;
-    using ContiguousDataContainer = l0l2::linearmodel::ContiguousDataContainer<Scalar>;
-    using Index = l0l2::linearmodel::Index;
-    using Utils = l0l2::linearmodel::Utils<Scalar>;
-    using Strategy = l0l2::linearmodel::Strategy;
-    using L0L2SPCA = l0l2::linearmodel::L0L2SPCA<Scalar>;
-    using Param = L0L2SPCA::Param;
-    using FullPathL0L2SPCA = l0l2::linearmodel::FullPathL0L2SPCA<Scalar>;
-    using FullPathParam = FullPathL0L2SPCA::Param;
-
-    //l0l2::FullPathSolver<Scalar>::ContiguousDataContainer b = A * alpha;
-    ContiguousDataContainer b(m);
-
-    for (Index i = 0; i < m; ++i)
-    {
-        b[i] = static_cast<Scalar>(0);
-        for (Index j = 0; j < n; ++j)
-        {
-            b[i] += AData[j * m + i] * alpha[j];
-        }
+        return std::pair<Matrix, Vector>
+            (std::move(AData), std::move(alphaData));
     }
 
-    const ContiguousDataContainer Vect = matrixIsCovariance ? alpha : b;
-    //ContiguousDataContainer MatData = matrixIsCovariance ? A.transpose(A) : AData;    
-
-    ContiguousDataContainer MatData{};
-    if (matrixIsCovariance)
+    template<std::floating_point ScalarType>
+    static auto run(const l0l2::linearmodel::Matrix<ScalarType>& AData,//AData[j*numberOfRows + i]
+        const l0l2::linearmodel::Vector<ScalarType>& alpha,
+        bool matrixIsCovariance,
+        ScalarType beta,
+        ScalarType delta)
     {
-        MatData.resize(n * n);//MatData[j*numberOfRows + i]
+        using Scalar = ScalarType;
+        using Matrix = l0l2::linearmodel::Matrix<Scalar>;
+        using Vector = l0l2::linearmodel::Vector<Scalar>;
+        using Index = l0l2::linearmodel::Index;
+        using Utils = l0l2::linearmodel::Utils<Scalar>;
+        using Strategy = l0l2::linearmodel::Strategy;
+        using L0L2SPCA = l0l2::linearmodel::L0L2SPCA<Scalar>;
+        using Param = L0L2SPCA::Param;
+        using FullPathL0L2SPCA = l0l2::linearmodel::FullPathL0L2SPCA<Scalar>;
+        using FullPathParam = FullPathL0L2SPCA::Param;
 
-        //A.transpose(A);
-        for (Index i = 0; i < n; ++i)
+        const auto n = static_cast<Index>(AData.cols());
+        const auto m = static_cast<Index>(AData.rows());
+
+        //l0l2::FullPathSolver<Scalar>::ContiguousDataContainer b = A * alpha;
+        const Vector b = AData * alpha;
+
+        const Vector Vect = matrixIsCovariance ? alpha : b;
+
+        Matrix MatData = matrixIsCovariance
+            ? static_cast<Matrix>(AData.transpose() * AData)
+            : AData;
+
+        const auto fullpath = delta < static_cast<Scalar>(0);
+
+        const auto nbComponents = static_cast<Index>(2);
+        const unsigned int nbJobs = 1U;
+        const Scalar epsilon = static_cast<Scalar>(1e-5);
+        const unsigned int numberOfTrialsMax = 1000U;
+        const Scalar regressorTolerance = static_cast<Scalar>(1e-6);
+        const unsigned int regressorMaximumNumberOfIterations = 100000U;
+
+        if (fullpath)
         {
-            for (Index j = 0; j < n; ++j)
+            //std::string resultsfilename = R"(Results.txt)";
+
+            //const auto start = std::chrono::high_resolution_clock::now();
+
+            //auto results = FullPathSolver::fitAll(MatData, m, n, Vect, matrixIsCovariance, beta,
+            //    Strategy::FromBothSolutions);
+
+            //const auto stop = std::chrono::high_resolution_clock::now();
+
+            //save<Scalar>(beta, results, resultsfilename);
+
+            //// Calculate the duration and cast to microseconds
+            //const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            //std::cout << "\n\nJOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        }
+        else
+        {
             {
-                MatData[j * n + i] = static_cast<Scalar>(0);
-                for (Index k = 0; k < m; ++k)
-                {
-                    MatData[j * n + i] += AData[i * m + k] * AData[j * m + k];
-                }
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromZeroSolution;
+
+                Param param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy,
+                    regressorTolerance,
+                    regressorMaximumNumberOfIterations };
+
+                L0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
+            }
+
+            {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromL2Solution;
+
+                Param param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy,
+                    regressorTolerance,
+                    regressorMaximumNumberOfIterations };
+
+                L0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "L2SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
+            }
+
+            {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromBothSolutions;
+
+                Param param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy,
+                    regressorTolerance,
+                    regressorMaximumNumberOfIterations };
+
+                L0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nFrom Both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "L02SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
+            }
+
+            {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromZeroSolution;
+
+                FullPathParam param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy };
+
+                FullPathL0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nOne solution From Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "FP0SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
+            }
+
+            {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromL2Solution;
+
+                FullPathParam param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy };
+
+                FullPathL0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nOne solution From L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "FP2SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
+            }
+
+            {
+                const auto start = std::chrono::high_resolution_clock::now();
+
+                const Strategy regressorStrategy = Strategy::FromBothSolutions;
+
+                FullPathParam param{
+                    delta,
+                    beta,
+                    nbComponents,
+                    regressorStrategy };
+
+                FullPathL0L2SPCA regressor{
+                    param,
+                    nbJobs,
+                    epsilon,
+                    numberOfTrialsMax };
+
+                auto components = regressor.run(MatData, matrixIsCovariance);
+
+                const auto stop = std::chrono::high_resolution_clock::now();
+
+                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+
+                // Calculate the duration and cast to microseconds
+                const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+                std::cout << "\n\nOne solution From both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+                saveMatrix<Scalar>(components, "FP02SparsePCAs.csv");
+                //std::cout << "Objective value " <<
+                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //std::cout << "\nSolution\n" << solution.toString() << "\n";
+                //std::cout << "\nSolution\n" << componentsX << "\n";
+
+                //return 0;
             }
         }
 
-        m = n;
+        return 0;
     }
-    else
-    {
-        MatData = AData;
-    }
-
-    const auto fullpath = delta < static_cast<Scalar>(0);
-
-    const auto nbComponents = static_cast<Index>(2);
-    const unsigned int nbJobs = 1U;
-    const Scalar epsilon = static_cast<Scalar>(1e-5);
-    const unsigned int numberOfTrialsMax = 1000U;
-    const Scalar regressorTolerance = static_cast<Scalar>(1e-6);
-    const unsigned int regressorMaximumNumberOfIterations = 100000U;
-
-    if (fullpath)
-    {
-        //std::string resultsfilename = R"(Results.txt)";
-
-        //const auto start = std::chrono::high_resolution_clock::now();
-
-        //auto results = FullPathSolver::fitAll(MatData, m, n, Vect, matrixIsCovariance, beta,
-        //    Strategy::FromBothSolutions);
-
-        //const auto stop = std::chrono::high_resolution_clock::now();
-
-        //save<Scalar>(beta, results, resultsfilename);
-
-        //// Calculate the duration and cast to microseconds
-        //const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        //std::cout << "\n\nJOB DONE in " << duration_us.count() << " microseconds!\n\n";
-    }
-    else
-    {
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromZeroSolution;
-
-            Param param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy,
-                regressorTolerance,
-                regressorMaximumNumberOfIterations };
-
-            L0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax};
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-            
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromL2Solution;
-
-            Param param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy,
-                regressorTolerance,
-                regressorMaximumNumberOfIterations };
-
-            L0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax };
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "L2SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromBothSolutions;
-
-            Param param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy,
-                regressorTolerance,
-                regressorMaximumNumberOfIterations };
-
-            L0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax };
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "L02SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromZeroSolution;
-
-            FullPathParam param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy};
-
-            FullPathL0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax };
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nOne solution From Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "FP0SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromL2Solution;
-
-            FullPathParam param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy };
-
-            FullPathL0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax };
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nOne solution From L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "FP2SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-
-        {
-            const auto start = std::chrono::high_resolution_clock::now();
-
-            const Strategy regressorStrategy = Strategy::FromBothSolutions;
-
-            FullPathParam param{
-                delta,
-                beta,
-                nbComponents,
-                regressorStrategy };
-
-            FullPathL0L2SPCA regressor{
-                param,
-                nbJobs,
-                epsilon,
-                numberOfTrialsMax };
-
-            auto components = regressor.run(MatData, m, n, matrixIsCovariance);
-
-            const auto stop = std::chrono::high_resolution_clock::now();
-
-            //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
-
-            // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nOne solution From both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-
-            saveMatrix<Scalar>(components, n, nbComponents, "FP02SparsePCAs.csv");
-            //std::cout << "Objective value " <<
-            //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
-            //std::cout << "\nSolution\n" << solution.toString() << "\n";
-            //std::cout << "\nSolution\n" << componentsX << "\n";
-
-            //return 0;
-        }
-    }
-
-    return 0;
 }
 
 int main()
 {
     using Scalar = double;
 
-    using ContiguousDataContainer = l0l2::linearmodel::ContiguousDataContainer<Scalar>;
+    using Matrix = l0l2::linearmodel::Matrix<Scalar>;
+    using Vector = l0l2::linearmodel::Vector<Scalar>;
     using Index = l0l2::linearmodel::Index;
 
-    const auto [A, m, n, alpha] = simulatedData<Scalar>();
+    const auto [A, alpha] = simulatedData<Scalar>();
 
-    //Index m = 200; //50; //8;
-    //Index n = 500;//150; //20;
+    //Index m = 8;
+    //Index n = 20;
 
     //std::default_random_engine engine;//engine.seed(std::chrono::system_clock::now().time_since_epoch().count());
     //engine.seed(10);
@@ -519,8 +508,6 @@ int main()
     std::cout << "\nFullpath: " << (delta < static_cast<Scalar>(0)) << "\n";
 
     return run<Scalar>(A,
-        m,
-        n,
         alpha,
         matrixIsCovariance,
         beta,

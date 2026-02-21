@@ -9,6 +9,24 @@
 #include "CoordinateDescentSolver.h"
 #include "SparsePCA.h"
 
+
+template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<float>>;
+template class l0l2::linearmodel::FullPathSolver<float>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
+const std::streamsize l0l2::linearmodel::Solution<float>::streamSize = 7;
+const float l0l2::linearmodel::Utils<float>::epsilon = 1e-6f;
+const std::streamsize l0l2::linearmodel::CDSolution<float>::streamSize = 7;
+
+
+template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<double>>;
+template class l0l2::linearmodel::FullPathSolver<double>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
+template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
+const std::streamsize l0l2::linearmodel::Solution<double>::streamSize = 9;
+const double l0l2::linearmodel::Utils<double>::epsilon = 1e-8;
+const std::streamsize l0l2::linearmodel::CDSolution<double>::streamSize = 9;
+
 namespace
 {
     using CDStatus = l0l2::linearmodel::CDStatus;
@@ -17,7 +35,8 @@ namespace
 
     using FullPathSolverf = l0l2::linearmodel::FullPathSolver<float>;
     using FullPathSolverParamf = FullPathSolverf::Param;
-    using ContiguousDataContainerf = l0l2::linearmodel::ContiguousDataContainer<float>;
+    using Matrixf = l0l2::linearmodel::Matrix<float>;
+    using Vectorf = l0l2::linearmodel::Vector<float>;
     using Solutionf = l0l2::linearmodel::Solution<float>;
     using L0L2Regressorf = l0l2::linearmodel::L0L2Regressor<float>;
     using L0L2RegressorParamf = L0L2Regressorf::Param;
@@ -30,7 +49,8 @@ namespace
 
     using FullPathSolverd = l0l2::linearmodel::FullPathSolver<double>;
     using FullPathSolverParamd = FullPathSolverd::Param;
-    using ContiguousDataContainerd = l0l2::linearmodel::ContiguousDataContainer<double>;
+    using Matrixd = l0l2::linearmodel::Matrix<double>;
+    using Vectord = l0l2::linearmodel::Vector<double>;
     using Solutiond = l0l2::linearmodel::Solution<double>;
     using L0L2Regressord = l0l2::linearmodel::L0L2Regressor<double>;
     using L0L2RegressorParamd = L0L2Regressord::Param;
@@ -73,14 +93,10 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<FullPathSolverParamf>(), pybind11::arg("param"))
         .def("fit", &FullPathSolverf::fit, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
         .def_static("fitAll", &FullPathSolverf::fitAll, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -88,7 +104,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<Solutionf>(m, "Solutionf")
         .def(pybind11::init<Index>())
-        .def(pybind11::init<float, ContiguousDataContainerf, ContiguousDataContainerf>())
+        .def(pybind11::init<float, Vectorf, Vectorf>())
         .def_readwrite("delta", &Solutionf::delta)
         .def_readwrite("x", &Solutionf::x)
         .def_readwrite("grad", &Solutionf::grad)
@@ -113,8 +129,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
 
@@ -131,8 +145,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
         //.def(pybind11::init())
         .def_static("objectiveValue", &Utilsf::objectiveValue, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -158,8 +170,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAf::run,
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
     pybind11::class_<FullPathL0L2SPCAParamf>(m, "FullPathL0L2SPCAParamf")
@@ -179,8 +189,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAf::run,
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
 
@@ -197,14 +205,10 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<FullPathSolverParamd>(), pybind11::arg("param"))
         .def("fit", &FullPathSolverd::fit, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
         .def_static("fitAll", &FullPathSolverd::fitAll, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -212,7 +216,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<Solutiond>(m, "Solutiond")
         .def(pybind11::init<Index>())
-        .def(pybind11::init<double, ContiguousDataContainerd, ContiguousDataContainerd>())
+        .def(pybind11::init<double, Vectord, Vectord>())
         .def_readwrite("delta", &Solutiond::delta)
         .def_readwrite("x", &Solutiond::x)
         .def_readwrite("grad", &Solutiond::grad)
@@ -237,8 +241,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
 
@@ -254,8 +256,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
     pybind11::class_<Utilsd>(m, "Utilsd")
         .def_static("objectiveValue", &Utilsd::objectiveValue,
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -281,8 +281,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAd::run, 
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
     pybind11::class_<FullPathL0L2SPCAParamd>(m, "FullPathL0L2SPCAParamd")
@@ -302,7 +300,5 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAd::run,
             pybind11::arg("matData")/*colmajor*/,
-            pybind11::arg("numberOfRows"),
-            pybind11::arg("numberOfColumns"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 }
