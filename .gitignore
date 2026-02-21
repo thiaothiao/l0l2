@@ -1,5 +1,9 @@
 builds/
 
+# Pdfs
+*.pdf
+*.synctex*
+
 # Prerequisites
 *.d
 
