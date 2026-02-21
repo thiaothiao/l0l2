@@ -17,7 +17,7 @@ namespace l0l2
         /*! \brief Cyclical Coordinate Descent Regressor Model concept.
         */
         template <class ModelImplementationType>
-        concept ModelLike = requires()//requires(ModelImplementationType impl)
+        concept ModelLike = requires()
         {
             {
                 ModelImplementationType::stepJ(typename ModelImplementationType::Param{},
@@ -25,7 +25,7 @@ namespace l0l2
                     typename ModelImplementationType::Scalar{})
             } ->std::convertible_to<typename ModelImplementationType::Scalar>;
 
-            //TODO add constraint for compute duality gap
+            //TODO add constraint for duality gap computations
         };
 
         /*! \brief Cyclical Coordinate Descent Regressor class.
@@ -109,7 +109,6 @@ namespace l0l2
                     tolerance{ toleranceInput },
                     maximumNumberOfIterations{ maximumNumberOfIterationsInput },
                     deltaBeta{ deltaInput * betaInput }
-                    //to optimize
                 {
                 }
 
@@ -164,104 +163,60 @@ namespace l0l2
         {
             using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
-            using Index = Index;
 
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
 
             Vector x = Vector::Zero(n);
 
-            if (matrixIsCovariance)
+            const Vector M = matrixIsCovariance ?
+                static_cast<Vector>(matData.diagonal().array() + m_Beta)
+                : static_cast<Vector>(matData.cwiseAbs2().colwise().sum().transpose().array() + m_Beta);
+
+            Vector r = matrixIsCovariance ?
+                static_cast<Vector>(matData * (vectData - x) + m_Beta * x)
+                : static_cast<Vector>(matData.transpose() * (vectData - matData * x) + m_Beta * x);
+
+            Vector p = r.cwiseQuotient(M);
+
+            Scalar r0dotz0 = r.dot(p);
+
             {
-                const auto& alpha = vectData;
-                const auto& Q = matData;
+                const Vector w = matrixIsCovariance ?
+                    static_cast<Vector>(matData * p + m_Beta * p)
+                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
+                
+                const Scalar alphaValue = r0dotz0 / p.dot(w);
 
-                const Vector M = Q.diagonal().array() + m_Beta;
-
-                Vector r = Q * (alpha - x) + m_Beta * x;// x.cwiseProduct(betaeye);//b - A * x;
-                Vector p = r.cwiseQuotient(M);// Mz0 = r0
-
-                Scalar r0dotz0 = r.dot(p);
-
-                {
-                    const Vector w = Q * p + m_Beta * p;// p.cwiseProduct(lambdaeye);// A* p;
-                    const Scalar alphaValue = r0dotz0 / p.dot(w);
-
-                    x += alphaValue * p;
-                    r -= alphaValue * w;
-                }
-
-                int iter = 0;
-                while (r.norm() > Utils::epsilon)
-                {
-                    const Vector z = r.cwiseQuotient(M);// Mzk = rk
-
-                    const Scalar rdotz = r.dot(z);
-
-                    p *= (rdotz / r0dotz0);
-                    p += z;
-
-                    const Vector w = Q * p + m_Beta * p;// p.cwiseProduct(betaeye);// A* p;
-                    const Scalar alphaValue = rdotz / p.dot(w);
-
-                    r0dotz0 = rdotz;
-
-                    x += alphaValue * p;
-                    r -= alphaValue * w;
-
-                    ++iter;
-
-                    if (iter > maxNumberOfIterations)
-                    {
-                        //std::cout << "\nMax iter attained\n";
-                        break;
-                    }
-                }
+                x += alphaValue * p;
+                r -= alphaValue * w;
             }
-            else
+
+            int iter = 0;
+            while (r.norm() > Utils::epsilon)
             {
-                const auto& b = vectData;
-                const auto& A = matData;
+                const Vector z = r.cwiseQuotient(M);// Mzk = rk
 
-                const Vector M = A.cwiseAbs2().colwise().sum().transpose().array() + m_Beta;
+                const Scalar rdotz = r.dot(z);
 
-                Vector r = A.transpose() * (b - A * x) + m_Beta * x;// x.cwiseProduct(betaeye);//b - A * x;
-                Vector p = r.cwiseQuotient(M);// Mz0 = r0
+                p = (rdotz / r0dotz0) * p + z;
 
-                Scalar r0dotz0 = r.dot(p);
+                const Vector w = matrixIsCovariance ?
+                    static_cast<Vector>(matData * p + m_Beta * p)
+                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
 
+                const Scalar alphaValue = rdotz / p.dot(w);
+
+                x += alphaValue * p;
+                r -= alphaValue * w;
+
+                r0dotz0 = rdotz;
+
+                ++iter;
+
+                if (iter > maxNumberOfIterations)
                 {
-                    const Vector w = A.transpose() * (A * p) + m_Beta * p;// p.cwiseProduct(lambdaeye);// A* p;
-                    const Scalar alphaValue = r0dotz0 / p.dot(w);
-
-                    x += alphaValue * p;
-                    r -= alphaValue * w;
-                }
-
-                int iter = 0;
-                while (r.norm() > Utils::epsilon)
-                {
-                    const Vector z = r.cwiseQuotient(M);// Mzk = rk
-
-                    const Scalar rdotz = r.dot(z);
-
-                    p *= (rdotz / r0dotz0);
-                    p += z;
-
-                    const Vector w = A.transpose() * (A * p) + m_Beta * p;// p.cwiseProduct(betaeye);// A* p;
-                    const Scalar alphaValue = rdotz / p.dot(w);
-
-                    r0dotz0 = rdotz;
-
-                    x += alphaValue * p;
-                    r -= alphaValue * w;
-
-                    ++iter;
-
-                    if (iter > maxNumberOfIterations)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
             
@@ -288,7 +243,6 @@ namespace l0l2
         {
             using Vector = Vector<Scalar>;
             using CDSolution = CDSolution<Scalar>;
-            using Index = Index;
 
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
@@ -380,7 +334,7 @@ namespace l0l2
         }
 
         template <ModelLike ModelImplementationType>
-        inline CDSolution<typename ModelImplementationType::Scalar>
+        CDSolution<typename ModelImplementationType::Scalar>
             CyclicalCoordinateDescent<ModelImplementationType>::fit(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,

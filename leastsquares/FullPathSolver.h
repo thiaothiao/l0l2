@@ -65,8 +65,6 @@ namespace l0l2
 
             /*! \brief Fit full path solutions.
                \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
                \param vectData contiguous data container representing target vector.
                \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
                \param beta l2 regularization parameter.
@@ -74,27 +72,25 @@ namespace l0l2
                \return a list of solutions generating entire piecewise linear path solutions
              */
             static std::list<Solution<Scalar>>
-                fitAll(const Matrix<Scalar>& matData/*colmajor*/,
+                fitAll(const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar beta,
                     Strategy strategy = Strategy::FromZeroSolution);
 
             /*! \brief Fit one solution.
-               \param matData contiguous data container representing matrix in column major layout.
-               \param numberOfRows matrix number of rows.
-               \param numberOfColumns matrix number of columns.
+               \param matData contiguous data container representing matrix in column major layout..
                \param vectData contiguous data container representing target vector.
                \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
                \return a solution corresponding to the regularization parameters.
              */
-            Solution<Scalar>  fit(const Matrix<Scalar>& matData/*colmajor*/,
+            Solution<Scalar>  fit(const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance);
 
         private:
             std::list<Solution<Scalar>> solve(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance, bool fromZeroSolution);
 
@@ -117,7 +113,7 @@ namespace l0l2
             }
 
             Vector<Scalar> fit(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const;
 
@@ -128,7 +124,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorGauss<ScalarType>::Scalar>
             L2RegressorGauss<ScalarType>::fit(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
         {// TODO optimize
@@ -136,7 +132,6 @@ namespace l0l2
             using Matrix = Matrix<Scalar>;
             using RMMatrix = RMMatrix<Scalar>;
             using Utils = Utils<Scalar>;
-            using Index = Index;
 
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
@@ -192,7 +187,7 @@ namespace l0l2
             }
 
             Solution<Scalar> run(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 const Solution<Scalar>& solutionYaay,
                 const Solution<Scalar>& solutionMaam,
@@ -352,14 +347,11 @@ namespace l0l2
             using Matrix = Matrix<Scalar>;
             using RMMatrix = RMMatrix<Scalar>;
             using Vector = Vector<Scalar>;
-            using Index = Index;
 
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
 
             auto [indices, xSigns] = updateSizesAndSigns(m_Beta, solutionYaay, solutionMaam, n);
-
-            //const auto& MatData = matData; //MatData[j*numberOfRows + i]
 
             const auto& VectData = vectData;
 
@@ -426,70 +418,25 @@ namespace l0l2
                     const auto nA = static_cast<Index>(indicesMap.size());
                     const auto mA = n;
 
-                    AData = RMMatrix(mA, nA);//ADataPtr[i*nA + j]
+                    AData = RMMatrix(mA, nA);
 
-                    auto ADataPtr = AData.data();
-
-                    const auto MatDataPtr =  matData.data();
-
-                    if (matrixIsCovariance)
+                    for (const auto& [j, idx] : indicesMap)
                     {
-                        // TODO parallelize map for loop
-                        for (const auto& [j, idx] : indicesMap)
-                        {//Not auto vectorized
-                            const auto MatDataPtrColj = MatDataPtr + j * m;
-                            for (Index k = 0; k < mA; ++k)
-                            {//Not auto vectorized
-                                ADataPtr[k * nA + idx] = MatDataPtrColj[k];
-                            }
+                        AData.col(idx) = matrixIsCovariance ? 
+                            static_cast<Vector>(matData.col(j))
+                            : static_cast<Vector>(matData.transpose() * matData.col(j));
 
-                            ADataPtr[j * nA + idx] += m_Beta;
+                        AData.coeffRef(j, idx) += m_Beta;
 
-                            const auto xsignsj = xSigns[j];
-
-                            for (Index i = 0; i < mA; ++i)
-                            {//Not auto vectorized
-                                ADataPtr[i * nA + idx] *= xsignsj;
-                            }
-                        }
-                    }
-                    else
-                    {// TODO parallelize map for loop
-                        for (const auto& [j, idx] : indicesMap)
-                        {//Not auto vectorized
-                            const auto MatDataPtrj = MatDataPtr + j * m;
-
-                            for (Index k = 0; k < n; ++k)
-                            {//Not auto vectorized
-                                const auto MatDataPtrk = MatDataPtr + k * m;
-                                auto value = static_cast<Scalar>(0);
-                                for (Index l = 0; l < m; ++l)
-                                {//Vectorized
-                                    value += MatDataPtrk[l] * MatDataPtrj[l];
-                                }
-
-                                ADataPtr[k * nA + idx] = value;
-                            }
-
-                            ADataPtr[j * nA + idx] += m_Beta;
-
-                            const auto xsignsj = xSigns[j];
-
-                            for (Index i = 0; i < mA; ++i)
-                            {//Not auto vectorized
-                                ADataPtr[i * nA + idx] *= xsignsj;
-                            }
-                        }
-                    }
+                        AData.col(idx) *= xSigns[j];
+                    }                    
                 }
 
                 gamma.setZero();
 
                 b.setZero();
 
-                b.head(n) = VectData;// ATb or Qalpha
-                //std::copy(std::execution::par,
-                    //VectData.cbegin(), VectData.cend(), b.begin());// TODO optimize
+                b.head(n) = VectData;// ATb or Qalpha// TODO optimize
 
                 Index jT = 0;
                 Index jW = 0;
@@ -1115,7 +1062,7 @@ namespace l0l2
         }
 
         template<std::floating_point ScalarType>
-        inline std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+        std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
             FullPathSolver<ScalarType>::fitAll(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
@@ -1167,7 +1114,7 @@ namespace l0l2
         }
 
         template<std::floating_point ScalarType>
-        inline Solution<typename FullPathSolver<ScalarType>::Scalar>
+        Solution<typename FullPathSolver<ScalarType>::Scalar>
             FullPathSolver<ScalarType>::fit(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
@@ -1273,7 +1220,6 @@ namespace l0l2
             using Utils = Utils<Scalar>;
             using L2Regressor = L2RegressorGauss<Scalar>;
             using FullPathStep = FullPathStep<Scalar>;
-            using Index = Index;
 
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
@@ -1823,12 +1769,6 @@ namespace l0l2
                         }
                     }
                 }
-
-                // TODO to remove. just for debug
-                //if (numberIters == 1)
-                //{
-                //   break;
-                //}
             }
 
             return results;
