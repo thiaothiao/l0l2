@@ -165,6 +165,7 @@ namespace l0l2
 
                 ATb[pivotRowIndex] /= pivotCoeff;
 
+#pragma omp parallel for
                 for (Index rowIndex = 0; rowIndex < n; ++rowIndex)
                 {
                     if (pivotRowIndex != rowIndex)
