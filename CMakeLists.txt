@@ -9,8 +9,6 @@ endif()
 
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_compile_definitions(_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS)
-add_compile_options("/fp:fast")
-add_compile_options("/openmp:experimental")
 
 set(LSDIR "${PROJECT_SOURCE_DIR}/leastsquares")
 set(PCADIR "${PROJECT_SOURCE_DIR}/pca")
