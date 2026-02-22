@@ -47,8 +47,10 @@ namespace l0l2
               \param tolerance covergence tolerance on the coordinates changes.
               \param maximumNumberOfIterations maximum number of iterations allowed.
             */
-            CyclicalCoordinateDescent(const Param& param)
+            CyclicalCoordinateDescent(const Param& param,
+                bool withIntercept = false)
                 :m_Param{param},
+                m_WithIntercept{ withIntercept },
                 m_FromBothConverged{}
             {
             }
@@ -65,6 +67,11 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
+            CDSolution<Scalar> fit_(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance);
+
             CDSolution<Scalar>  fitFrom(
                 const Matrix<Scalar>& matData,
                 bool matrixIsCovariance,
@@ -72,6 +79,8 @@ namespace l0l2
                 Vector<Scalar>&& w0);
 
             const Param m_Param;
+
+            const bool m_WithIntercept;
 
             std::atomic_flag m_FromBothConverged;
         };
@@ -165,7 +174,6 @@ namespace l0l2
             using Utils = Utils<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             Vector x = Vector::Zero(n);
 
@@ -245,7 +253,6 @@ namespace l0l2
             using CDSolution = CDSolution<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             CDSolution solution{ n };
             solution.x = std::move(w0);// be carefull with rvalue reference. w0 is moved!
@@ -340,15 +347,37 @@ namespace l0l2
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
+            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+
+            auto solution = fit_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance);
+
+            if (withIntercept)
+            {
+                solution.intercept = (vectData - matData * solution.x).mean();
+            }
+
+            return solution;
+        }
+
+        template <ModelLike ModelImplementationType>
+        CDSolution<typename ModelImplementationType::Scalar>
+            CyclicalCoordinateDescent<ModelImplementationType>::fit_(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance)
+        {
             using Vector = Vector<Scalar>;
             using L2Regressor = L2RegressorPCG<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             if (m_Param.strategy != Strategy::FromBothSolutions)
             {
-                return fitFrom(matData, matrixIsCovariance, vectData,
+                return fitFrom(matData,
+                    matrixIsCovariance, 
+                    vectData,
                     m_Param.strategy == Strategy::FromZeroSolution
                     ? Vector::Zero(n)
                     : L2Regressor(m_Param.beta).fit(matData,vectData, matrixIsCovariance));

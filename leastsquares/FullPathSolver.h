@@ -56,8 +56,10 @@ namespace l0l2
               \param beta l2 regularization parameter.
               \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
             */
-            FullPathSolver(const Param& param) :
+            FullPathSolver(const Param& param,
+                bool withIntercept = false) :
                 m_Param{ param },
+                m_WithIntercept{ withIntercept },
                 m_DeltaFromZeroSolution{ std::numeric_limits<Scalar>::max() },
                 m_DeltaFromL2Solution{ static_cast<Scalar>(0) }
             {
@@ -89,12 +91,19 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
+
+            Solution<Scalar>  fit_(const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance);
+
             std::list<Solution<Scalar>> solve(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance, bool fromZeroSolution);
 
             const Param m_Param;
+
+            const bool m_WithIntercept;
 
             volatile Scalar m_DeltaFromZeroSolution;
             volatile Scalar m_DeltaFromL2Solution;
@@ -134,7 +143,6 @@ namespace l0l2
             using Utils = Utils<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             auto ATA = matrixIsCovariance
                 ? static_cast<RMMatrix>(matData)
@@ -349,7 +357,6 @@ namespace l0l2
             using Vector = Vector<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             auto [indices, xSigns] = updateSizesAndSigns(m_Beta, solutionYaay, solutionMaam, n);
 
@@ -1113,9 +1120,31 @@ namespace l0l2
             }
         }
 
+
         template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
             FullPathSolver<ScalarType>::fit(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance)
+        {
+            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+
+            auto solution = fit_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance);
+
+            if (withIntercept)
+            {
+                solution.intercept = (vectData - matData * solution.x).mean();// TODO use grad!
+            }
+
+            return solution;
+        }
+
+        template<std::floating_point ScalarType>
+        Solution<typename FullPathSolver<ScalarType>::Scalar>
+            FullPathSolver<ScalarType>::fit_(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
@@ -1222,7 +1251,6 @@ namespace l0l2
             using FullPathStep = FullPathStep<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             const auto tau = fromZeroSolution ? static_cast<Scalar>(1) : static_cast<Scalar>(-1);
 

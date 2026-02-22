@@ -218,6 +218,8 @@ namespace
         const auto n = static_cast<Index>(AData.cols());
         const auto m = static_cast<Index>(AData.rows());
 
+        const auto withIntercept = true;
+
         const Vector b = AData * alpha;
 
         const Vector Vect = matrixIsCovariance ? alpha : b;
@@ -271,7 +273,7 @@ namespace
                 const unsigned int maximumNumberOfIterations = 100000U;
                 L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -299,7 +301,7 @@ namespace
 
                 L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -327,7 +329,7 @@ namespace
 
                 L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -353,7 +355,7 @@ namespace
 
                 FullPathSolverParam param{ delta, beta, Strategy::FromZeroSolution };
 
-                FullPathSolver regressor{ param };
+                FullPathSolver regressor{ param , withIntercept };
 
                 auto solution = regressor.fit(MatData, Vect, matrixIsCovariance);
 
@@ -426,7 +428,7 @@ int main()
     std::cout << "Finding path...\n\n";
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+    const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
 
     const auto fullpath = true;
 
