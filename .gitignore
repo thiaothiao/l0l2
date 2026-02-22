@@ -1,4 +1,5 @@
-builds/
+buildslinux/
+buildswindows/
 
 # Pdfs
 *.synctex*
