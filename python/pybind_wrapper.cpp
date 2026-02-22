@@ -9,22 +9,26 @@
 #include "CoordinateDescentSolver.h"
 #include "SparsePCA.h"
 
-
 template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
+template<>
 const std::streamsize l0l2::linearmodel::Solution<float>::streamSize = 7;
+template<>
 const float l0l2::linearmodel::Utils<float>::epsilon = 1e-6f;
+template<>
 const std::streamsize l0l2::linearmodel::CDSolution<float>::streamSize = 7;
-
 
 template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
+template<>
 const std::streamsize l0l2::linearmodel::Solution<double>::streamSize = 9;
+template<>
 const double l0l2::linearmodel::Utils<double>::epsilon = 1e-8;
+template<>
 const std::streamsize l0l2::linearmodel::CDSolution<double>::streamSize = 9;
 
 namespace
