@@ -1232,7 +1232,7 @@ namespace l0l2
 
             if (fromZeroSolution)
             {
-                const auto deltaZero = ATb.lpNorm<Eigen::Infinity>() / m_Param.beta;
+                const auto deltaZero = ATb.cwiseAbs().maxCoeff() / m_Param.beta;
 
                 results.emplace_back(std::numeric_limits<Scalar>::max(),//static_cast<Scalar>(2) * deltaZero,
                     Vector::Zero(n), -ATb);

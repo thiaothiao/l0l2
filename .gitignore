@@ -1,7 +1,7 @@
-builds/
+buildslinux/
+buildswindows/
 
 # Pdfs
-*.pdf
 *.synctex*
 
 # Prerequisites
