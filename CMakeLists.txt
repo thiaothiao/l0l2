@@ -14,8 +14,9 @@ add_compile_options("/openmp:experimental")
 
 set(LSDIR "${PROJECT_SOURCE_DIR}/leastsquares")
 set(PCADIR "${PROJECT_SOURCE_DIR}/pca")
-
-include_directories(${LSDIR} ${PCADIR} "C:/eigen-5.0.1" "C:/thread-pool-master/include")
+message(STATUS "Using Eigen3")
+message(STATUS "Using thread-pool")
+include_directories(${LSDIR} ${PCADIR} "$ENV{EIGEN3_INCLUDE_DIR}" "$ENV{THREAD_POOL_INCLUDE_DIR}")
 
 # Add the subdirectories
 add_subdirectory(leastsquares)
