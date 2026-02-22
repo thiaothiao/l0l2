@@ -368,8 +368,8 @@ namespace l0l2
 
             const auto numberOfConstraints = 2 * n;
 
-            auto m_NbWs = computeNbWs(n, indices);
-            auto m_NbTs = n - m_NbWs;
+            auto nbWs = computeNbWs(n, indices);
+            auto nbTs = n - nbWs;
 
             Vector b = Vector::Zero(numberOfConstraints);
 
@@ -392,8 +392,8 @@ namespace l0l2
             while (!presolveDone)
             {
                 const auto jStartSlacksT = n;
-                const auto jStartSlacksW = jStartSlacksT + m_NbTs;
-                const auto jStartSlacksS = jStartSlacksW + m_NbWs;
+                const auto jStartSlacksW = jStartSlacksT + nbTs;
+                const auto jStartSlacksS = jStartSlacksW + nbWs;
 
                 indicesMap.clear();// TODO is it necessary to clear all
 
@@ -896,8 +896,8 @@ namespace l0l2
 
                 presolveDone = !bHasZeros;
 
-                m_NbWs = computeNbWs(n, indices);
-                m_NbTs = n - m_NbWs;
+                nbWs = computeNbWs(n, indices);
+                nbTs = n - nbWs;
             }
 
             Solution solutionNew{ n };
