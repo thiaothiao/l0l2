@@ -123,17 +123,21 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("__str__", &Solutionf::toString);
 
     pybind11::class_<L0L2RegressorParamf>(m, "L0L2RegressorParamf")
-        .def(pybind11::init<float, float, Strategy, float, unsigned int>(),
+        .def(pybind11::init<float, float, Strategy, float, unsigned int, float, unsigned int>(),
             pybind11::arg("delta") = 0.f,
             pybind11::arg("beta") = 1.f,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4f,
-            pybind11::arg("maximumNumberOfIterations") = 10000U)
+            pybind11::arg("maximumNumberOfIterations") = 10000U, 
+            pybind11::arg("innerEpsilon") = 1e-6f,
+            pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamf::delta)
         .def_readonly("beta", &L0L2RegressorParamf::beta)
         .def_readonly("strategy", &L0L2RegressorParamf::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamf::tolerance)
-        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations);
+        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations)
+        .def_readonly("innerEpsilon", &L0L2RegressorParamf::innerEpsilon)
+        .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamf::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
         .def(pybind11::init<L0L2RegressorParamf, bool>(), 
@@ -165,13 +169,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
-        .def(pybind11::init<float, float, Index, Strategy, float, unsigned int>(),
+        .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
             pybind11::arg("regressorDelta") = 0.f,
             pybind11::arg("regressorBeta") = 1.f,
             pybind11::arg("nbComponents") = static_cast<Index>(2),
             pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
             pybind11::arg("regressorTolerance") = 1e-4f,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U)
+            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
+            pybind11::arg("regressorInnerEpsilon") = 1e-6f,
+            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
         .def_readonly("regressorParam", &L0L2SPCAParamf::regressorParam)
         .def_readonly("nbComponents", &L0L2SPCAParamf::nbComponents);
 
@@ -242,17 +248,21 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("__str__", &Solutiond::toString);
 
     pybind11::class_<L0L2RegressorParamd>(m, "L0L2RegressorParamd")
-        .def(pybind11::init<double, double, Strategy, double, unsigned int>(),
+        .def(pybind11::init<double, double, Strategy, double, unsigned int, double, unsigned int>(),
             pybind11::arg("delta") = 0.0,
             pybind11::arg("beta") = 1.0,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4,
-            pybind11::arg("maximumNumberOfIterations") = 10000U)
+            pybind11::arg("maximumNumberOfIterations") = 10000U,
+            pybind11::arg("innerEpsilon") = 1e-6,
+            pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamd::delta)
         .def_readonly("beta", &L0L2RegressorParamd::beta)
         .def_readonly("strategy", &L0L2RegressorParamd::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamd::tolerance)
-        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations);
+        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations)
+        .def_readonly("innerEpsilon", &L0L2RegressorParamd::innerEpsilon)
+        .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamd::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
         .def(pybind11::init<L0L2RegressorParamd, bool>(), 
@@ -283,13 +293,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
-        .def(pybind11::init<double, double, Index, Strategy, double, unsigned int>(),
+        .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
             pybind11::arg("regressorDelta") = 0.0,
             pybind11::arg("regressorBeta") = 1.0,
             pybind11::arg("nbComponents") = static_cast<Index>(2),
             pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
             pybind11::arg("regressorTolerance") = 1e-4,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U)
+            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
+            pybind11::arg("regressorInnerEpsilon") = 1e-6,
+            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
         .def_readonly("regressorParam", &L0L2SPCAParamd::regressorParam)
         .def_readonly("nbComponents", &L0L2SPCAParamd::nbComponents);
 

@@ -111,12 +111,16 @@ namespace l0l2
                     Scalar betaInput = static_cast<Scalar>(1),
                     Strategy strategyInput = Strategy::FromZeroSolution,
                     Scalar toleranceInput = static_cast<Scalar>(1e-4),
-                    unsigned int maximumNumberOfIterationsInput = 10000U)
+                    unsigned int maximumNumberOfIterationsInput = 10000U,
+                    Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
+                    unsigned int innerMaximumNumberOfIterationsInput = 100000U)
                     :delta{ deltaInput },
                     beta{ betaInput },
                     strategy{ strategyInput },
                     tolerance{ toleranceInput },
                     maximumNumberOfIterations{ maximumNumberOfIterationsInput },
+                    innerEpsilon{ innerEpsilonInput },
+                    innerMaximumNumberOfIterations{ innerMaximumNumberOfIterationsInput },
                     deltaBeta{ deltaInput * betaInput }
                 {
                 }
@@ -132,6 +136,8 @@ namespace l0l2
                 const Strategy strategy;
                 const Scalar tolerance;
                 const unsigned int maximumNumberOfIterations;
+                const Scalar innerEpsilon;
+                const unsigned int innerMaximumNumberOfIterations;
                 const Scalar deltaBeta;
             };
 
@@ -156,7 +162,8 @@ namespace l0l2
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
-                unsigned int maxNumberOfIterations = 100000U) const;
+                Scalar epsilon,
+                unsigned int maxNumberOfIterations) const;
 
         private:
             const Scalar m_Beta;
@@ -168,6 +175,7 @@ namespace l0l2
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
+                Scalar epsilon,
                 unsigned int maxNumberOfIterations) const
         {
             using Vector = Vector<Scalar>;
@@ -201,7 +209,7 @@ namespace l0l2
             }
 
             int iter = 0;
-            while (r.norm() > Utils::epsilon)
+            while (r.norm() > epsilon)
             {
                 const Vector z = r.cwiseQuotient(M);// Mzk = rk
 
@@ -380,7 +388,9 @@ namespace l0l2
                     vectData,
                     m_Param.strategy == Strategy::FromZeroSolution
                     ? Vector::Zero(n)
-                    : L2Regressor(m_Param.beta).fitNoIntercept(matData,vectData, matrixIsCovariance));
+                    : L2Regressor(m_Param.beta).fitNoIntercept(matData,vectData, matrixIsCovariance,
+                        m_Param.innerEpsilon,
+                        m_Param.innerMaximumNumberOfIterations));
             }
             else
             {
@@ -396,7 +406,9 @@ namespace l0l2
                 auto fromL2Solution = fitFrom(matData,
                     matrixIsCovariance,
                     vectData,
-                    L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance));
+                    L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance,
+                        m_Param.innerEpsilon,
+                        m_Param.innerMaximumNumberOfIterations));
 
                 auto fromZeroSolution = fromZeroFuture.get();
 
