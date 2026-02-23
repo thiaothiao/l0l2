@@ -202,7 +202,8 @@ namespace
         const l0l2::linearmodel::Vector<ScalarType>& alpha,
         bool matrixIsCovariance,
         ScalarType beta,
-        ScalarType delta)
+        ScalarType delta,
+        bool withIntercept)
     {
         using Scalar = ScalarType;
         using Matrix = l0l2::linearmodel::Matrix<Scalar>;
@@ -218,8 +219,6 @@ namespace
         const auto n = static_cast<Index>(AData.cols());
         const auto m = static_cast<Index>(AData.rows());
 
-        const auto withIntercept = true;
-
         const Vector b = AData * alpha;
 
         const Vector Vect = matrixIsCovariance ? alpha : b;
@@ -229,6 +228,12 @@ namespace
             : AData;
 
         const auto fullpath = delta < static_cast<Scalar>(0);
+
+        const Scalar tolerance = static_cast<Scalar>(1e-6);
+        const unsigned int maximumNumberOfIterations = 100000U;
+
+        const Scalar innerEpsilon = static_cast<Scalar>(1e-6);
+        const unsigned int innerMaximumNumberOfIterations = 100000U;
 
         if (fullpath)
         {
@@ -270,9 +275,9 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromZeroSolution;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
+
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
 
                 L0L2Regressor regressor{ param, withIntercept };
 
@@ -297,10 +302,9 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromL2Solution;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
 
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
 
                 L0L2Regressor regressor{ param, withIntercept };
 
@@ -325,10 +329,9 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromBothSolutions;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
 
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
 
                 L0L2Regressor regressor{ param, withIntercept };
 
@@ -431,6 +434,8 @@ int main()
     const Scalar beta = static_cast<Scalar>(0.1);
     const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
 
+    const auto withIntercept = true;
+
     const auto fullpath = true;
 
     std::cout << std::boolalpha;
@@ -443,5 +448,6 @@ int main()
         alpha,
         matrixIsCovariance,
         beta,
-        delta);
+        delta,
+        withIntercept);
 }
