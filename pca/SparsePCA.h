@@ -82,8 +82,11 @@ namespace l0l2
                     Index nbComponentsInput = static_cast<Index>(2),
                     Strategy strategyInput = Strategy::FromZeroSolution,
                     Scalar toleranceInput = static_cast<Scalar>(1e-4),
-                    unsigned int maximumNumberOfIterationsInput = 10000U)
-                    :regressorParam{ deltaInput, betaInput , strategyInput, toleranceInput, maximumNumberOfIterationsInput },
+                    unsigned int maximumNumberOfIterationsInput = 10000U,
+                    Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
+                    unsigned int innerMaximumNumberOfIterationsInput = 100000U)
+                    :regressorParam{ deltaInput, betaInput , strategyInput, toleranceInput, maximumNumberOfIterationsInput,
+                    innerEpsilonInput, innerMaximumNumberOfIterationsInput },
                     nbComponents{ nbComponentsInput }//to optimize
                 {
                 }

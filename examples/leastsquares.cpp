@@ -202,7 +202,8 @@ namespace
         const l0l2::linearmodel::Vector<ScalarType>& alpha,
         bool matrixIsCovariance,
         ScalarType beta,
-        ScalarType delta)
+        ScalarType delta,
+        bool withIntercept)
     {
         using Scalar = ScalarType;
         using Matrix = l0l2::linearmodel::Matrix<Scalar>;
@@ -228,6 +229,12 @@ namespace
 
         const auto fullpath = delta < static_cast<Scalar>(0);
 
+        const Scalar tolerance = static_cast<Scalar>(1e-6);
+        const unsigned int maximumNumberOfIterations = 100000U;
+
+        const Scalar innerEpsilon = static_cast<Scalar>(1e-6);
+        const unsigned int innerMaximumNumberOfIterations = 100000U;
+
         if (fullpath)
         {
             std::string resultsfilename = R"(Results.txt)";
@@ -235,6 +242,7 @@ namespace
             const auto start = std::chrono::high_resolution_clock::now();
 
             auto results = FullPathSolver::fitAll(MatData, Vect, matrixIsCovariance, beta,
+                withIntercept,
                 Strategy::FromBothSolutions);
 
             const auto stop = std::chrono::high_resolution_clock::now();
@@ -267,11 +275,11 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromZeroSolution;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
+
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -294,12 +302,11 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromL2Solution;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
 
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -322,12 +329,11 @@ namespace
                 const auto start = std::chrono::high_resolution_clock::now();
 
                 const Strategy strategy = Strategy::FromBothSolutions;
-                const Scalar tolerance = static_cast<Scalar>(1e-6);
-                const unsigned int maximumNumberOfIterations = 100000U;
 
-                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations };
+                L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
+                innerEpsilon, innerMaximumNumberOfIterations };
 
-                L0L2Regressor regressor{ param };
+                L0L2Regressor regressor{ param, withIntercept };
 
                 const auto solution = regressor.fit(
                     MatData,
@@ -353,7 +359,7 @@ namespace
 
                 FullPathSolverParam param{ delta, beta, Strategy::FromZeroSolution };
 
-                FullPathSolver regressor{ param };
+                FullPathSolver regressor{ param , withIntercept };
 
                 auto solution = regressor.fit(MatData, Vect, matrixIsCovariance);
 
@@ -426,7 +432,9 @@ int main()
     std::cout << "Finding path...\n\n";
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+    const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+
+    const auto withIntercept = true;
 
     const auto fullpath = true;
 
@@ -440,5 +448,6 @@ int main()
         alpha,
         matrixIsCovariance,
         beta,
-        delta);
+        delta,
+        withIntercept);
 }

@@ -56,8 +56,10 @@ namespace l0l2
               \param beta l2 regularization parameter.
               \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
             */
-            FullPathSolver(const Param& param) :
+            FullPathSolver(const Param& param,
+                bool withIntercept = false) :
                 m_Param{ param },
+                m_WithIntercept{ withIntercept },
                 m_DeltaFromZeroSolution{ std::numeric_limits<Scalar>::max() },
                 m_DeltaFromL2Solution{ static_cast<Scalar>(0) }
             {
@@ -76,6 +78,7 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar beta,
+                    bool withIntercept = false,
                     Strategy strategy = Strategy::FromZeroSolution);
 
             /*! \brief Fit one solution.
@@ -89,12 +92,25 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
+            static std::list<Solution<Scalar>>
+                fitAllNoIntercept(const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance,
+                    Scalar beta,
+                    Strategy strategy = Strategy::FromZeroSolution);
+
+            Solution<Scalar>  fitNoIntercept(const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance);
+
             std::list<Solution<Scalar>> solve(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance, bool fromZeroSolution);
 
             const Param m_Param;
+
+            const bool m_WithIntercept;
 
             volatile Scalar m_DeltaFromZeroSolution;
             volatile Scalar m_DeltaFromL2Solution;
@@ -112,7 +128,7 @@ namespace l0l2
             {
             }
 
-            Vector<Scalar> fit(
+            Vector<Scalar> fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const;
@@ -123,7 +139,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorGauss<ScalarType>::Scalar>
-            L2RegressorGauss<ScalarType>::fit(
+            L2RegressorGauss<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
@@ -134,7 +150,6 @@ namespace l0l2
             using Utils = Utils<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             auto ATA = matrixIsCovariance
                 ? static_cast<RMMatrix>(matData)
@@ -157,6 +172,7 @@ namespace l0l2
 
                 ATb[pivotRowIndex] /= pivotCoeff;
 
+#pragma omp parallel for
                 for (Index rowIndex = 0; rowIndex < n; ++rowIndex)
                 {
                     if (pivotRowIndex != rowIndex)
@@ -349,7 +365,6 @@ namespace l0l2
             using Vector = Vector<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             auto [indices, xSigns] = updateSizesAndSigns(m_Beta, solutionYaay, solutionMaam, n);
 
@@ -361,8 +376,8 @@ namespace l0l2
 
             const auto numberOfConstraints = 2 * n;
 
-            auto m_NbWs = computeNbWs(n, indices);
-            auto m_NbTs = n - m_NbWs;
+            auto nbWs = computeNbWs(n, indices);
+            auto nbTs = n - nbWs;
 
             Vector b = Vector::Zero(numberOfConstraints);
 
@@ -385,8 +400,8 @@ namespace l0l2
             while (!presolveDone)
             {
                 const auto jStartSlacksT = n;
-                const auto jStartSlacksW = jStartSlacksT + m_NbTs;
-                const auto jStartSlacksS = jStartSlacksW + m_NbWs;
+                const auto jStartSlacksW = jStartSlacksT + nbTs;
+                const auto jStartSlacksS = jStartSlacksW + nbWs;
 
                 indicesMap.clear();// TODO is it necessary to clear all
 
@@ -889,8 +904,8 @@ namespace l0l2
 
                 presolveDone = !bHasZeros;
 
-                m_NbWs = computeNbWs(n, indices);
-                m_NbTs = n - m_NbWs;
+                nbWs = computeNbWs(n, indices);
+                nbTs = n - nbWs;
             }
 
             Solution solutionNew{ n };
@@ -1068,13 +1083,42 @@ namespace l0l2
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar beta,
+                bool withIntercept,
+                Strategy strategy)
+        {// TODO optimize intercept case
+            const auto consideringIntercept = withIntercept && !matrixIsCovariance;
+
+            auto results = fitAllNoIntercept(consideringIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                consideringIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance,
+                beta,
+                strategy);
+
+            if (consideringIntercept)
+            {
+                for (auto& result : results)
+                {
+                    result.intercept = (vectData - matData * result.x).mean();// TODO use grad!
+                }
+            }
+
+            return results;
+        }
+
+        template<std::floating_point ScalarType>
+        std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+            FullPathSolver<ScalarType>::fitAllNoIntercept(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance,
+                Scalar beta,
                 Strategy strategy)
         {
             using Solution = Solution<Scalar>;
             using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
 
-            FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy} };
+            FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy}, false};
 
             if (strategy != Strategy::FromBothSolutions)
             {
@@ -1113,9 +1157,31 @@ namespace l0l2
             }
         }
 
+
         template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
             FullPathSolver<ScalarType>::fit(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance)
+        {
+            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+
+            auto solution = fitNoIntercept(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance);
+
+            if (withIntercept)
+            {
+                solution.intercept = (vectData - matData * solution.x).mean();// TODO use grad!
+            }
+
+            return solution;
+        }
+
+        template<std::floating_point ScalarType>
+        Solution<typename FullPathSolver<ScalarType>::Scalar>
+            FullPathSolver<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
@@ -1222,7 +1288,6 @@ namespace l0l2
             using FullPathStep = FullPathStep<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             const auto tau = fromZeroSolution ? static_cast<Scalar>(1) : static_cast<Scalar>(-1);
 
@@ -1308,7 +1373,7 @@ namespace l0l2
             {
                 Solution solutionBar{ n };
 
-                solutionBar.x = L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance);
+                solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
 
                 solutionBar.delta = std::numeric_limits<Scalar>::max();
                 for (Index i = 0; i < n; ++i)

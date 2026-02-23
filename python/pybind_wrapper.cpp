@@ -1,3 +1,5 @@
+#include <ios>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/cast.h>
 #include <pybind11/attr.h>
@@ -94,7 +96,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("strategy", &FullPathSolverParamf::strategy);
 
     pybind11::class_<FullPathSolverf>(m, "FullPathSolverf")
-        .def(pybind11::init<FullPathSolverParamf>(), pybind11::arg("param"))
+        .def(pybind11::init<FullPathSolverParamf, bool>(), 
+            pybind11::arg("param"), 
+            pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverf::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -104,6 +108,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
+            pybind11::arg("withintercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
 
     pybind11::class_<Solutionf>(m, "Solutionf")
@@ -112,25 +117,32 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutionf::delta)
         .def_readwrite("x", &Solutionf::x)
         .def_readwrite("grad", &Solutionf::grad)
+        .def_readwrite("intercept", &Solutionf::intercept)
         .def("isValidFor", &Solutionf::isValidFor,
             pybind11::arg("beta"), "A member function that checks solution validity.")
         .def("__str__", &Solutionf::toString);
 
     pybind11::class_<L0L2RegressorParamf>(m, "L0L2RegressorParamf")
-        .def(pybind11::init<float, float, Strategy, float, unsigned int>(),
+        .def(pybind11::init<float, float, Strategy, float, unsigned int, float, unsigned int>(),
             pybind11::arg("delta") = 0.f,
             pybind11::arg("beta") = 1.f,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4f,
-            pybind11::arg("maximumNumberOfIterations") = 10000U)
+            pybind11::arg("maximumNumberOfIterations") = 10000U, 
+            pybind11::arg("innerEpsilon") = 1e-6f,
+            pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamf::delta)
         .def_readonly("beta", &L0L2RegressorParamf::beta)
         .def_readonly("strategy", &L0L2RegressorParamf::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamf::tolerance)
-        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations);
+        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations)
+        .def_readonly("innerEpsilon", &L0L2RegressorParamf::innerEpsilon)
+        .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamf::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
-        .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
+        .def(pybind11::init<L0L2RegressorParamf, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -143,6 +155,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutionf::dualityGap)
         .def_readwrite("status", &CDSolutionf::status)
         .def_readwrite("x", &CDSolutionf::x)
+        .def_readwrite("intercept", &CDSolutionf::intercept)
         .def("__str__", &CDSolutionf::toString);
 
     pybind11::class_<Utilsf>(m, "Utilsf")
@@ -156,13 +169,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
-        .def(pybind11::init<float, float, Index, Strategy, float, unsigned int>(),
+        .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
             pybind11::arg("regressorDelta") = 0.f,
             pybind11::arg("regressorBeta") = 1.f,
             pybind11::arg("nbComponents") = static_cast<Index>(2),
             pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
             pybind11::arg("regressorTolerance") = 1e-4f,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U)
+            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
+            pybind11::arg("regressorInnerEpsilon") = 1e-6f,
+            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
         .def_readonly("regressorParam", &L0L2SPCAParamf::regressorParam)
         .def_readonly("nbComponents", &L0L2SPCAParamf::nbComponents);
 
@@ -206,7 +221,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("strategy", &FullPathSolverParamd::strategy);
 
     pybind11::class_<FullPathSolverd>(m, "FullPathSolverd")
-        .def(pybind11::init<FullPathSolverParamd>(), pybind11::arg("param"))
+        .def(pybind11::init<FullPathSolverParamd, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverd::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -216,6 +233,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
+            pybind11::arg("withintercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
 
     pybind11::class_<Solutiond>(m, "Solutiond")
@@ -224,25 +242,32 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutiond::delta)
         .def_readwrite("x", &Solutiond::x)
         .def_readwrite("grad", &Solutiond::grad)
+        .def_readwrite("intercept", &Solutiond::intercept)
         .def("isValidFor", &Solutiond::isValidFor,
             pybind11::arg("beta"), "A member function that checks solution validity.")
         .def("__str__", &Solutiond::toString);
 
     pybind11::class_<L0L2RegressorParamd>(m, "L0L2RegressorParamd")
-        .def(pybind11::init<double, double, Strategy, double, unsigned int>(),
+        .def(pybind11::init<double, double, Strategy, double, unsigned int, double, unsigned int>(),
             pybind11::arg("delta") = 0.0,
             pybind11::arg("beta") = 1.0,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4,
-            pybind11::arg("maximumNumberOfIterations") = 10000U)
+            pybind11::arg("maximumNumberOfIterations") = 10000U,
+            pybind11::arg("innerEpsilon") = 1e-6,
+            pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamd::delta)
         .def_readonly("beta", &L0L2RegressorParamd::beta)
         .def_readonly("strategy", &L0L2RegressorParamd::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamd::tolerance)
-        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations);
+        .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations)
+        .def_readonly("innerEpsilon", &L0L2RegressorParamd::innerEpsilon)
+        .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamd::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
-        .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
+        .def(pybind11::init<L0L2RegressorParamd, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -255,6 +280,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutiond::dualityGap)
         .def_readwrite("status", &CDSolutiond::status)
         .def_readwrite("x", &CDSolutiond::x)
+        .def_readwrite("intercept", &CDSolutiond::intercept)
         .def("__str__", &CDSolutiond::toString);
 
     pybind11::class_<Utilsd>(m, "Utilsd")
@@ -267,13 +293,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
-        .def(pybind11::init<double, double, Index, Strategy, double, unsigned int>(),
+        .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
             pybind11::arg("regressorDelta") = 0.0,
             pybind11::arg("regressorBeta") = 1.0,
             pybind11::arg("nbComponents") = static_cast<Index>(2),
             pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
             pybind11::arg("regressorTolerance") = 1e-4,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U)
+            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
+            pybind11::arg("regressorInnerEpsilon") = 1e-6,
+            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
         .def_readonly("regressorParam", &L0L2SPCAParamd::regressorParam)
         .def_readonly("nbComponents", &L0L2SPCAParamd::nbComponents);
 

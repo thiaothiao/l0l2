@@ -75,14 +75,16 @@ namespace l0l2
 				const Vector<Scalar>& gradInput = {}) :
 				delta{ deltaInput },
 				x{ xInput },
-				grad{ gradInput }
+				grad{ gradInput },
+				intercept{ static_cast<Scalar>(0) }
 			{
 			}
 
 			Solution(Index n) :
 				delta{ std::numeric_limits<Scalar>::max() },
 				x{ Vector<Scalar>::Zero(n) },
-				grad{ Vector<Scalar>::Zero(n) }
+				grad{ Vector<Scalar>::Zero(n) },
+				intercept{ static_cast<Scalar>(0) }
 			{
 			}
 
@@ -99,6 +101,7 @@ namespace l0l2
 			Scalar delta;
 			Vector<Scalar> x;
 			Vector<Scalar> grad;
+			Scalar intercept;
 		};
 
 		template<std::floating_point ScalarType>
@@ -113,7 +116,8 @@ namespace l0l2
 				globalChange{ static_cast<Scalar>(0) },
 				dualityGap{ static_cast<Scalar>(0) },
 				status{ CDStatus::Unknown },
-				x{ Vector<Scalar>::Zero(n) }
+				x{ Vector<Scalar>::Zero(n) },
+				intercept{ static_cast<Scalar>(0) }
 			{
 			}
 
@@ -130,6 +134,7 @@ namespace l0l2
 			Scalar dualityGap;
 			CDStatus status;
 			Vector<Scalar> x;
+			Scalar intercept;
 		};
 
 		template<std::floating_point ScalarType>
@@ -203,7 +208,7 @@ namespace l0l2
 			const auto n = static_cast<Index>(x.size());
 
 			const auto deltaBeta = delta * beta;
-			////////#pragma omp parallel for
+
 			for (Index i = 0; i < n; ++i)
 			{//Not auto vectorized
 				if (std::abs(x[i]) <= Utils::epsilon)
@@ -250,6 +255,8 @@ namespace l0l2
 
 			out << Utils::print(Solution::streamSize, grad);
 
+			out << "\t\t" << intercept;
+
 			out << "]";
 
 			return out.str();
@@ -267,6 +274,8 @@ namespace l0l2
 			out << "GlobalChange: " << globalChange << "\n";
 
 			out << Utils::print(CDSolution::streamSize, x);
+
+			out << "\t\t" << intercept;
 
 			return out.str();
 		}

@@ -47,8 +47,10 @@ namespace l0l2
               \param tolerance covergence tolerance on the coordinates changes.
               \param maximumNumberOfIterations maximum number of iterations allowed.
             */
-            CyclicalCoordinateDescent(const Param& param)
+            CyclicalCoordinateDescent(const Param& param,
+                bool withIntercept = false)
                 :m_Param{param},
+                m_WithIntercept{ withIntercept },
                 m_FromBothConverged{}
             {
             }
@@ -65,6 +67,11 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
+            CDSolution<Scalar> fitNoIntercept(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance);
+
             CDSolution<Scalar>  fitFrom(
                 const Matrix<Scalar>& matData,
                 bool matrixIsCovariance,
@@ -72,6 +79,8 @@ namespace l0l2
                 Vector<Scalar>&& w0);
 
             const Param m_Param;
+
+            const bool m_WithIntercept;
 
             std::atomic_flag m_FromBothConverged;
         };
@@ -102,12 +111,16 @@ namespace l0l2
                     Scalar betaInput = static_cast<Scalar>(1),
                     Strategy strategyInput = Strategy::FromZeroSolution,
                     Scalar toleranceInput = static_cast<Scalar>(1e-4),
-                    unsigned int maximumNumberOfIterationsInput = 10000U)
+                    unsigned int maximumNumberOfIterationsInput = 10000U,
+                    Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
+                    unsigned int innerMaximumNumberOfIterationsInput = 100000U)
                     :delta{ deltaInput },
                     beta{ betaInput },
                     strategy{ strategyInput },
                     tolerance{ toleranceInput },
                     maximumNumberOfIterations{ maximumNumberOfIterationsInput },
+                    innerEpsilon{ innerEpsilonInput },
+                    innerMaximumNumberOfIterations{ innerMaximumNumberOfIterationsInput },
                     deltaBeta{ deltaInput * betaInput }
                 {
                 }
@@ -123,6 +136,8 @@ namespace l0l2
                 const Strategy strategy;
                 const Scalar tolerance;
                 const unsigned int maximumNumberOfIterations;
+                const Scalar innerEpsilon;
+                const unsigned int innerMaximumNumberOfIterations;
                 const Scalar deltaBeta;
             };
 
@@ -143,11 +158,12 @@ namespace l0l2
             {
             }
 
-            Vector<Scalar> fit(
+            Vector<Scalar> fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
-                unsigned int maxNumberOfIterations = 100000U) const;
+                Scalar epsilon,
+                unsigned int maxNumberOfIterations) const;
 
         private:
             const Scalar m_Beta;
@@ -155,17 +171,17 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorPCG<ScalarType>::Scalar>
-            L2RegressorPCG<ScalarType>::fit(
+            L2RegressorPCG<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
+                Scalar epsilon,
                 unsigned int maxNumberOfIterations) const
         {
             using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             Vector x = Vector::Zero(n);
 
@@ -193,7 +209,7 @@ namespace l0l2
             }
 
             int iter = 0;
-            while (r.norm() > Utils::epsilon)
+            while (r.norm() > epsilon)
             {
                 const Vector z = r.cwiseQuotient(M);// Mzk = rk
 
@@ -245,7 +261,6 @@ namespace l0l2
             using CDSolution = CDSolution<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             CDSolution solution{ n };
             solution.x = std::move(w0);// be carefull with rvalue reference. w0 is moved!
@@ -340,18 +355,42 @@ namespace l0l2
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
+            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+
+            auto solution = fitNoIntercept(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance);
+
+            if (withIntercept)
+            {
+                solution.intercept = (vectData - matData * solution.x).mean();
+            }
+
+            return solution;
+        }
+
+        template <ModelLike ModelImplementationType>
+        CDSolution<typename ModelImplementationType::Scalar>
+            CyclicalCoordinateDescent<ModelImplementationType>::fitNoIntercept(
+                const Matrix<Scalar>& matData,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance)
+        {
             using Vector = Vector<Scalar>;
             using L2Regressor = L2RegressorPCG<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
-            const auto m = static_cast<Index>(matData.rows());
 
             if (m_Param.strategy != Strategy::FromBothSolutions)
             {
-                return fitFrom(matData, matrixIsCovariance, vectData,
+                return fitFrom(matData,
+                    matrixIsCovariance, 
+                    vectData,
                     m_Param.strategy == Strategy::FromZeroSolution
                     ? Vector::Zero(n)
-                    : L2Regressor(m_Param.beta).fit(matData,vectData, matrixIsCovariance));
+                    : L2Regressor(m_Param.beta).fitNoIntercept(matData,vectData, matrixIsCovariance,
+                        m_Param.innerEpsilon,
+                        m_Param.innerMaximumNumberOfIterations));
             }
             else
             {
@@ -367,7 +406,9 @@ namespace l0l2
                 auto fromL2Solution = fitFrom(matData,
                     matrixIsCovariance,
                     vectData,
-                    L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance));
+                    L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance,
+                        m_Param.innerEpsilon,
+                        m_Param.innerMaximumNumberOfIterations));
 
                 auto fromZeroSolution = fromZeroFuture.get();
 

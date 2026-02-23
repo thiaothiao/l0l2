@@ -229,11 +229,13 @@ namespace
         const auto fullpath = delta < static_cast<Scalar>(0);
 
         const auto nbComponents = static_cast<Index>(2);
-        const unsigned int nbJobs = 1U;
-        const Scalar epsilon = static_cast<Scalar>(1e-5);
-        const unsigned int numberOfTrialsMax = 1000U;
-        const Scalar regressorTolerance = static_cast<Scalar>(1e-6);
-        const unsigned int regressorMaximumNumberOfIterations = 100000U;
+        const auto nbJobs = 1U;
+        const auto epsilon = static_cast<Scalar>(1e-5);
+        const auto numberOfTrialsMax = 1000U;
+        const auto regressorTolerance = static_cast<Scalar>(1e-6);
+        const auto regressorMaximumNumberOfIterations = 100000U;
+        const auto regressorInnerEpsilon = static_cast<Scalar>(1e-6);
+        const auto intregressorInnerMaximumNumberOfIterations = 100000U;
 
         if (fullpath)
         {
@@ -242,6 +244,7 @@ namespace
             //const auto start = std::chrono::high_resolution_clock::now();
 
             //auto results = FullPathSolver::fitAll(MatData, m, n, Vect, matrixIsCovariance, beta,
+            // withIntercept,
             //    Strategy::FromBothSolutions);
 
             //const auto stop = std::chrono::high_resolution_clock::now();
@@ -265,7 +268,9 @@ namespace
                     nbComponents,
                     regressorStrategy,
                     regressorTolerance,
-                    regressorMaximumNumberOfIterations };
+                    regressorMaximumNumberOfIterations,
+                    regressorInnerEpsilon,
+                    intregressorInnerMaximumNumberOfIterations};
 
                 L0L2SPCA regressor{
                     param,
@@ -303,7 +308,9 @@ namespace
                     nbComponents,
                     regressorStrategy,
                     regressorTolerance,
-                    regressorMaximumNumberOfIterations };
+                    regressorMaximumNumberOfIterations,
+                    regressorInnerEpsilon,
+                    intregressorInnerMaximumNumberOfIterations };
 
                 L0L2SPCA regressor{
                     param,
@@ -341,7 +348,9 @@ namespace
                     nbComponents,
                     regressorStrategy,
                     regressorTolerance,
-                    regressorMaximumNumberOfIterations };
+                    regressorMaximumNumberOfIterations,
+                    regressorInnerEpsilon,
+                    intregressorInnerMaximumNumberOfIterations };
 
                 L0L2SPCA regressor{
                     param,
