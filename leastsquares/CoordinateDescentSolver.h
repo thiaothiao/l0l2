@@ -357,7 +357,8 @@ namespace l0l2
         {
             const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
 
-            auto solution = fitNoIntercept(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+            auto solution = fitNoIntercept(withIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
+                : matData,
                 withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance);
 
