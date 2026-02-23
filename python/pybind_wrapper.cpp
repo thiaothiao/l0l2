@@ -108,6 +108,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
+            pybind11::arg("withintercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
 
     pybind11::class_<Solutionf>(m, "Solutionf")
@@ -226,6 +227,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
+            pybind11::arg("withintercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
 
     pybind11::class_<Solutiond>(m, "Solutiond")

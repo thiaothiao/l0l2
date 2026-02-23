@@ -237,6 +237,7 @@ namespace
             const auto start = std::chrono::high_resolution_clock::now();
 
             auto results = FullPathSolver::fitAll(MatData, Vect, matrixIsCovariance, beta,
+                withIntercept,
                 Strategy::FromBothSolutions);
 
             const auto stop = std::chrono::high_resolution_clock::now();

@@ -1086,15 +1086,15 @@ namespace l0l2
                 bool withIntercept,
                 Strategy strategy)
         {// TODO optimize intercept case
-            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+            const auto consideringIntercept = withIntercept && !matrixIsCovariance;
 
-            auto results = fitAll_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
-                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+            auto results = fitAll_(consideringIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                consideringIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance,
                 beta,
                 strategy);
 
-            if (withIntercept)
+            if (consideringIntercept)
             {
                 for (auto& result : results)
                 {
