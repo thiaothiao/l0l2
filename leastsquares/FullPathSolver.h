@@ -93,13 +93,13 @@ namespace l0l2
 
         private:
             static std::list<Solution<Scalar>>
-                fitAll_(const Matrix<Scalar>& matData,
+                fitAllNoIntercept(const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar beta,
                     Strategy strategy = Strategy::FromZeroSolution);
 
-            Solution<Scalar>  fit_(const Matrix<Scalar>& matData,
+            Solution<Scalar>  fitNoIntercept(const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance);
 
@@ -128,7 +128,7 @@ namespace l0l2
             {
             }
 
-            Vector<Scalar> fit(
+            Vector<Scalar> fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const;
@@ -139,7 +139,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorGauss<ScalarType>::Scalar>
-            L2RegressorGauss<ScalarType>::fit(
+            L2RegressorGauss<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
@@ -1088,7 +1088,7 @@ namespace l0l2
         {// TODO optimize intercept case
             const auto consideringIntercept = withIntercept && !matrixIsCovariance;
 
-            auto results = fitAll_(consideringIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+            auto results = fitAllNoIntercept(consideringIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
                 consideringIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance,
                 beta,
@@ -1107,7 +1107,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAll_(
+            FullPathSolver<ScalarType>::fitAllNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
@@ -1118,7 +1118,7 @@ namespace l0l2
             using Vector = Vector<Scalar>;
             using Utils = Utils<Scalar>;
 
-            FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy} };
+            FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy}, false};
 
             if (strategy != Strategy::FromBothSolutions)
             {
@@ -1167,7 +1167,7 @@ namespace l0l2
         {
             const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
 
-            auto solution = fit_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+            auto solution = fitNoIntercept(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
                 withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance);
 
@@ -1181,7 +1181,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
-            FullPathSolver<ScalarType>::fit_(
+            FullPathSolver<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
@@ -1373,7 +1373,7 @@ namespace l0l2
             {
                 Solution solutionBar{ n };
 
-                solutionBar.x = L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance);
+                solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
 
                 solutionBar.delta = std::numeric_limits<Scalar>::max();
                 for (Index i = 0; i < n; ++i)

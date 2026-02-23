@@ -67,7 +67,7 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
-            CDSolution<Scalar> fit_(
+            CDSolution<Scalar> fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance);
@@ -152,7 +152,7 @@ namespace l0l2
             {
             }
 
-            Vector<Scalar> fit(
+            Vector<Scalar> fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
@@ -164,7 +164,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorPCG<ScalarType>::Scalar>
-            L2RegressorPCG<ScalarType>::fit(
+            L2RegressorPCG<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
@@ -349,7 +349,7 @@ namespace l0l2
         {
             const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
 
-            auto solution = fit_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+            auto solution = fitNoIntercept(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
                 withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance);
 
@@ -363,7 +363,7 @@ namespace l0l2
 
         template <ModelLike ModelImplementationType>
         CDSolution<typename ModelImplementationType::Scalar>
-            CyclicalCoordinateDescent<ModelImplementationType>::fit_(
+            CyclicalCoordinateDescent<ModelImplementationType>::fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
@@ -380,7 +380,7 @@ namespace l0l2
                     vectData,
                     m_Param.strategy == Strategy::FromZeroSolution
                     ? Vector::Zero(n)
-                    : L2Regressor(m_Param.beta).fit(matData,vectData, matrixIsCovariance));
+                    : L2Regressor(m_Param.beta).fitNoIntercept(matData,vectData, matrixIsCovariance));
             }
             else
             {
@@ -396,7 +396,7 @@ namespace l0l2
                 auto fromL2Solution = fitFrom(matData,
                     matrixIsCovariance,
                     vectData,
-                    L2Regressor(m_Param.beta).fit(matData, vectData, matrixIsCovariance));
+                    L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance));
 
                 auto fromZeroSolution = fromZeroFuture.get();
 
