@@ -1,3 +1,5 @@
+#include <ios>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/cast.h>
 #include <pybind11/attr.h>
@@ -94,7 +96,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("strategy", &FullPathSolverParamf::strategy);
 
     pybind11::class_<FullPathSolverf>(m, "FullPathSolverf")
-        .def(pybind11::init<FullPathSolverParamf>(), pybind11::arg("param"))
+        .def(pybind11::init<FullPathSolverParamf, bool>(), 
+            pybind11::arg("param"), 
+            pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverf::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -112,6 +116,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutionf::delta)
         .def_readwrite("x", &Solutionf::x)
         .def_readwrite("grad", &Solutionf::grad)
+        .def_readwrite("intercept", &Solutionf::intercept)
         .def("isValidFor", &Solutionf::isValidFor,
             pybind11::arg("beta"), "A member function that checks solution validity.")
         .def("__str__", &Solutionf::toString);
@@ -130,7 +135,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
-        .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
+        .def(pybind11::init<L0L2RegressorParamf, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -143,6 +150,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutionf::dualityGap)
         .def_readwrite("status", &CDSolutionf::status)
         .def_readwrite("x", &CDSolutionf::x)
+        .def_readwrite("intercept", &CDSolutionf::intercept)
         .def("__str__", &CDSolutionf::toString);
 
     pybind11::class_<Utilsf>(m, "Utilsf")
@@ -206,7 +214,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("strategy", &FullPathSolverParamd::strategy);
 
     pybind11::class_<FullPathSolverd>(m, "FullPathSolverd")
-        .def(pybind11::init<FullPathSolverParamd>(), pybind11::arg("param"))
+        .def(pybind11::init<FullPathSolverParamd, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverd::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -224,6 +234,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutiond::delta)
         .def_readwrite("x", &Solutiond::x)
         .def_readwrite("grad", &Solutiond::grad)
+        .def_readwrite("intercept", &Solutiond::intercept)
         .def("isValidFor", &Solutiond::isValidFor,
             pybind11::arg("beta"), "A member function that checks solution validity.")
         .def("__str__", &Solutiond::toString);
@@ -242,7 +253,9 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
-        .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
+        .def(pybind11::init<L0L2RegressorParamd, bool>(), 
+            pybind11::arg("param"),
+            pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData")/*colmajor*/,
             pybind11::arg("vectData"),
@@ -255,6 +268,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutiond::dualityGap)
         .def_readwrite("status", &CDSolutiond::status)
         .def_readwrite("x", &CDSolutiond::x)
+        .def_readwrite("intercept", &CDSolutiond::intercept)
         .def("__str__", &CDSolutiond::toString);
 
     pybind11::class_<Utilsd>(m, "Utilsd")
