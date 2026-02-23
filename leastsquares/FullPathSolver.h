@@ -78,6 +78,7 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar beta,
+                    bool withIntercept = false,
                     Strategy strategy = Strategy::FromZeroSolution);
 
             /*! \brief Fit one solution.
@@ -91,6 +92,12 @@ namespace l0l2
                 bool matrixIsCovariance);
 
         private:
+            static std::list<Solution<Scalar>>
+                fitAll_(const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance,
+                    Scalar beta,
+                    Strategy strategy = Strategy::FromZeroSolution);
 
             Solution<Scalar>  fit_(const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
@@ -1072,6 +1079,35 @@ namespace l0l2
         template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
             FullPathSolver<ScalarType>::fitAll(
+                const Matrix<Scalar>& matData/*colmajor*/,
+                const Vector<Scalar>& vectData,
+                bool matrixIsCovariance,
+                Scalar beta,
+                bool withIntercept,
+                Strategy strategy)
+        {// TODO optimize intercept case
+            const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
+
+            auto results = fitAll_(withIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+                withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
+                matrixIsCovariance,
+                beta,
+                strategy);
+
+            if (withIntercept)
+            {
+                for (auto& result : results)
+                {
+                    result.intercept = (vectData - matData * result.x).mean();// TODO use grad!
+                }
+            }
+
+            return results;
+        }
+
+        template<std::floating_point ScalarType>
+        std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+            FullPathSolver<ScalarType>::fitAll_(
                 const Matrix<Scalar>& matData/*colmajor*/,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
