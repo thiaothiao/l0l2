@@ -1088,7 +1088,8 @@ namespace l0l2
         {// TODO optimize intercept case
             const auto consideringIntercept = withIntercept && !matrixIsCovariance;
 
-            auto results = fitAllNoIntercept(consideringIntercept ? (matData.array() - matData.colwise().mean().array()).matrix() : matData,
+            auto results = fitAllNoIntercept(consideringIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
+                : matData,
                 consideringIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
                 matrixIsCovariance,
                 beta,
