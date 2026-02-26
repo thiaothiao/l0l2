@@ -20,3 +20,16 @@ Implemented solutions:
 Interfaces for Sparse PCA cases are also availlable.
 
 For the technical details see the technical report and references therein.
+
+We use c++ 23 and later.
+
+Dependencies:
+- Eigen c++ library, https://libeigen.gitlab.io/
+- thread-pool c++ libary, https://github.com/ptsouchlos/thread-pool
+- pybind11 used for python interfaces, https://github.com/pybind/pybind11
+
+Builds: WIP
+- windows with visual studio
+- ubuntu
+
+Benchmarks: WIP
