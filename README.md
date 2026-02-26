@@ -27,6 +27,7 @@ Dependencies:
 - Eigen c++ library, https://libeigen.gitlab.io/
 - thread-pool c++ libary, https://github.com/ptsouchlos/thread-pool
 - pybind11 used for python interfaces, https://github.com/pybind/pybind11
+- openMP
 
 Builds: WIP
 - windows with visual studio
