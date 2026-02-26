@@ -5,6 +5,7 @@
 #include <pybind11/attr.h>
 #include <pybind11/stl.h>
 #include <pybind11/detail/common.h>
+#include <pybind11/eigen.h>
 
 #include "Utils.h"
 #include "FullPathSolver.h"
