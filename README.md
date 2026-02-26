@@ -1,6 +1,6 @@
 # l0l2
 **Biconjugate Convex Relaxation Solver for Sparse Modeling**\
-The solver addressed solutions for sparse linear least squares problem via $l_0$, $l_2$  combined regularizations.
+The solver addresses solutions for sparse linear least squares problems via $l_0$, $l_2$  combined regularizations.
 ```math
 \min \left\|Ax-b\right\|^2_2 + \rho\left\|x\right\|_0 + \beta\left\|x\right\|^2_2,\;x\in\mathbb{R}^n.
 ```
