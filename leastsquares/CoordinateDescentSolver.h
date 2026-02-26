@@ -159,7 +159,7 @@ namespace l0l2
             }
 
             Vector<Scalar> fitNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar epsilon,
@@ -172,7 +172,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Vector<typename L2RegressorPCG<ScalarType>::Scalar>
             L2RegressorPCG<ScalarType>::fitNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar epsilon,
@@ -211,7 +211,7 @@ namespace l0l2
             int iter = 0;
             while (r.norm() > epsilon)
             {
-                const Vector z = r.cwiseQuotient(M);// Mzk = rk
+                const Vector z = r.cwiseQuotient(M);
 
                 const Scalar rdotz = r.dot(z);
 
@@ -263,7 +263,7 @@ namespace l0l2
             const auto n = static_cast<Index>(matData.cols());
 
             CDSolution solution{ n };
-            solution.x = std::move(w0);// be carefull with rvalue reference. w0 is moved!
+            solution.x = std::move(w0);
 
             auto& x = solution.x;
             auto& numberOfIterations = solution.numberOfIterations;
@@ -271,7 +271,7 @@ namespace l0l2
             auto& dualityGap = solution.dualityGap;
             auto& status = solution.status;
 
-            Vector R = matrixIsCovariance 
+            auto R = matrixIsCovariance 
                 ? static_cast<Vector>(matData * (vectData - x))
                 : static_cast<Vector>(vectData - matData * x);
 
@@ -284,9 +284,8 @@ namespace l0l2
             {
                 globalChange = static_cast<Scalar>(0);
 
-                // cyclical part
                 for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
+                {
                     const auto zJ = zJs[j];
 
                     if (zJ == static_cast<Scalar>(0))

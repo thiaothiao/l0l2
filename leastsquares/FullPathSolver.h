@@ -42,7 +42,6 @@ namespace l0l2
                     :delta{ deltaInput },
                     beta{ betaInput },
                     strategy{ strategyInput }
-                    //to optimize
                 {
                 }
 
@@ -143,7 +142,7 @@ namespace l0l2
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
-        {// TODO optimize
+        {
             using Vector = Vector<Scalar>;
             using Matrix = Matrix<Scalar>;
             using RMMatrix = RMMatrix<Scalar>;
@@ -252,8 +251,7 @@ namespace l0l2
 
 #pragma omp parallel for
             for (Index i = 0; i < n; ++i)
-            {//Not auto vectorized
-                // TODO optimize
+            {
                 if (std::abs(solutionYaayx[i]) <= Utils::epsilon)
                 {
                     const auto gradi = solutionYaaygrad[i];
@@ -275,14 +273,14 @@ namespace l0l2
             const auto deltaYaayBeta = solutionYaaydelta * beta;
 #pragma omp parallel for
             for (Index i = 0; i < n; ++i)
-            {//Not auto vectorized
+            {
                 const auto absXMaami = std::abs(solutionMaamx[i]);
                 const auto absXYaayi = std::abs(solutionYaayx[i]);
 
                 if (std::abs(absXYaayi - solutionYaaydelta) <= Utils::epsilon)
                 {
                     if (std::abs(absXMaami - solutionMaamdelta) <= Utils::epsilon)
-                    {// crtical
+                    {
                         indicesPtr[i] = ConstraintsType::K1;
                     }
                     else if (absXMaami > solutionMaamdelta)
@@ -307,7 +305,7 @@ namespace l0l2
                     const auto absGradi = std::abs(solutionYaaygrad[i]);
 
                     if (std::abs(absGradi - deltaYaayBeta) <= Utils::epsilon)
-                    {//critical
+                    {
                         if (absXMaami <= Utils::epsilon)
                         {
                             indicesPtr[i] = ConstraintsType::K4;
@@ -336,7 +334,7 @@ namespace l0l2
         {
             auto nbWs = static_cast<Index>(0);
             for (auto idx : indices)
-            {//Not auto vectorized
+            {
                 if (idx == ConstraintsType::K5
                     || idx == ConstraintsType::K6
                     || idx == ConstraintsType::K7)
@@ -351,7 +349,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Solution<typename FullPathStep<ScalarType>::Scalar>
             FullPathStep<ScalarType>::run(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 const Solution<Scalar>& solutionYaay,
                 const Solution<Scalar>& solutionMaam,
@@ -403,19 +401,15 @@ namespace l0l2
                 const auto jStartSlacksW = jStartSlacksT + nbTs;
                 const auto jStartSlacksS = jStartSlacksW + nbWs;
 
-                indicesMap.clear();// TODO is it necessary to clear all
+                indicesMap.clear();
 
-                //tIndicesMap reset values to -1;// TODO is it necessary to clear all
-                //wIndicesMap reset values to -1;
-                //sIndicesMap reset values to -1;
-                //pivots reset values to -1;
                 std::fill(std::execution::par,
                     pivots.begin(), pivots.end(), static_cast<Index>(-1));
 
                 {
                     Index idx = 0;
                     for (Index j = 0; j < n; ++j)
-                    {//Not auto vectorized
+                    {
                         const auto idxType = indicesPtr[j];
 
                         if (idxType == ConstraintsType::K0
@@ -451,14 +445,14 @@ namespace l0l2
 
                 b.setZero();
 
-                b.head(n) = VectData;// ATb or Qalpha// TODO optimize
+                b.head(n) = VectData;// ATb or Qalpha
 
                 Index jT = 0;
                 Index jW = 0;
                 Index jS = 0;
 
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto idxType = indicesPtr[i];
 
                     switch (idxType)
@@ -600,9 +594,9 @@ namespace l0l2
                     }
                 }
 
-#pragma omp parallel for // TODO is it usefull??
+#pragma omp parallel for
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto idxType = indicesPtr[i];
 
                     switch (idxType)
@@ -621,7 +615,6 @@ namespace l0l2
 
                         const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
                         AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
                         gamma[i] -= betaTimesSigni * gamma[tIndex];
@@ -636,7 +629,6 @@ namespace l0l2
 
                         const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
                         AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
                         gamma[i] -= betaTimesSigni * gamma[tIndex];
@@ -651,7 +643,6 @@ namespace l0l2
 
                         const auto betaTimesSigni = m_Beta * xSigns[i];
 
-                        //ADataPtr[i * nA + indicesMap.at(i)] -= betaTimesSigni;
                         AData.coeffRef(i, indicesMap.at(i)) -= betaTimesSigni;
 
                         gamma[i] -= betaTimesSigni * gamma[tIndex];
@@ -687,7 +678,7 @@ namespace l0l2
 
                 // do not parallelize           
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto pivotRowIndex = i;
                     const auto pivotColumnIndex = pivots[i];
 
@@ -842,7 +833,7 @@ namespace l0l2
 
                 bool bHasZeros = false;
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     const auto idxType = indicesPtr[i];
 
                     switch (idxType)
@@ -915,9 +906,9 @@ namespace l0l2
             auto aPivotRowIndex = static_cast<Index>(-1);
             {
                 for (Index i = 0; i < numberOfConstraints; ++i)
-                {//Not auto vectorized
-                    const auto value = gamma[i];// m_PositiveValues[i];
-                    if (value > Utils::epsilon)//&& std::abs(m_B.get()[i]) > Utils::epsilon)
+                {
+                    const auto value = gamma[i];
+                    if (value > Utils::epsilon)
                     {
                         const auto itemValue = b[i] / value;
                         if (itemValue < minimum)
@@ -1018,7 +1009,6 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            //const auto sIndex = sIndicesMap.at(i);
                             const auto Si = b[i] - gamma[i] * gammaSol;
 
                             solutionNewgrad[i] = -m_Beta * xSigns[i] * Si;
@@ -1030,7 +1020,6 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            //const auto sIndex = sIndicesMap.at(i);
                             const auto Si = b[i] - gamma[i] * gammaSol;
 
                             solutionNewgrad[i] = -m_Beta * xSigns[i] * Si;
@@ -1042,7 +1031,6 @@ namespace l0l2
                     {
                         if (i != aPivotRowIndex)
                         {
-                            //const auto sIndex = sIndicesMap.at(i);
                             const auto Si = b[i] - gamma[i] * gammaSol;
 
                             solutionNewgrad[i] += m_Beta * xSigns[i] * Si;
@@ -1079,7 +1067,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
             FullPathSolver<ScalarType>::fitAll(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar beta,
@@ -1109,7 +1097,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
             FullPathSolver<ScalarType>::fitAllNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance,
                 Scalar beta,
@@ -1162,7 +1150,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
             FullPathSolver<ScalarType>::fit(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
@@ -1184,7 +1172,7 @@ namespace l0l2
         template<std::floating_point ScalarType>
         Solution<typename FullPathSolver<ScalarType>::Scalar>
             FullPathSolver<ScalarType>::fitNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
+                const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance)
         {
@@ -1301,7 +1289,7 @@ namespace l0l2
             {
                 const auto deltaZero = ATb.cwiseAbs().maxCoeff() / m_Param.beta;
 
-                results.emplace_back(std::numeric_limits<Scalar>::max(),//static_cast<Scalar>(2) * deltaZero,
+                results.emplace_back(std::numeric_limits<Scalar>::max(),
                     Vector::Zero(n), -ATb);
 
                 results.emplace_back(deltaZero,
@@ -1318,18 +1306,18 @@ namespace l0l2
                     m_DeltaFromZeroSolution = deltaZero;
                     if (m_Param.delta > static_cast<Scalar>(0))
                     {
-                        if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                        if (m_DeltaFromZeroSolution <= m_Param.delta)
                         {
                             iamOnTarget = true;
                         }
-                        else if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                        else if (m_Param.delta <= m_DeltaFromL2Solution)
                         {
                             otherOnTarget = true;
                         }
                     }
 
                     if (!iamOnTarget && !otherOnTarget
-                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
                     {
                         leave = true;
                     }
@@ -1339,13 +1327,13 @@ namespace l0l2
                     m_DeltaFromZeroSolution = deltaZero;
                     if (m_Param.delta > static_cast<Scalar>(0))
                     {
-                        if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                        if (m_DeltaFromZeroSolution <= m_Param.delta)
                         {
                             iamOnTarget = true;
                         }
                     }
 
-                    if (!iamOnTarget && m_DeltaFromZeroSolution <= Utils::epsilon)// TODO maybe use std option?
+                    if (!iamOnTarget && m_DeltaFromZeroSolution <= Utils::epsilon)
                     {
                         leave = true;
                     }
@@ -1379,7 +1367,7 @@ namespace l0l2
 
                 solutionBar.delta = std::numeric_limits<Scalar>::max();
                 for (Index i = 0; i < n; ++i)
-                {//Not auto vectorized
+                {
                     // TODO optimize
                     const auto absWeight = std::abs(solutionBar.x[i]);
                     if (Utils::epsilon < absWeight && absWeight < solutionBar.delta)
@@ -1388,7 +1376,7 @@ namespace l0l2
                     }
                 }
 
-                results.emplace_front(static_cast<Scalar>(0),// solutionBar.delta / static_cast<Scalar>(2),
+                results.emplace_front(static_cast<Scalar>(0),
                     solutionBar.x,
                     solutionBar.grad);
 
@@ -1403,18 +1391,18 @@ namespace l0l2
                     m_DeltaFromL2Solution = solutionBar.delta;
                     if (m_Param.delta > static_cast<Scalar>(0))
                     {
-                        if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                        if (m_Param.delta <= m_DeltaFromL2Solution)
                         {
                             iamOnTarget = true;
                         }
-                        else if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                        else if (m_DeltaFromZeroSolution <= m_Param.delta)
                         {
                             otherOnTarget = true;
                         }
                     }
 
                     if (!iamOnTarget && !otherOnTarget
-                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
                     {
                         leave = true;
                     }
@@ -1424,7 +1412,7 @@ namespace l0l2
                     m_DeltaFromL2Solution = solutionBar.delta;
                     if (m_Param.delta > static_cast<Scalar>(0))
                     {
-                        if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                        if (m_Param.delta <= m_DeltaFromL2Solution)
                         {
                             iamOnTarget = true;
                         }
@@ -1509,22 +1497,22 @@ namespace l0l2
                         {
                             if (fromZeroSolution)
                             {
-                                if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                if (m_DeltaFromZeroSolution <= m_Param.delta)
                                 {
                                     iamOnTarget = true;
                                 }
-                                else if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                else if (m_Param.delta <= m_DeltaFromL2Solution)
                                 {
                                     otherOnTarget = true;
                                 }
                             }
                             else
                             {
-                                if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                if (m_Param.delta <= m_DeltaFromL2Solution)
                                 {
                                     iamOnTarget = true;
                                 }
-                                else if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                else if (m_DeltaFromZeroSolution <= m_Param.delta)
                                 {
                                     otherOnTarget = true;
                                 }
@@ -1532,7 +1520,7 @@ namespace l0l2
                         }
 
                         if (!iamOnTarget && !otherOnTarget
-                            && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                            && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
                         {
                             leave = true;
                         }
@@ -1552,14 +1540,14 @@ namespace l0l2
                         {
                             if (fromZeroSolution)
                             {
-                                if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                if (m_DeltaFromZeroSolution <= m_Param.delta)
                                 {
                                     iamOnTarget = true;
                                 }
                             }
                             else
                             {
-                                if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                if (m_Param.delta <= m_DeltaFromL2Solution)
                                 {
                                     iamOnTarget = true;
                                 }
@@ -1644,7 +1632,7 @@ namespace l0l2
                 {
                     auto normMax = std::numeric_limits<Scalar>::max();
                     for (Index i = 0; i < n; ++i)
-                    {//Not auto vectorized
+                    {
                         // TODO optimize
                         const auto absXi = std::abs(solutionLast.x[i]);
                         if (Utils::epsilon < absXi && absXi < normMax)
@@ -1660,7 +1648,7 @@ namespace l0l2
 
                             auto absGradMax = std::numeric_limits<Scalar>::min();
                             for (Index i = 0; i < n; ++i)
-                            {//Not auto vectorized
+                            {
                                 // TODO optimize
                                 const auto absXi = std::abs(solutionLast.x[i]);
                                 if (absXi <= Utils::epsilon)
@@ -1688,18 +1676,18 @@ namespace l0l2
 
                                     if (m_Param.delta > static_cast<Scalar>(0))
                                     {
-                                        if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                        if (m_DeltaFromZeroSolution <= m_Param.delta)
                                         {
                                             iamOnTarget = true;
                                         }
-                                        else if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                        else if (m_Param.delta <= m_DeltaFromL2Solution)
                                         {
                                             otherOnTarget = true;
                                         }
                                     }
 
                                     if (!iamOnTarget && !otherOnTarget
-                                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
                                     {
                                         leave = true;
                                     }
@@ -1710,14 +1698,14 @@ namespace l0l2
 
                                     if (m_Param.delta > static_cast<Scalar>(0))
                                     {
-                                        if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                        if (m_DeltaFromZeroSolution <= m_Param.delta)
                                         {
                                             iamOnTarget = true;
                                         }
                                     }
 
                                     if (!iamOnTarget
-                                        && m_DeltaFromZeroSolution <= Utils::epsilon)// TODO maybe use std option?
+                                        && m_DeltaFromZeroSolution <= Utils::epsilon)
                                     {
                                         leave = true;
                                     }
@@ -1771,18 +1759,18 @@ namespace l0l2
 
                                 if (m_Param.delta > static_cast<Scalar>(0))
                                 {
-                                    if (m_Param.delta <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                    if (m_Param.delta <= m_DeltaFromL2Solution)
                                     {
                                         iamOnTarget = true;
                                     }
-                                    else if (m_DeltaFromZeroSolution <= m_Param.delta)// TODO maybe use std option?
+                                    else if (m_DeltaFromZeroSolution <= m_Param.delta)
                                     {
                                         otherOnTarget = true;
                                     }
                                 }
 
                                 if (!iamOnTarget && !otherOnTarget
-                                    && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)// TODO maybe use std option?
+                                    && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
                                 {
                                     leave = true;
                                 }
