@@ -1,4 +1,4 @@
-add_executable(leastsquares leastsquares.cpp ${LSDIR}/FullPathSolver.h ${LSDIR}/Utils.h ${LSDIR}/CoordinateDescentSolver.h)
+add_executable(leastsquares leastsquares.cpp)
 
 add_custom_command(TARGET leastsquares POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
@@ -6,7 +6,7 @@ add_custom_command(TARGET leastsquares POST_BUILD
             ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_NAME:leastsquares>
 )
 
-add_executable(pca pca.cpp ${PCADIR}/SparsePCA.h ${LSDIR}/FullPathSolver.h ${LSDIR}/Utils.h ${LSDIR}/CoordinateDescentSolver.h)
+add_executable(pca pca.cpp)
 
 add_custom_command(TARGET pca POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
