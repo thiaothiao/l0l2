@@ -118,12 +118,12 @@ namespace l0l2
         };
 
         template<std::floating_point ScalarType>
-        class L2RegressorGauss
+        class L2Regressor
         {
         public:
             using Scalar = ScalarType;
 
-            L2RegressorGauss(Scalar beta) : m_Beta{ beta }
+            L2Regressor(Scalar beta) : m_Beta{ beta }
             {
             }
 
@@ -137,22 +137,20 @@ namespace l0l2
         };
 
         template<std::floating_point ScalarType>
-        Vector<typename L2RegressorGauss<ScalarType>::Scalar>
-            L2RegressorGauss<ScalarType>::fitNoIntercept(
+        Vector<typename L2Regressor<ScalarType>::Scalar>
+            L2Regressor<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar>& matData,
                 const Vector<Scalar>& vectData,
                 bool matrixIsCovariance) const
         {
             using Vector = Vector<Scalar>;
             using Matrix = Matrix<Scalar>;
-            using RMMatrix = RMMatrix<Scalar>;
-            using Utils = Utils<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());
 
             auto ATA = matrixIsCovariance
-                ? static_cast<RMMatrix>(matData)
-                : static_cast<RMMatrix>(matData.transpose() * matData);
+                ? static_cast<Matrix>(matData)
+                : static_cast<Matrix>(matData.transpose() * matData);
 
             auto ATb = matrixIsCovariance
                 ? static_cast<Vector>(matData * vectData)
@@ -160,34 +158,8 @@ namespace l0l2
 
             ATA.diagonal().array() += m_Beta;
 
-            for (Index i = 0; i < n; ++i)
-            {
-                const auto pivotRowIndex = i;
-                const auto pivotColumnIndex = i;
-
-                const auto pivotCoeff = ATA.coeff(pivotRowIndex, pivotColumnIndex);
-
-                ATA.row(pivotRowIndex) /= pivotCoeff;
-
-                ATb[pivotRowIndex] /= pivotCoeff;
-
-#pragma omp parallel for
-                for (Index rowIndex = 0; rowIndex < n; ++rowIndex)
-                {
-                    if (pivotRowIndex != rowIndex)
-                    {
-                        const auto value = ATA.coeff(rowIndex, pivotColumnIndex);
-                        if (std::abs(value) > Utils::epsilon)
-                        {
-                            ATA.row(rowIndex) -= value * ATA.row(pivotRowIndex);
-
-                            ATb[rowIndex] -= value * ATb[pivotRowIndex];
-                        }
-                    }
-                }
-            }
-
-            return ATb;
+            return ATA.ldlt().solve(ATb);
+            //return ATA.householderQr().solve(ATb);
         }
 
 
@@ -1274,7 +1246,7 @@ namespace l0l2
             using Vector = Vector<Scalar>;
             using Solution = Solution<Scalar>;
             using Utils = Utils<Scalar>;
-            using L2Regressor = L2RegressorGauss<Scalar>;
+            using L2Regressor = L2Regressor<Scalar>;
             using FullPathStep = FullPathStep<Scalar>;
 
             const auto n = static_cast<Index>(matData.cols());

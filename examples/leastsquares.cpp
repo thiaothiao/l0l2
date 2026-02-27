@@ -349,7 +349,7 @@ namespace
                     Utils::objectiveValue(MatData, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 std::cout << "\nSolution\n" << solution.toString() << "\n";
 
-                return 0;
+                //return 0;
             }
 
             {
@@ -432,7 +432,7 @@ int main()
     std::cout << "Finding path...\n\n";
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+    const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
 
     const auto withIntercept = true;
 
