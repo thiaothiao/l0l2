@@ -1,5 +1,4 @@
-buildslinux/
-buildswindows/
+build*/
 
 # Pdfs
 *.synctex*
@@ -27,6 +26,7 @@ buildswindows/
 *.so
 *.dylib
 *.dll
+*.pyd
 
 # Fortran module files
 *.mod

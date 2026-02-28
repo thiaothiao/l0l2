@@ -12,6 +12,9 @@
 #include "CoordinateDescentSolver.h"
 #include "SparsePCA.h"
 
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
 template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
@@ -101,11 +104,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("param"), 
             pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverf::fit, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
         .def_static("fitAll", &FullPathSolverf::fitAll, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -145,7 +148,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("param"),
             pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressorf::fit,
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
 
@@ -162,7 +165,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
     pybind11::class_<Utilsf>(m, "Utilsf")
         //.def(pybind11::init())
         .def_static("objectiveValue", &Utilsf::objectiveValue, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -189,7 +192,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("epsilon") = 1e-5f,
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAf::run,
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
     pybind11::class_<FullPathL0L2SPCAParamf>(m, "FullPathL0L2SPCAParamf")
@@ -208,7 +211,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("epsilon") = 1e-5f,
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAf::run,
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
 
@@ -226,11 +229,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("param"),
             pybind11::arg("withintercept") = false)
         .def("fit", &FullPathSolverd::fit, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
         .def_static("fitAll", &FullPathSolverd::fitAll, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -270,7 +273,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("param"),
             pybind11::arg("withintercept") = false)
         .def("fit", &L0L2Regressord::fit, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
 
@@ -286,7 +289,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<Utilsd>(m, "Utilsd")
         .def_static("objectiveValue", &Utilsd::objectiveValue,
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
@@ -313,7 +316,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("epsilon") = 1e-5,
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAd::run, 
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
     pybind11::class_<FullPathL0L2SPCAParamd>(m, "FullPathL0L2SPCAParamd")
@@ -332,6 +335,12 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("epsilon") = 1e-5,
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAd::run,
-            pybind11::arg("matData")/*colmajor*/,
+            pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
+
+#ifdef VERSION_INFO
+    mainmodule.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#else
+    mainmodule.attr("__version__") = "dev";
+#endif
 }
