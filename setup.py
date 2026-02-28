@@ -37,8 +37,8 @@ __version__ = "0.0.1"
 ext_modules = [
     Pybind11Extension(
         "l0l2", 
-        sources=["python/pybind_wrapper.cpp"],
-        include_dirs=[pybind11.get_include(), 'leastsquares', 'pca', EIGEN3_INCLUDE_DIR, THREAD_POOL_INCLUDE_DIR],
+        sources=["python/pybindwrapper.cpp"],
+        include_dirs=[pybind11.get_include(), EIGEN3_INCLUDE_DIR, THREAD_POOL_INCLUDE_DIR],
         language='c++',
         cxx_std='latest',# Use C++23 or later
         define_macros = [('VERSION_INFO', __version__), ('_CRT_SECURE_NO_WARNINGS', None), ('_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS', None)],

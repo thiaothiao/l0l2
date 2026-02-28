@@ -14,9 +14,9 @@
 #include <cstdint>
 #include <concepts>
 
-#include "Utils.h"
-#include "L2Regressors.h"
-#include "FullPathStep.h"
+#include "leastsquares/utils.h"
+#include "leastsquares/l2regressor/solver.h"
+#include "leastsquares/fullpath/step.h"
 
 namespace l0l2
 {

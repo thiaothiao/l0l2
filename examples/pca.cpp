@@ -11,8 +11,8 @@
 #include <concepts>
 
 
-#include "SparsePCA.h"
-#include "Utils.h"
+#include "leastsquares/utils.h"
+#include "pca/solver.h"
 
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;

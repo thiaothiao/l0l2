@@ -10,10 +10,9 @@
 #include <utility>
 #include <concepts>
 
-#include "Utils.h"
-
-#include "FullPathSolver.h"
-#include "CoordinateDescentSolver.h"
+#include "leastsquares/utils.h"
+#include "leastsquares/cycliccoordinatedescent/solver.h"
+#include "leastsquares/fullpath/solver.h"
 
 template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::FullPathSolver<float>;
