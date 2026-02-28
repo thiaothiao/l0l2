@@ -43,12 +43,9 @@ namespace l0l2
                 using Param = typename ModelImplementation::Param; /*!< Alias for the used parameter type */
                 using Scalar = typename ModelImplementation::Scalar; /*!< Alias for the used scalar type */
 
-                /*! \brief A solver object constructor.
-                  \param delta sparsity regularization parameter.
-                  \param beta l2 regularization parameter.
-                  \param strategy enum indicating a strategy: from zero, or l2 or both solutions.
-                  \param tolerance covergence tolerance on the coordinates changes.
-                  \param maximumNumberOfIterations maximum number of iterations allowed.
+                /*! \brief A cyclic coordinate descent solver object constructor.
+                  \param param regularization parameters.
+                  \param withIntercept boolean indicating with intercept or not. Default is false.
                 */
                 CyclicCoordinateDescent(const Param& param,
                     bool withIntercept = false)
@@ -58,7 +55,7 @@ namespace l0l2
                 {
                 }
 
-                /*! \brief Fit full path solutions.
+                /*! \brief Fit model.
                    \param matData contiguous data container representing matrix in column major layout.
                    \param vectData contiguous data container representing target vector.
                    \param matrixIsCovariance a boolean indicating if matrix is covariance or not.

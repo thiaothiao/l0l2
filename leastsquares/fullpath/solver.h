@@ -36,6 +36,11 @@ namespace l0l2
 
                 struct Param final
                 {
+                    /*! \brief l0l2 model parameter object constructor.
+                      \param deltaInput sparsity regularization parameter.
+                      \param betaInput l2 regularization parameter.
+                      \param strategyInput enum indicating a strategy: from zero, or l2 or both solutions.
+                    */
                     Param(
                         Scalar deltaInput = static_cast<Scalar>(0),
                         Scalar betaInput = static_cast<Scalar>(1),
@@ -51,10 +56,9 @@ namespace l0l2
                     const Strategy strategy;
                 };
 
-                /*! \brief A solver object constructor.
-                  \param delta sparsity regularization parameter.
-                  \param beta l2 regularization parameter.
-                  \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
+                /*! \brief A Full path solver object constructor.
+                  \param param regularization parameters.
+                  \param withIntercept boolean indicating with intercept or not. Default is false.
                 */
                 FullPathSolver(const Param& param,
                     bool withIntercept = false) :
