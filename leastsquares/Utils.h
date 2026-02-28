@@ -14,270 +14,230 @@
 
 namespace l0l2
 {
+	using Index = Eigen::Index;
+
+	template<std::floating_point ScalarType>
+	using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
+
+	template<std::floating_point ScalarType>
+	using Matrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
+
+	template<std::floating_point ScalarType>
+	using RMMatrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+
+	template<std::floating_point ScalarType>
+	class Utils final
+	{
+	public:
+		using Scalar = ScalarType;
+
+		const static Scalar epsilon;
+
+		static Scalar sign(Scalar value);
+
+		static std::string print(std::streamsize size,
+			const Vector<Scalar>& other);
+	};
+
+	template<std::floating_point ScalarType>
+	inline Utils<ScalarType>::Scalar Utils<ScalarType>::sign(Scalar value)
+	{
+		return std::signbit(value) ? static_cast<Scalar>(-1) : static_cast<Scalar>(1);
+	}
+
+	template<std::floating_point ScalarType>
+	std::string Utils<ScalarType>::print(std::streamsize size,
+		const Vector<Scalar>& other)
+	{
+		std::stringstream out;
+
+		out << std::fixed << std::setprecision(size);
+
+		const auto n = static_cast<Index>(other.size());
+		for (Index i = 0; i < n - 1; ++i)
+		{//Not auto vectorized
+			out << other[i] << "\t";
+		}
+
+		if (n - 1 > 0)
+		{
+			out << other[n - 1];
+		}
+
+		return out.str();
+	}
+
 	namespace linearmodel
 	{
-		using Index = Eigen::Index;
-
-		template<std::floating_point ScalarType>
-		using Vector = Eigen::Matrix<ScalarType, Eigen::Dynamic, 1>;
-
-		template<std::floating_point ScalarType>
-		using Matrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
-
-		template<std::floating_point ScalarType>
-		using RMMatrix = Eigen::Matrix<ScalarType, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
-		enum class CDStatus : std::uint8_t
+		namespace leastsquares
 		{
-			Converged = 0U,
-			LimitReached,
-			Unknown
-		};
-
-		enum class Strategy : std::uint8_t
-		{
-			FromZeroSolution = 0U,
-			FromL2Solution,
-			FromBothSolutions
-		};
-
-		template<std::floating_point ScalarType>
-		class Utils final
-		{
-		public:
-			using Scalar = ScalarType;
-
-			const static Scalar epsilon;
-
-			static Scalar sign(Scalar value);
-
-			static Scalar objectiveValue(
-				const Matrix<Scalar>& matData,
-				const Vector<Scalar>& vectData,
-				bool matrixIsCovariance,
-				Scalar beta,
-				Scalar delta,
-				const Vector<Scalar>& x);
-
-			static std::string print(std::streamsize size,
-				const Vector<Scalar>& other);
-		};
-
-		template<std::floating_point ScalarType>
-		struct Solution
-		{
-			using Scalar = ScalarType;
-
-			const static std::streamsize streamSize;
-
-			Solution(Scalar deltaInput = std::numeric_limits<Scalar>::max(),
-				const Vector<Scalar>& xInput = {},
-				const Vector<Scalar>& gradInput = {}) :
-				delta{ deltaInput },
-				x{ xInput },
-				grad{ gradInput },
-				intercept{ static_cast<Scalar>(0) }
+			enum class CDStatus : std::uint8_t
 			{
-			}
+				Converged = 0U,
+				LimitReached,
+				Unknown
+			};
 
-			Solution(Index n) :
-				delta{ std::numeric_limits<Scalar>::max() },
-				x{ Vector<Scalar>::Zero(n) },
-				grad{ Vector<Scalar>::Zero(n) },
-				intercept{ static_cast<Scalar>(0) }
+			enum class Strategy : std::uint8_t
 			{
-			}
+				FromZeroSolution = 0U,
+				FromL2Solution,
+				FromBothSolutions
+			};
 
-			Solution(const Solution&) = default;
-			Solution& operator=(const Solution&) = default;
-
-			Solution(Solution&&) = default;
-			Solution& operator=(Solution&&) = default;
-
-			bool isValidFor(Scalar beta) const;
-
-			std::string toString() const;
-
-			Scalar delta;
-			Vector<Scalar> x;
-			Vector<Scalar> grad;
-			Scalar intercept;
-		};
-
-		template<std::floating_point ScalarType>
-		struct CDSolution
-		{
-			using Scalar = ScalarType;
-
-			const static std::streamsize streamSize;
-
-			CDSolution(Index n = 0) :
-				numberOfIterations{ 0 },
-				globalChange{ static_cast<Scalar>(0) },
-				dualityGap{ static_cast<Scalar>(0) },
-				status{ CDStatus::Unknown },
-				x{ Vector<Scalar>::Zero(n) },
-				intercept{ static_cast<Scalar>(0) }
+			template<std::floating_point ScalarType>
+			struct Solution
 			{
-			}
+				using Scalar = ScalarType;
 
-			CDSolution(const CDSolution&) = default;
-			CDSolution& operator=(const CDSolution&) = default;
+				const static std::streamsize streamSize;
 
-			CDSolution(CDSolution&&) = default;
-			CDSolution& operator=(CDSolution&&) = default;
-
-			std::string toString() const;
-
-			unsigned int numberOfIterations;
-			Scalar globalChange;
-			Scalar dualityGap;
-			CDStatus status;
-			Vector<Scalar> x;
-			Scalar intercept;
-		};
-
-		template<std::floating_point ScalarType>
-		inline Utils<ScalarType>::Scalar Utils<ScalarType>::sign(Scalar value)
-		{
-			return std::signbit(value) ? static_cast<Scalar>(-1) : static_cast<Scalar>(1);
-		}
-
-		template<std::floating_point ScalarType>
-		Utils<ScalarType>::Scalar Utils<ScalarType>::objectiveValue(
-			const Matrix<Scalar>& matData/*colmajor*/,
-			const Vector<Scalar>& vectData,
-			bool matrixIsCovariance,
-			Scalar beta,
-			Scalar delta,
-			const Vector<Scalar>& x)
-		{
-			using Index = Index;
-
-			const auto n = static_cast<Index>(matData.cols());
-			const auto m = static_cast<Index>(matData.rows());
-
-			const auto twoDeltaBeta = static_cast<Scalar>(2) * delta * beta;
-			const auto betaSquaredDelta = beta * delta * delta;
-
-			auto objVal = matrixIsCovariance
-				? (vectData - x).dot(matData * (vectData - x))
-				: (vectData - matData * x).squaredNorm();
-			for (Index j = 0; j < n; ++j)
-			{
-				if (std::abs(x[j]) >= delta)
+				Solution(Scalar deltaInput = std::numeric_limits<Scalar>::max(),
+					const Vector<Scalar>& xInput = {},
+					const Vector<Scalar>& gradInput = {}) :
+					delta{ deltaInput },
+					x{ xInput },
+					grad{ gradInput },
+					intercept{ static_cast<Scalar>(0) }
 				{
-					objVal += beta * x[j] * x[j] + betaSquaredDelta;
 				}
-				else
+
+				Solution(Index n) :
+					delta{ std::numeric_limits<Scalar>::max() },
+					x{ Vector<Scalar>::Zero(n) },
+					grad{ Vector<Scalar>::Zero(n) },
+					intercept{ static_cast<Scalar>(0) }
 				{
-					objVal += twoDeltaBeta * std::abs(x[j]);
 				}
-			}
 
-			return objVal;
-		}
+				Solution(const Solution&) = default;
+				Solution& operator=(const Solution&) = default;
 
-		template<std::floating_point ScalarType>
-		std::string Utils<ScalarType>::print(std::streamsize size,
-			const Vector<Scalar>& other)
-		{
-			std::stringstream out;
+				Solution(Solution&&) = default;
+				Solution& operator=(Solution&&) = default;
 
-			out << std::fixed << std::setprecision(size);
+				bool isValidFor(Scalar beta) const;
 
-			const auto n = static_cast<Index>(other.size());
-			for (Index i = 0; i < n - 1; ++i)
-			{//Not auto vectorized
-				out << other[i] << "\t";
-			}
+				std::string toString() const;
 
-			if (n - 1 > 0)
+				Scalar delta;
+				Vector<Scalar> x;
+				Vector<Scalar> grad;
+				Scalar intercept;
+			};
+
+			template<std::floating_point ScalarType>
+			struct CDSolution
 			{
-				out << other[n - 1];
-			}
+				using Scalar = ScalarType;
 
-			return out.str();
-		}
+				const static std::streamsize streamSize;
 
-		template<std::floating_point ScalarType>
-		bool Solution<ScalarType>::isValidFor(Scalar beta) const
-		{
-			using Utils = Utils<Scalar>;
-
-			const auto n = static_cast<Index>(x.size());
-
-			const auto deltaBeta = delta * beta;
-
-			for (Index i = 0; i < n; ++i)
-			{//Not auto vectorized
-				if (std::abs(x[i]) <= Utils::epsilon)
+				CDSolution(Index n = 0) :
+					numberOfIterations{ 0 },
+					globalChange{ static_cast<Scalar>(0) },
+					dualityGap{ static_cast<Scalar>(0) },
+					status{ CDStatus::Unknown },
+					x{ Vector<Scalar>::Zero(n) },
+					intercept{ static_cast<Scalar>(0) }
 				{
-					if (std::abs(grad[i]) - deltaBeta > Utils::epsilon)
+				}
+
+				CDSolution(const CDSolution&) = default;
+				CDSolution& operator=(const CDSolution&) = default;
+
+				CDSolution(CDSolution&&) = default;
+				CDSolution& operator=(CDSolution&&) = default;
+
+				std::string toString() const;
+
+				unsigned int numberOfIterations;
+				Scalar globalChange;
+				Scalar dualityGap;
+				CDStatus status;
+				Vector<Scalar> x;
+				Scalar intercept;
+			};			
+
+			template<std::floating_point ScalarType>
+			bool Solution<ScalarType>::isValidFor(Scalar beta) const
+			{
+				using Utils = Utils<Scalar>;
+
+				const auto n = static_cast<Index>(x.size());
+
+				const auto deltaBeta = delta * beta;
+
+				for (Index i = 0; i < n; ++i)
+				{//Not auto vectorized
+					if (std::abs(x[i]) <= Utils::epsilon)
 					{
-						return false;
+						if (std::abs(grad[i]) - deltaBeta > Utils::epsilon)
+						{
+							return false;
+						}
+					}
+					else if (std::abs(x[i]) < delta)
+					{
+						const auto err = grad[i] - beta * x[i] + deltaBeta * Utils::sign(x[i]);
+						if (std::abs(err) > Utils::epsilon)
+						{
+							return false;
+						}
+					}
+					else //if (std::abs(x[i]) >= delta)
+					{
+						if (std::abs(grad[i]) > Utils::epsilon)
+						{
+							return false;
+						}
 					}
 				}
-				else if (std::abs(x[i]) < delta)
-				{
-					const auto err = grad[i] - beta * x[i] + deltaBeta * Utils::sign(x[i]);
-					if (std::abs(err) > Utils::epsilon)
-					{
-						return false;
-					}
-				}
-				else //if (std::abs(x[i]) >= delta)
-				{
-					if (std::abs(grad[i]) > Utils::epsilon)
-					{
-						return false;
-					}
-				}
+
+				return true;
 			}
 
-			return true;
-		}
+			template<std::floating_point ScalarType>
+			std::string Solution<ScalarType>::toString() const
+			{
+				using Utils = Utils<Scalar>;
 
-		template<std::floating_point ScalarType>
-		std::string Solution<ScalarType>::toString() const
-		{
-			using Utils = Utils<Scalar>;
+				std::stringstream out;
 
-			std::stringstream out;
+				out << std::fixed << std::setprecision(Solution::streamSize);
 
-			out << std::fixed << std::setprecision(Solution::streamSize);
+				out << delta << ": [";
 
-			out << delta << ": [";
+				out << Utils::print(Solution::streamSize, x);
 
-			out << Utils::print(Solution::streamSize, x);
+				out << "\t\t";
 
-			out << "\t\t";
+				out << Utils::print(Solution::streamSize, grad);
 
-			out << Utils::print(Solution::streamSize, grad);
+				out << "\t\t" << intercept;
 
-			out << "\t\t" << intercept;
+				out << "]";
 
-			out << "]";
+				return out.str();
+			}
 
-			return out.str();
-		}
+			template<std::floating_point ScalarType>
+			std::string CDSolution<ScalarType>::toString() const
+			{
+				using Utils = Utils<Scalar>;
 
-		template<std::floating_point ScalarType>
-		std::string CDSolution<ScalarType>::toString() const
-		{
-			using Utils = Utils<Scalar>;
+				std::stringstream out;
 
-			std::stringstream out;
+				out << std::fixed << std::setprecision(CDSolution::streamSize);
+				out << "NumberOfIterations: " << numberOfIterations << "\n";
+				out << "GlobalChange: " << globalChange << "\n";
 
-			out << std::fixed << std::setprecision(CDSolution::streamSize);
-			out << "NumberOfIterations: " << numberOfIterations << "\n";
-			out << "GlobalChange: " << globalChange << "\n";
+				out << Utils::print(CDSolution::streamSize, x);
 
-			out << Utils::print(CDSolution::streamSize, x);
+				out << "\t\t" << intercept;
 
-			out << "\t\t" << intercept;
-
-			return out.str();
+				return out.str();
+			}
 		}
 	}
 }

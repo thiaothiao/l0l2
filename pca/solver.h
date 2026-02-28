@@ -23,7 +23,7 @@ namespace l0l2
         {
         public:
             using Scalar = ScalarType;
-            using Regressor = L0L2Regressor<Scalar>;
+            using Regressor = leastsquares::L0L2Regressor<Scalar>;
             using RegressorParam = Regressor::Param;
 
             struct Param final
@@ -32,7 +32,7 @@ namespace l0l2
                     Scalar deltaInput = static_cast<Scalar>(0),
                     Scalar betaInput = static_cast<Scalar>(1),
                     Index nbComponentsInput = static_cast<Index>(2),
-                    Strategy strategyInput = Strategy::FromZeroSolution,
+                    leastsquares::Strategy strategyInput = leastsquares::Strategy::FromZeroSolution,
                     Scalar toleranceInput = static_cast<Scalar>(1e-4),
                     unsigned int maximumNumberOfIterationsInput = 10000U,
                     Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
@@ -70,7 +70,7 @@ namespace l0l2
         {
         public:
             using Scalar = ScalarType;
-            using Regressor = FullPathSolver<Scalar>;
+            using Regressor = leastsquares::FullPathSolver<Scalar>;
             using RegressorParam = Regressor::Param;
 
             struct Param final
@@ -79,7 +79,7 @@ namespace l0l2
                     Scalar deltaInput = static_cast<Scalar>(0),
                     Scalar betaInput = static_cast<Scalar>(1),
                     Index nbComponentsInput = static_cast<Index>(2),
-                    Strategy strategyInput = Strategy::FromZeroSolution)
+                    leastsquares::Strategy strategyInput = leastsquares::Strategy::FromZeroSolution)
                     :regressorParam{ deltaInput, betaInput , strategyInput},
                     nbComponents{ nbComponentsInput }//to optimize
                 {

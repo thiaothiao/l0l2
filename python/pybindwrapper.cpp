@@ -15,57 +15,57 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<float>>;
-template class l0l2::linearmodel::FullPathSolver<float>;
+template class l0l2::linearmodel::leastsquares::CyclicalCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
+template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
 template<>
-const std::streamsize l0l2::linearmodel::Solution<float>::streamSize = 7;
+const std::streamsize l0l2::linearmodel::leastsquares::Solution<float>::streamSize = 7;
 template<>
-const float l0l2::linearmodel::Utils<float>::epsilon = 1e-6f;
+const float l0l2::Utils<float>::epsilon = 1e-6f;
 template<>
-const std::streamsize l0l2::linearmodel::CDSolution<float>::streamSize = 7;
+const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<float>::streamSize = 7;
 
-template class l0l2::linearmodel::CyclicalCoordinateDescent<l0l2::linearmodel::L0L2ModelImplementation<double>>;
-template class l0l2::linearmodel::FullPathSolver<double>;
+template class l0l2::linearmodel::leastsquares::CyclicalCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
+template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
 template<>
-const std::streamsize l0l2::linearmodel::Solution<double>::streamSize = 9;
+const std::streamsize l0l2::linearmodel::leastsquares::Solution<double>::streamSize = 9;
 template<>
-const double l0l2::linearmodel::Utils<double>::epsilon = 1e-8;
+const double l0l2::Utils<double>::epsilon = 1e-8;
 template<>
-const std::streamsize l0l2::linearmodel::CDSolution<double>::streamSize = 9;
+const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<double>::streamSize = 9;
 
 namespace
 {
-    using CDStatus = l0l2::linearmodel::CDStatus;
-    using Strategy = l0l2::linearmodel::Strategy;
-    using Index = l0l2::linearmodel::Index;
+    using CDStatus = l0l2::linearmodel::leastsquares::CDStatus;
+    using Strategy = l0l2::linearmodel::leastsquares::Strategy;
+    using Index = l0l2::Index;
 
-    using FullPathSolverf = l0l2::linearmodel::FullPathSolver<float>;
+    using FullPathSolverf = l0l2::linearmodel::leastsquares::FullPathSolver<float>;
     using FullPathSolverParamf = FullPathSolverf::Param;
-    using Matrixf = l0l2::linearmodel::Matrix<float>;
-    using Vectorf = l0l2::linearmodel::Vector<float>;
-    using Solutionf = l0l2::linearmodel::Solution<float>;
-    using L0L2Regressorf = l0l2::linearmodel::L0L2Regressor<float>;
+    using Matrixf = l0l2::Matrix<float>;
+    using Vectorf = l0l2::Vector<float>;
+    using Solutionf = l0l2::linearmodel::leastsquares::Solution<float>;
+    using L0L2Regressorf = l0l2::linearmodel::leastsquares::L0L2Regressor<float>;
     using L0L2RegressorParamf = L0L2Regressorf::Param;
-    using CDSolutionf = l0l2::linearmodel::CDSolution<float>;
-    using Utilsf = l0l2::linearmodel::Utils<float>;
+    using CDSolutionf = l0l2::linearmodel::leastsquares::CDSolution<float>;
+    using Utilsf = l0l2::Utils<float>;
     using L0L2SPCAf = l0l2::linearmodel::L0L2SPCA<float>;
     using L0L2SPCAParamf = L0L2SPCAf::Param;
     using FullPathL0L2SPCAf = l0l2::linearmodel::FullPathL0L2SPCA<float>;
     using FullPathL0L2SPCAParamf = FullPathL0L2SPCAf::Param;
 
-    using FullPathSolverd = l0l2::linearmodel::FullPathSolver<double>;
+    using FullPathSolverd = l0l2::linearmodel::leastsquares::FullPathSolver<double>;
     using FullPathSolverParamd = FullPathSolverd::Param;
-    using Matrixd = l0l2::linearmodel::Matrix<double>;
-    using Vectord = l0l2::linearmodel::Vector<double>;
-    using Solutiond = l0l2::linearmodel::Solution<double>;
-    using L0L2Regressord = l0l2::linearmodel::L0L2Regressor<double>;
+    using Matrixd = l0l2::Matrix<double>;
+    using Vectord = l0l2::Vector<double>;
+    using Solutiond = l0l2::linearmodel::leastsquares::Solution<double>;
+    using L0L2Regressord = l0l2::linearmodel::leastsquares::L0L2Regressor<double>;
     using L0L2RegressorParamd = L0L2Regressord::Param;
-    using CDSolutiond = l0l2::linearmodel::CDSolution<double>;
-    using Utilsd = l0l2::linearmodel::Utils<double>;
+    using CDSolutiond = l0l2::linearmodel::leastsquares::CDSolution<double>;
+    using Utilsd = l0l2::Utils<double>;
     using L0L2SPCAd = l0l2::linearmodel::L0L2SPCA<double>;
     using L0L2SPCAParamd = L0L2SPCAd::Param;
     using FullPathL0L2SPCAd = l0l2::linearmodel::FullPathL0L2SPCA<double>;
@@ -161,16 +161,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("x", &CDSolutionf::x)
         .def_readwrite("intercept", &CDSolutionf::intercept)
         .def("__str__", &CDSolutionf::toString);
-
-    pybind11::class_<Utilsf>(m, "Utilsf")
-        //.def(pybind11::init())
-        .def_static("objectiveValue", &Utilsf::objectiveValue, 
-            pybind11::arg("matData"),
-            pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"),
-            pybind11::arg("beta"),
-            pybind11::arg("delta"),
-            pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
         .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
@@ -286,15 +276,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("x", &CDSolutiond::x)
         .def_readwrite("intercept", &CDSolutiond::intercept)
         .def("__str__", &CDSolutiond::toString);
-
-    pybind11::class_<Utilsd>(m, "Utilsd")
-        .def_static("objectiveValue", &Utilsd::objectiveValue,
-            pybind11::arg("matData"),
-            pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"),
-            pybind11::arg("beta"),
-            pybind11::arg("delta"),
-            pybind11::arg("x"), "A member function that fits data on all path.");
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
         .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
