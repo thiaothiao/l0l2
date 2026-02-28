@@ -11,7 +11,7 @@ message(STATUS "Using pybind11 found at: ${pybind11_DIR}")
 find_package(pybind11 REQUIRED)
 
 # Create Python module
-pybind11_add_module(l0l2 SHARED pybind_wrapper.cpp)
+pybind11_add_module(l0l2 SHARED pybindwrapper.cpp)
 
 # Needed for importing the "l0l2" module from the build directory
 set(INIT_PY "${CMAKE_CURRENT_BINARY_DIR}/__init__.py")

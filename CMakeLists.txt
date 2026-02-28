@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.2)
+cmake_minimum_required(VERSION 4.1)
 project(l0l2 CXX)
 
 message(STATUS "Using openMP")
@@ -10,11 +10,9 @@ endif()
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_compile_definitions(_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS)
 
-set(LSDIR "${PROJECT_SOURCE_DIR}/leastsquares")
-set(PCADIR "${PROJECT_SOURCE_DIR}/pca")
 message(STATUS "Using Eigen3")
 message(STATUS "Using thread-pool")
-include_directories(${LSDIR} ${PCADIR} "$ENV{EIGEN3_INCLUDE_DIR}" "$ENV{THREAD_POOL_INCLUDE_DIR}")
+include_directories(${PROJECT_SOURCE_DIR} "$ENV{EIGEN3_INCLUDE_DIR}" "$ENV{THREAD_POOL_INCLUDE_DIR}")
 
 # Add the subdirectories
 add_subdirectory(leastsquares)

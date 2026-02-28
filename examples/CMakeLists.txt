@@ -7,6 +7,11 @@ add_custom_command(TARGET leastsquares POST_BUILD
 )
 
 add_executable(pca pca.cpp)
+if (MSVC)
+    target_compile_options(pca PRIVATE /bigobj)
+else()
+    target_compile_options(pca PRIVATE -Wa,-mbig-obj)
+endif()
 
 add_custom_command(TARGET pca POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy

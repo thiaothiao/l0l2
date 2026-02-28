@@ -11,33 +11,33 @@
 #include <concepts>
 
 
-#include "SparsePCA.h"
-#include "Utils.h"
+#include "leastsquares/utils.h"
+#include "pca/solver.h"
 
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
 template<>
-const std::streamsize l0l2::linearmodel::Solution<float>::streamSize = 7;
+const std::streamsize l0l2::linearmodel::leastsquares::Solution<float>::streamSize = 7;
 template<>
-const float l0l2::linearmodel::Utils<float>::epsilon = 1e-6f;
+const float l0l2::Utils<float>::epsilon = 1e-6f;
 template<>
-const std::streamsize l0l2::linearmodel::CDSolution<float>::streamSize = 7;
+const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<float>::streamSize = 7;
 
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
 template<>
-const std::streamsize l0l2::linearmodel::Solution<double>::streamSize = 9;
+const std::streamsize l0l2::linearmodel::leastsquares::Solution<double>::streamSize = 9;
 template<>
-const double l0l2::linearmodel::Utils<double>::epsilon = 1e-8;
+const double l0l2::Utils<double>::epsilon = 1e-8;
 template<>
-const std::streamsize l0l2::linearmodel::CDSolution<double>::streamSize = 9;
+const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<double>::streamSize = 9;
 
 namespace
 {
 
     template<std::floating_point Scalar>
     static void save(Scalar beta,
-        const std::list<l0l2::linearmodel::Solution<Scalar>>& results,
+        const std::list<l0l2::linearmodel::leastsquares::Solution<Scalar>>& results,
         const std::string& filename)
     {
         std::ofstream file;
@@ -63,10 +63,10 @@ namespace
     }
 
     template<std::floating_point Scalar>
-    static void saveMatrix(const typename l0l2::linearmodel::Matrix<Scalar>& mat,
+    static void saveMatrix(const typename l0l2::Matrix<Scalar>& mat,
         const std::string& filename)
     {
-        using Index = l0l2::linearmodel::Index;
+        using Index = l0l2::Index;
 
         const auto n = static_cast<Index>(mat.cols());
         const auto m = static_cast<Index>(mat.rows());
@@ -76,7 +76,7 @@ namespace
 
         file << std::fixed << std::setprecision(10);
 
-        using Index = typename l0l2::linearmodel::Index;
+        using Index = typename l0l2::Index;
 
         for (Index i = 0; i < m; ++i)
         {
@@ -92,7 +92,7 @@ namespace
     }
 
     template<std::floating_point Scalar>
-    static void saveVector(const typename l0l2::linearmodel::Vector<Scalar>& vect,
+    static void saveVector(const typename l0l2::Vector<Scalar>& vect,
         const std::string& filename)
     {
         std::ofstream file;
@@ -100,7 +100,7 @@ namespace
 
         file << std::fixed << std::setprecision(10);
 
-        using Index = typename l0l2::linearmodel::Index;
+        using Index = typename l0l2::Index;
 
         const auto n = static_cast<Index>(vect.size());
 
@@ -117,9 +117,9 @@ namespace
     template<std::floating_point Scalar>
     static auto simulatedData()
     {
-        using Matrix = l0l2::linearmodel::Matrix<Scalar>;
-        using Vector = l0l2::linearmodel::Vector<Scalar>;
-        using Index = l0l2::linearmodel::Index;
+        using Matrix = l0l2::Matrix<Scalar>;
+        using Vector = l0l2::Vector<Scalar>;
+        using Index = l0l2::Index;
 
         Matrix AData(8, 20);
         AData <<
@@ -197,18 +197,18 @@ namespace
     }
 
     template<std::floating_point ScalarType>
-    static auto run(const l0l2::linearmodel::Matrix<ScalarType>& AData,//AData[j*numberOfRows + i]
-        const l0l2::linearmodel::Vector<ScalarType>& alpha,
+    static auto run(const l0l2::Matrix<ScalarType>& AData,//AData[j*numberOfRows + i]
+        const l0l2::Vector<ScalarType>& alpha,
         bool matrixIsCovariance,
         ScalarType beta,
         ScalarType delta)
     {
         using Scalar = ScalarType;
-        using Matrix = l0l2::linearmodel::Matrix<Scalar>;
-        using Vector = l0l2::linearmodel::Vector<Scalar>;
-        using Index = l0l2::linearmodel::Index;
-        using Utils = l0l2::linearmodel::Utils<Scalar>;
-        using Strategy = l0l2::linearmodel::Strategy;
+        using Matrix = l0l2::Matrix<Scalar>;
+        using Vector = l0l2::Vector<Scalar>;
+        using Index = l0l2::Index;
+        using Utils = l0l2::Utils<Scalar>;
+        using Strategy = l0l2::linearmodel::leastsquares::Strategy;
         using L0L2SPCA = l0l2::linearmodel::L0L2SPCA<Scalar>;
         using Param = L0L2SPCA::Param;
         using FullPathL0L2SPCA = l0l2::linearmodel::FullPathL0L2SPCA<Scalar>;
@@ -282,7 +282,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -290,7 +290,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -322,7 +322,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -330,7 +330,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "L2SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -362,7 +362,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -370,7 +370,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "L02SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -398,7 +398,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -406,7 +406,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "FP0SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -434,7 +434,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -442,7 +442,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "FP2SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -470,7 +470,7 @@ namespace
 
                 const auto stop = std::chrono::high_resolution_clock::now();
 
-                //Eigen::Map<const l0l2::linearmodel::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
+                //Eigen::Map<const l0l2::Matrix<Scalar>> componentsX(components.data(), n, param.nbComponents);
 
                 // Calculate the duration and cast to microseconds
                 const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
@@ -478,7 +478,7 @@ namespace
 
                 saveMatrix<Scalar>(components, "FP02SparsePCAs.csv");
                 //std::cout << "Objective value " <<
-                //    Utils::objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
+                //    objectiveValue(MatData, m, n, Vect, matrixIsCovariance, beta, delta, solution.x) << "\n";
                 //std::cout << "\nSolution\n" << solution.toString() << "\n";
                 //std::cout << "\nSolution\n" << componentsX << "\n";
 
@@ -494,9 +494,9 @@ int main()
 {
     using Scalar = double;
 
-    using Matrix = l0l2::linearmodel::Matrix<Scalar>;
-    using Vector = l0l2::linearmodel::Vector<Scalar>;
-    using Index = l0l2::linearmodel::Index;
+    using Matrix = l0l2::Matrix<Scalar>;
+    using Vector = l0l2::Vector<Scalar>;
+    using Index = l0l2::Index;
 
     const auto [A, alpha] = simulatedData<Scalar>();
 
