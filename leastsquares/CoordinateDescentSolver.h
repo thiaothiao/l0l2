@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "Utils.h"
+#include "L2Regressors.h"
 
 namespace l0l2
 {
@@ -49,7 +50,7 @@ namespace l0l2
             */
             CyclicalCoordinateDescent(const Param& param,
                 bool withIntercept = false)
-                :m_Param{param},
+                :m_Param{ param },
                 m_WithIntercept{ withIntercept },
                 m_FromBothConverged{}
             {
@@ -148,97 +149,6 @@ namespace l0l2
             static Scalar stepJ(const Param& param, Scalar zJ, Scalar uJ);
         };
 
-        template<std::floating_point ScalarType>
-        class L2RegressorPCG
-        {
-        public:
-            using Scalar = ScalarType;
-
-            L2RegressorPCG(Scalar beta) : m_Beta{ beta }
-            {
-            }
-
-            Vector<Scalar> fitNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
-                const Vector<Scalar>& vectData,
-                bool matrixIsCovariance,
-                Scalar epsilon,
-                unsigned int maxNumberOfIterations) const;
-
-        private:
-            const Scalar m_Beta;
-        };
-
-        template<std::floating_point ScalarType>
-        Vector<typename L2RegressorPCG<ScalarType>::Scalar>
-            L2RegressorPCG<ScalarType>::fitNoIntercept(
-                const Matrix<Scalar>& matData/*colmajor*/,
-                const Vector<Scalar>& vectData,
-                bool matrixIsCovariance,
-                Scalar epsilon,
-                unsigned int maxNumberOfIterations) const
-        {
-            using Vector = Vector<Scalar>;
-            using Utils = Utils<Scalar>;
-
-            const auto n = static_cast<Index>(matData.cols());
-
-            Vector x = Vector::Zero(n);
-
-            const Vector M = matrixIsCovariance ?
-                static_cast<Vector>(matData.diagonal().array() + m_Beta)
-                : static_cast<Vector>(matData.cwiseAbs2().colwise().sum().transpose().array() + m_Beta);
-
-            Vector r = matrixIsCovariance ?
-                static_cast<Vector>(matData * (vectData - x) + m_Beta * x)
-                : static_cast<Vector>(matData.transpose() * (vectData - matData * x) + m_Beta * x);
-
-            Vector p = r.cwiseQuotient(M);
-
-            Scalar r0dotz0 = r.dot(p);
-
-            {
-                const Vector w = matrixIsCovariance ?
-                    static_cast<Vector>(matData * p + m_Beta * p)
-                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
-                
-                const Scalar alphaValue = r0dotz0 / p.dot(w);
-
-                x += alphaValue * p;
-                r -= alphaValue * w;
-            }
-
-            int iter = 0;
-            while (r.norm() > epsilon)
-            {
-                const Vector z = r.cwiseQuotient(M);// Mzk = rk
-
-                const Scalar rdotz = r.dot(z);
-
-                p = (rdotz / r0dotz0) * p + z;
-
-                const Vector w = matrixIsCovariance ?
-                    static_cast<Vector>(matData * p + m_Beta * p)
-                    : static_cast<Vector>(matData.transpose() * (matData * p) + m_Beta * p);
-
-                const Scalar alphaValue = rdotz / p.dot(w);
-
-                x += alphaValue * p;
-                r -= alphaValue * w;
-
-                r0dotz0 = rdotz;
-
-                ++iter;
-
-                if (iter > maxNumberOfIterations)
-                {
-                    break;
-                }
-            }
-            
-            return x;
-        }
-
 
         template<std::floating_point ScalarType>
         inline L0L2ModelImplementation<ScalarType>::Scalar
@@ -263,7 +173,7 @@ namespace l0l2
             const auto n = static_cast<Index>(matData.cols());
 
             CDSolution solution{ n };
-            solution.x = std::move(w0);// be carefull with rvalue reference. w0 is moved!
+            solution.x = std::move(w0);
 
             auto& x = solution.x;
             auto& numberOfIterations = solution.numberOfIterations;
@@ -271,7 +181,7 @@ namespace l0l2
             auto& dualityGap = solution.dualityGap;
             auto& status = solution.status;
 
-            Vector R = matrixIsCovariance 
+            auto R = matrixIsCovariance 
                 ? static_cast<Vector>(matData * (vectData - x))
                 : static_cast<Vector>(vectData - matData * x);
 
@@ -284,9 +194,8 @@ namespace l0l2
             {
                 globalChange = static_cast<Scalar>(0);
 
-                // cyclical part
                 for (Index j = 0; j < n; ++j)
-                {//Not auto vectorized
+                {
                     const auto zJ = zJs[j];
 
                     if (zJ == static_cast<Scalar>(0))
