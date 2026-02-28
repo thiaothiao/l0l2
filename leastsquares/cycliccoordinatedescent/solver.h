@@ -80,7 +80,7 @@ namespace l0l2
             }
 
             template<std::floating_point ScalarType>
-            using L0L2Regressor = CyclicalCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
+            using L0L2Regressor = CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
         }
     }
 }

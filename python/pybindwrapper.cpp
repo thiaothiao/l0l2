@@ -15,7 +15,7 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
-template class l0l2::linearmodel::leastsquares::CyclicalCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
+template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
@@ -26,7 +26,7 @@ const float l0l2::Utils<float>::epsilon = 1e-6f;
 template<>
 const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<float>::streamSize = 7;
 
-template class l0l2::linearmodel::leastsquares::CyclicalCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
+template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;

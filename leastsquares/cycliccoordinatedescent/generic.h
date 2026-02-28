@@ -36,7 +36,7 @@ namespace l0l2
             * It produces solutions using cyclical coordinate descent algorithm.
             */
             template <ModelLike ModelImplementationType>
-            class CyclicalCoordinateDescent final
+            class CyclicCoordinateDescent final
             {
             public:
                 using ModelImplementation = ModelImplementationType;/*!< Alias for the model implementation type */
@@ -50,7 +50,7 @@ namespace l0l2
                   \param tolerance covergence tolerance on the coordinates changes.
                   \param maximumNumberOfIterations maximum number of iterations allowed.
                 */
-                CyclicalCoordinateDescent(const Param& param,
+                CyclicCoordinateDescent(const Param& param,
                     bool withIntercept = false)
                     :m_Param{ param },
                     m_WithIntercept{ withIntercept },
@@ -101,7 +101,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fitFrom(
+                CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
                     const Matrix<Scalar>& matData,
                     bool matrixIsCovariance,
                     const Vector<Scalar>& vectData,
@@ -199,7 +199,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fit(
+                CyclicCoordinateDescent<ModelImplementationType>::fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
@@ -221,7 +221,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fitNoIntercept(
+                CyclicCoordinateDescent<ModelImplementationType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
@@ -247,7 +247,7 @@ namespace l0l2
                     m_FromBothConverged.clear(std::memory_order_relaxed);
 
                     auto fromZeroFuture =
-                        std::async(std::launch::async, &CyclicalCoordinateDescent::fitFrom, this,
+                        std::async(std::launch::async, &CyclicCoordinateDescent::fitFrom, this,
                             matData,
                             matrixIsCovariance,
                             vectData,
