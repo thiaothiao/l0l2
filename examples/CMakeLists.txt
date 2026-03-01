@@ -1,4 +1,4 @@
-add_executable(leastsquares leastsquares.cpp)
+add_executable(leastsquares leastsquares.cpp simu.h)
 
 add_custom_command(TARGET leastsquares POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
@@ -6,7 +6,7 @@ add_custom_command(TARGET leastsquares POST_BUILD
             ${CMAKE_CURRENT_BINARY_DIR}/$<TARGET_FILE_NAME:leastsquares>
 )
 
-add_executable(pca pca.cpp)
+add_executable(pca pca.cpp simu.h)
 if (MSVC)
     target_compile_options(pca PRIVATE /bigobj)
 else()
