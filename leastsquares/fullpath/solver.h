@@ -107,10 +107,15 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance);
 
-                std::list<Solution<Scalar>> solve(
+                std::list<Solution<Scalar>> solveFromZero(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance, bool fromZeroSolution);
+                    bool matrixIsCovariance);
+
+                std::list<Solution<Scalar>> solveFromL2(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance);
 
                 const Param m_Param;
 
@@ -168,34 +173,30 @@ namespace l0l2
 
                 FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy}, false };
 
-                if (strategy != Strategy::FromBothSolutions)
+                if (strategy == Strategy::FromZeroSolution)
                 {
-                    return regressor.solve(
-                        matData,
-                        vectData,
-                        matrixIsCovariance,
-                        strategy == Strategy::FromZeroSolution);
+                    return regressor.solveFromZero(matData, vectData, matrixIsCovariance);
+                }
+                else if (strategy == Strategy::FromL2Solution)
+                {
+                    return regressor.solveFromL2(matData, vectData, matrixIsCovariance);
                 }
                 else
                 {
                     auto fromZeroFuture =
-                        std::async(std::launch::async, &FullPathSolver::solve, &regressor,
-                            matData,
-                            vectData,
-                            matrixIsCovariance,
-                            true);
+                        std::async(std::launch::async, &FullPathSolver::solveFromZero, 
+                            &regressor, matData, vectData, matrixIsCovariance);
 
-                    auto fromL2SolutionResults = regressor.solve(
-                        matData,
-                        vectData,
-                        matrixIsCovariance,
-                        false);
+                    auto fromL2SolutionResults = 
+                        regressor.solveFromL2(matData, vectData, matrixIsCovariance);
 
                     auto fromZeroSolutionResults = fromZeroFuture.get();
 
+                    const auto fromZeroSmallestDelta = fromZeroSolutionResults.back().delta - Utils::epsilon;
+
                     for (auto it = fromL2SolutionResults.begin(); it != fromL2SolutionResults.end(); ++it)
                     {
-                        if (it->delta < fromZeroSolutionResults.back().delta - Utils::epsilon)
+                        if (it->delta < fromZeroSmallestDelta)
                         {
                             fromZeroSolutionResults.push_back(std::move(*it));
                         }
@@ -248,45 +249,56 @@ namespace l0l2
                 Solution minBoundSolution{};
                 Solution maxBoundSolution{};
 
-                if (m_Param.strategy != Strategy::FromBothSolutions)
+                if (m_Param.strategy == Strategy::FromZeroSolution)
                 {
-                    auto results = solve(matData, vectData, matrixIsCovariance,
-                        m_Param.strategy == Strategy::FromZeroSolution);
+                    auto results = solveFromZero(matData, vectData, matrixIsCovariance);
                     if (!results.empty())
                     {
-                        auto minBoundIt = results.begin();
+                        auto minBoundIt = results.rbegin();
 
                         minBoundSolution = std::move(*minBoundIt);
 
                         maxBoundSolution = std::move(*++minBoundIt);
                     }
                 }
+                else if (m_Param.strategy == Strategy::FromL2Solution)
+                {
+                    auto results = solveFromL2(matData, vectData, matrixIsCovariance);
+                    if (!results.empty())
+                    {
+                        auto maxBoundIt = results.begin();
+
+                        maxBoundSolution = std::move(*maxBoundIt);
+
+                        minBoundSolution = std::move(*++maxBoundIt);
+                    }
+                }
                 else
                 {
                     auto fromZeroFuture =
-                        std::async(std::launch::async, &FullPathSolver::solve, this,
-                            matData,
-                            vectData,
-                            matrixIsCovariance,
-                            true);
+                        std::async(std::launch::async, &FullPathSolver::solveFromZero, 
+                            this, matData, vectData, matrixIsCovariance);
 
-                    auto fromL2SolutionResults = solve(
-                        matData,
-                        vectData,
-                        matrixIsCovariance,
-                        false);
+                    auto fromL2SolutionResults = 
+                        solveFromL2(matData, vectData, matrixIsCovariance);
 
                     auto fromZeroSolutionResults = fromZeroFuture.get();
 
-                    if (!fromZeroSolutionResults.empty() || !fromL2SolutionResults.empty())
+                    if (!fromZeroSolutionResults.empty())
                     {
-                        auto minBoundIt = fromZeroSolutionResults.empty()
-                            ? fromL2SolutionResults.begin()
-                            : fromZeroSolutionResults.begin();
+                        auto minBoundIt = fromZeroSolutionResults.rbegin();
 
                         minBoundSolution = std::move(*minBoundIt);
 
                         maxBoundSolution = std::move(*++minBoundIt);
+                    }
+                    else
+                    {
+                        auto maxBoundIt = fromL2SolutionResults.begin();
+
+                        maxBoundSolution = std::move(*maxBoundIt);
+
+                        minBoundSolution = std::move(*++maxBoundIt);
                     }
                 }
 
@@ -326,9 +338,9 @@ namespace l0l2
 
             template<std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::solve(const Matrix<Scalar>& matData/*colmajor*/,
+                FullPathSolver<ScalarType>::solveFromZero(const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance, bool fromZeroSolution)
+                    bool matrixIsCovariance)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
@@ -338,169 +350,38 @@ namespace l0l2
 
                 const auto n = static_cast<Index>(matData.cols());
 
-                const auto tau = fromZeroSolution ? static_cast<Scalar>(1) : static_cast<Scalar>(-1);
+                const auto tau = static_cast<Scalar>(1);
 
                 std::list<Solution> results;
 
                 const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
-
-                if (fromZeroSolution)
                 {
                     const auto deltaZero = ATb.cwiseAbs().maxCoeff() / m_Param.beta;
 
-                    results.emplace_back(std::numeric_limits<Scalar>::max(),
-                        Vector::Zero(n), -ATb);
+                    results.emplace_back(
+                        std::numeric_limits<Scalar>::max(), Vector::Zero(n), -ATb);
 
-                    results.emplace_back(deltaZero,
-                        results.back().x,
-                        results.back().grad);
-
-                    bool leave = false;
-                    bool iamOnTarget = false;
-                    bool otherOnTarget = false;
-
+                    results.emplace_back(
+                        deltaZero, Vector::Zero(n), -ATb);//TODO avoid repeating and optimize
+                    
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                         m_DeltaFromZeroSolution = deltaZero;
-                        if (m_Param.delta > static_cast<Scalar>(0))
-                        {
-                            if (m_DeltaFromZeroSolution <= m_Param.delta)
-                            {
-                                iamOnTarget = true;
-                            }
-                            else if (m_Param.delta <= m_DeltaFromL2Solution)
-                            {
-                                otherOnTarget = true;
-                            }
-                        }
 
-                        if (!iamOnTarget && !otherOnTarget
-                            && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                         {
-                            leave = true;
+                            return results;
                         }
                     }
                     else
                     {
                         m_DeltaFromZeroSolution = deltaZero;
-                        if (m_Param.delta > static_cast<Scalar>(0))
+
+                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                         {
-                            if (m_DeltaFromZeroSolution <= m_Param.delta)
-                            {
-                                iamOnTarget = true;
-                            }
+                            return results;
                         }
-
-                        if (!iamOnTarget && m_DeltaFromZeroSolution <= Utils::epsilon)
-                        {
-                            leave = true;
-                        }
-                    }
-
-                    if (iamOnTarget)
-                    {
-                        auto minBoundIt = results.crbegin();
-
-                        const auto& minBoundSolution = *minBoundIt;
-
-                        const auto& maxBoundSolution = *++minBoundIt;
-
-
-                        return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                    }
-                    else if (otherOnTarget)
-                    {
-                        return std::list<Solution>{};
-                    }
-                    else if (leave)
-                    {
-                        return results;
-                    }
-                }
-                else
-                {
-                    Solution solutionBar{ n };
-
-                    solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
-
-                    solutionBar.delta = std::numeric_limits<Scalar>::max();
-                    for (Index i = 0; i < n; ++i)
-                    {
-                        // TODO optimize
-                        const auto absWeight = std::abs(solutionBar.x[i]);
-                        if (Utils::epsilon < absWeight && absWeight < solutionBar.delta)
-                        {
-                            solutionBar.delta = absWeight;
-                        }
-                    }
-
-                    results.emplace_front(static_cast<Scalar>(0),
-                        solutionBar.x,
-                        solutionBar.grad);
-
-                    results.push_front(std::move(solutionBar));
-
-                    bool leave = false;
-                    bool iamOnTarget = false;
-                    bool otherOnTarget = false;
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
-                    {
-                        const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                        m_DeltaFromL2Solution = solutionBar.delta;
-                        if (m_Param.delta > static_cast<Scalar>(0))
-                        {
-                            if (m_Param.delta <= m_DeltaFromL2Solution)
-                            {
-                                iamOnTarget = true;
-                            }
-                            else if (m_DeltaFromZeroSolution <= m_Param.delta)
-                            {
-                                otherOnTarget = true;
-                            }
-                        }
-
-                        if (!iamOnTarget && !otherOnTarget
-                            && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
-                        {
-                            leave = true;
-                        }
-                    }
-                    else
-                    {
-                        m_DeltaFromL2Solution = solutionBar.delta;
-                        if (m_Param.delta > static_cast<Scalar>(0))
-                        {
-                            if (m_Param.delta <= m_DeltaFromL2Solution)
-                            {
-                                iamOnTarget = true;
-                            }
-                        }
-
-                        if (!iamOnTarget &&
-                            std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution)// TODO use delta of zero
-                        {
-                            leave = true;
-                        }
-                    }
-
-                    if (iamOnTarget)
-                    {
-                        auto maxBoundIt = results.cbegin();
-
-                        const auto& maxBoundSolution = *maxBoundIt;
-
-                        const auto& minBoundSolution = *++maxBoundIt;
-
-                        return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                    }
-                    else if (otherOnTarget)
-                    {
-                        return std::list<Solution>{};
-                    }
-                    else if (leave)
-                    {
-                        return results;
                     }
                 }
 
@@ -508,12 +389,31 @@ namespace l0l2
 
                 while (true)
                 {
+                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    {
+                        const std::lock_guard<std::mutex> lock(m_DeltasMutex);
+                        if (m_Param.delta >= static_cast<Scalar>(0))
+                        {
+                            if (m_Param.delta <= m_DeltaFromL2Solution)
+                            {
+                                return std::list<Solution>{};
+                            }
+                        }
+                        else
+                        {
+                            if (m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
                     ++numberIters;
 
                     {
-                        const auto& solutionMaam = fromZeroSolution ? *(++results.crbegin()) : *(++results.cbegin());
+                        const auto& solutionMaam = *(++results.crbegin()) ;
 
-                        const auto& solutionYaay = fromZeroSolution ? results.back() : results.front();
+                        const auto& solutionYaay = results.back();
 
                         const auto step = FullPathStep(m_Param.beta);
 
@@ -537,150 +437,36 @@ namespace l0l2
                             break;
                         }
 
-                        bool leave = false;
-                        bool iamOnTarget = false;
-                        bool otherOnTarget = false;
+                        const auto solutionNewDelta = solutionNew.delta;
+
+                        results.push_back(std::move(solutionNew));
+
                         if (m_Param.strategy == Strategy::FromBothSolutions)
                         {
                             const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                            if (fromZeroSolution)
-                            {
-                                m_DeltaFromZeroSolution = solutionNew.delta;
-                            }
-                            else
-                            {
-                                m_DeltaFromL2Solution = solutionNew.delta;
-                            }
 
-                            if (m_Param.delta > static_cast<Scalar>(0))
-                            {
-                                if (fromZeroSolution)
-                                {
-                                    if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                    {
-                                        iamOnTarget = true;
-                                    }
-                                    else if (m_Param.delta <= m_DeltaFromL2Solution)
-                                    {
-                                        otherOnTarget = true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (m_Param.delta <= m_DeltaFromL2Solution)
-                                    {
-                                        iamOnTarget = true;
-                                    }
-                                    else if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                    {
-                                        otherOnTarget = true;
-                                    }
-                                }
-                            }
+                            m_DeltaFromZeroSolution = solutionNewDelta;
 
-                            if (!iamOnTarget && !otherOnTarget
-                                && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                            if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                             {
-                                leave = true;
+                                return results;
                             }
                         }
                         else
                         {
-                            if (fromZeroSolution)
+                            m_DeltaFromZeroSolution = solutionNewDelta;
+
+                            if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                             {
-                                m_DeltaFromZeroSolution = solutionNew.delta;
+                                return results;
                             }
-                            else
-                            {
-                                m_DeltaFromL2Solution = solutionNew.delta;
-                            }
-
-                            if (m_Param.delta > static_cast<Scalar>(0))
-                            {
-                                if (fromZeroSolution)
-                                {
-                                    if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                    {
-                                        iamOnTarget = true;
-                                    }
-                                }
-                                else
-                                {
-                                    if (m_Param.delta <= m_DeltaFromL2Solution)
-                                    {
-                                        iamOnTarget = true;
-                                    }
-                                }
-                            }
-
-                            if (fromZeroSolution)
-                            {
-                                if (!iamOnTarget && m_DeltaFromZeroSolution <= Utils::epsilon)
-                                {
-                                    leave = true;
-                                }
-                            }
-                            else
-                            {
-                                if (!iamOnTarget
-                                    && std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution)
-                                {
-                                    leave = true;
-                                }
-                            }
-                        }
-
-                        if (fromZeroSolution)
-                        {
-                            results.push_back(std::move(solutionNew));
-
-                            if (iamOnTarget)
-                            {
-                                auto minBoundIt = results.crbegin();
-
-                                const auto& minBoundSolution = *minBoundIt;
-
-                                const auto& maxBoundSolution = *++minBoundIt;
-
-
-                                return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                            }
-                            else if (otherOnTarget)
-                            {
-                                return std::list<Solution>{};
-                            }
-                        }
-                        else
-                        {
-                            results.push_front(std::move(solutionNew));
-
-                            if (iamOnTarget)
-                            {
-                                auto maxBoundIt = results.cbegin();
-
-                                const auto& maxBoundSolution = *maxBoundIt;
-
-                                const auto& minBoundSolution = *++maxBoundIt;
-
-                                return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                            }
-                            else if (otherOnTarget)
-                            {
-                                return std::list<Solution>{};
-                            }
-                        }
-
-                        if (leave)
-                        {
-                            return results;
                         }
                     }
 
-                    const auto& solutionLast = fromZeroSolution ? results.back() : results.front();
-
+                    const auto& solutionLast =  results.back();
                     {
-                        const auto fullPathDone = (!fromZeroSolution) && solutionLast.x.norm() <= Utils::epsilon
-                            || fromZeroSolution && solutionLast.x.cwiseAbs().minCoeff() >= solutionLast.delta - Utils::epsilon;
+                        const auto fullPathDone = 
+                            solutionLast.x.cwiseAbs().minCoeff() >= solutionLast.delta - Utils::epsilon;
 
                         if (fullPathDone)
                         {
@@ -702,13 +488,12 @@ namespace l0l2
 
                         if (normMax < std::numeric_limits<Scalar>::max())
                         {
-                            if (fromZeroSolution && normMax >= solutionLast.delta - Utils::epsilon)
+                            if (normMax >= solutionLast.delta - Utils::epsilon)
                             {// constant for delta in [deltaCandidate, delta]. improve delta
 
                                 auto absGradMax = std::numeric_limits<Scalar>::min();
                                 for (Index i = 0; i < n; ++i)
-                                {
-                                    // TODO optimize
+                                {  // TODO optimize
                                     const auto absXi = std::abs(solutionLast.x[i]);
                                     if (absXi <= Utils::epsilon)
                                     {
@@ -725,71 +510,24 @@ namespace l0l2
                                 {
                                     const auto deltaCandidate = absGradMax / m_Param.beta;
 
-                                    bool leave = false;
-                                    bool iamOnTarget = false;
-                                    bool otherOnTarget = false;
+                                    results.emplace_back(deltaCandidate, solutionLast.x, solutionLast.grad);
+
                                     if (m_Param.strategy == Strategy::FromBothSolutions)
                                     {
                                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                                         m_DeltaFromZeroSolution = deltaCandidate;
-
-                                        if (m_Param.delta > static_cast<Scalar>(0))
+                                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                                         {
-                                            if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                            {
-                                                iamOnTarget = true;
-                                            }
-                                            else if (m_Param.delta <= m_DeltaFromL2Solution)
-                                            {
-                                                otherOnTarget = true;
-                                            }
-                                        }
-
-                                        if (!iamOnTarget && !otherOnTarget
-                                            && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
-                                        {
-                                            leave = true;
+                                            return results;
                                         }
                                     }
                                     else
                                     {
                                         m_DeltaFromZeroSolution = deltaCandidate;
-
-                                        if (m_Param.delta > static_cast<Scalar>(0))
+                                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
                                         {
-                                            if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                            {
-                                                iamOnTarget = true;
-                                            }
+                                            return results;
                                         }
-
-                                        if (!iamOnTarget
-                                            && m_DeltaFromZeroSolution <= Utils::epsilon)
-                                        {
-                                            leave = true;
-                                        }
-                                    }
-
-                                    results.emplace_back(deltaCandidate, solutionLast.x, solutionLast.grad);
-
-                                    if (iamOnTarget)
-                                    {
-                                        auto minBoundIt = results.crbegin();
-
-                                        const auto& minBoundSolution = *minBoundIt;
-
-                                        const auto& maxBoundSolution = *++minBoundIt;
-
-
-                                        return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                                    }
-                                    else if (otherOnTarget)
-                                    {
-                                        return std::list<Solution>{};
-                                    }
-                                    else if (leave)
-                                    {
-                                        return results;
                                     }
 
                                     // TODO try to optimize using minmax and avoid abs
@@ -801,79 +539,220 @@ namespace l0l2
                                         return results;
                                     }
                                 }
+                            }                           
+                        }
+                    }
+                }
+
+                return results;
+            }
+
+            template<std::floating_point ScalarType>
+            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+                FullPathSolver<ScalarType>::solveFromL2(const Matrix<Scalar>& matData/*colmajor*/,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance)
+            {
+                using Vector = Vector<Scalar>;
+                using Solution = Solution<Scalar>;
+                using Utils = Utils<Scalar>;
+                using L2Regressor = L2Regressor<Scalar>;
+                using FullPathStep = FullPathStep<Scalar>;
+
+                const auto n = static_cast<Index>(matData.cols());
+
+                const auto tau = static_cast<Scalar>(-1);
+
+                std::list<Solution> results;
+
+                const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
+
+                {
+                    Solution solutionBar{ n };
+
+                    solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
+
+                    auto deltaBar = std::numeric_limits<Scalar>::max();
+                    for (Index i = 0; i < n; ++i)
+                    {
+                        // TODO optimize
+                        const auto absWeight = std::abs(solutionBar.x[i]);
+                        if (Utils::epsilon < absWeight && absWeight < deltaBar)
+                        {
+                            deltaBar = absWeight;
+                        }
+                    }
+
+                    results.emplace_front(static_cast<Scalar>(0),
+                        solutionBar.x,
+                        solutionBar.grad);
+
+                    solutionBar.delta = deltaBar;
+
+                    results.push_front(std::move(solutionBar));
+
+                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    {
+                        const std::lock_guard<std::mutex> lock(m_DeltasMutex);
+                        m_DeltaFromL2Solution = deltaBar;
+
+                        if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                            || static_cast<Scalar>(0) <= m_Param.delta &&
+                            m_Param.delta <= m_DeltaFromL2Solution)
+                        {
+                            return results;
+                        }
+                    }
+                    else
+                    {
+                        m_DeltaFromL2Solution = deltaBar;
+
+                        if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                            || static_cast<Scalar>(0) <= m_Param.delta &&
+                            m_Param.delta <= m_DeltaFromL2Solution)
+                        {
+                            return results;
+                        }
+                    }
+                }
+
+                unsigned int numberIters = 0;
+
+                while (true)
+                {
+                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    {
+                        const std::lock_guard<std::mutex> lock(m_DeltasMutex);
+                        if (m_Param.delta >= static_cast<Scalar>(0))
+                        {
+                            if (m_DeltaFromZeroSolution <= m_Param.delta)
+                            {
+                                return std::list<Solution>{};
                             }
-                            else if (!fromZeroSolution && normMax > solutionLast.delta + Utils::epsilon)
+                        }
+                        else
+                        {
+                            if (m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    ++numberIters;
+
+                    {
+                        const auto& solutionMaam = *(++results.cbegin());
+
+                        const auto& solutionYaay = results.front();
+
+                        const auto step = FullPathStep(m_Param.beta);
+
+                        auto solutionNew = step.run(matData,
+                            ATb,
+                            solutionYaay,
+                            solutionMaam,
+                            matrixIsCovariance,
+                            tau);
+
+                        const auto gammaNew = tau * (solutionYaay.delta - solutionNew.delta);
+
+                        if (gammaNew <= Utils::epsilon)
+                        {
+                            std::cout << "\nSTART CYCLING!\n";
+
+                            std::cout << std::fixed << std::setprecision(15);
+                            std::cout << "\nGamma: " << gammaNew
+                                << " is less than " << Utils::epsilon << "\n";
+
+                            break;
+                        }
+
+                        const auto deltaNew = solutionNew.delta;
+
+                        results.push_front(std::move(solutionNew));
+
+                        if (m_Param.strategy == Strategy::FromBothSolutions)
+                        {
+                            const std::lock_guard<std::mutex> lock(m_DeltasMutex);
+                            m_DeltaFromL2Solution = deltaNew;
+
+                            if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                                || static_cast<Scalar>(0) <= m_Param.delta &&
+                                m_Param.delta <= m_DeltaFromL2Solution)
+                            {
+                                return results;
+                            }
+                        }
+                        else
+                        {
+                            m_DeltaFromL2Solution = deltaNew;
+
+                            if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                                || static_cast<Scalar>(0) <= m_Param.delta &&
+                                m_Param.delta <= m_DeltaFromL2Solution)
+                            {
+                                return results;
+                            }
+                        }
+                    }
+
+                    const auto& solutionLast = results.front();
+                    {
+                        const auto fullPathDone = solutionLast.x.norm() <= Utils::epsilon;
+
+                        if (fullPathDone)
+                        {
+                            return results;
+                        }
+                    }
+
+                    {
+                        auto normMax = std::numeric_limits<Scalar>::max();
+                        for (Index i = 0; i < n; ++i)
+                        {
+                            // TODO optimize
+                            const auto absXi = std::abs(solutionLast.x[i]);
+                            if (Utils::epsilon < absXi && absXi < normMax)
+                            {
+                                normMax = absXi;
+                            }
+                        }
+
+                        if (normMax < std::numeric_limits<Scalar>::max())
+                        {
+                            if (normMax > solutionLast.delta + Utils::epsilon)
                             {// constant for delta in [delta, normMax]. improve delta
 
                                 const auto deltaCandidate = normMax;
 
-                                bool leave = false;
-                                bool iamOnTarget = false;
-                                bool otherOnTarget = false;
+                                results.emplace_front(deltaCandidate, solutionLast.x, solutionLast.grad);
 
                                 if (m_Param.strategy == Strategy::FromBothSolutions)
                                 {
                                     const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                                     m_DeltaFromL2Solution = deltaCandidate;
 
-                                    if (m_Param.delta > static_cast<Scalar>(0))
+                                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                                        || static_cast<Scalar>(0) <= m_Param.delta &&
+                                        m_Param.delta <= m_DeltaFromL2Solution)
                                     {
-                                        if (m_Param.delta <= m_DeltaFromL2Solution)
-                                        {
-                                            iamOnTarget = true;
-                                        }
-                                        else if (m_DeltaFromZeroSolution <= m_Param.delta)
-                                        {
-                                            otherOnTarget = true;
-                                        }
-                                    }
-
-                                    if (!iamOnTarget && !otherOnTarget
-                                        && m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
-                                    {
-                                        leave = true;
+                                        return results;
                                     }
                                 }
                                 else
                                 {
                                     m_DeltaFromL2Solution = deltaCandidate;
 
-                                    if (m_Param.delta > static_cast<Scalar>(0))
+                                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                                        || static_cast<Scalar>(0) <= m_Param.delta &&
+                                        m_Param.delta <= m_DeltaFromL2Solution)
                                     {
-                                        if (m_Param.delta <= m_DeltaFromL2Solution)
-                                        {
-                                            iamOnTarget = true;
-                                        }
-                                    }
-
-                                    if (!iamOnTarget
-                                        && std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution)
-                                    {
-                                        leave = true;
+                                        return results;
                                     }
                                 }
 
-                                results.emplace_front(deltaCandidate, solutionLast.x, solutionLast.grad);
-
-                                if (iamOnTarget)
-                                {
-                                    auto maxBoundIt = results.cbegin();
-
-                                    const auto& maxBoundSolution = *maxBoundIt;
-
-                                    const auto& minBoundSolution = *++maxBoundIt;
-
-                                    return std::list<Solution>{ minBoundSolution, maxBoundSolution };
-                                }
-                                else if (otherOnTarget)
-                                {
-                                    return std::list<Solution>{};
-                                }
-                                else if (leave)
-                                {
-                                    return results;
-                                }
-
+                                // TODO Not necessary to check zero a second time!
                                 const auto fullPathDone = results.front().x.norm() <= Utils::epsilon;
 
                                 if (fullPathDone)
