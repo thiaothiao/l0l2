@@ -117,6 +117,30 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance);
 
+                bool isDeltaTargetReachedFromZero(Scalar newDelta)
+                {
+                    m_DeltaFromZeroSolution = newDelta;
+                    if (m_DeltaFromZeroSolution <= std::max(Utils<Scalar>::epsilon, m_Param.delta))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                bool isDeltaTargetReachedFromL2(Scalar newDelta)
+                {
+                    m_DeltaFromL2Solution = newDelta;
+                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
+                        || static_cast<Scalar>(0) <= m_Param.delta &&
+                        m_Param.delta <= m_DeltaFromL2Solution)
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+
                 const Param m_Param;
 
                 const bool m_WithIntercept;
@@ -364,24 +388,20 @@ namespace l0l2
                     results.emplace_back(
                         deltaZero, Vector::Zero(n), -ATb);//TODO avoid repeating and optimize
                     
+                    bool deltaTargetReached = false;
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                        m_DeltaFromZeroSolution = deltaZero;
-
-                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                        {
-                            return results;
-                        }
+                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaZero);
                     }
                     else
                     {
-                        m_DeltaFromZeroSolution = deltaZero;
+                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaZero);
+                    }
 
-                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                        {
-                            return results;
-                        }
+                    if (deltaTargetReached)
+                    {
+                        return results;
                     }
                 }
 
@@ -441,25 +461,20 @@ namespace l0l2
 
                         results.push_back(std::move(solutionNew));
 
+                        bool deltaTargetReached = false;
                         if (m_Param.strategy == Strategy::FromBothSolutions)
                         {
                             const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-
-                            m_DeltaFromZeroSolution = solutionNewDelta;
-
-                            if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                            {
-                                return results;
-                            }
+                            deltaTargetReached = isDeltaTargetReachedFromZero(solutionNewDelta);
                         }
                         else
                         {
-                            m_DeltaFromZeroSolution = solutionNewDelta;
+                            deltaTargetReached = isDeltaTargetReachedFromZero(solutionNewDelta);
+                        }
 
-                            if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                            {
-                                return results;
-                            }
+                        if (deltaTargetReached)
+                        {
+                            return results;
                         }
                     }
 
@@ -512,22 +527,20 @@ namespace l0l2
 
                                     results.emplace_back(deltaCandidate, solutionLast.x, solutionLast.grad);
 
+                                    bool deltaTargetReached = false;
                                     if (m_Param.strategy == Strategy::FromBothSolutions)
                                     {
                                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                                        m_DeltaFromZeroSolution = deltaCandidate;
-                                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                                        {
-                                            return results;
-                                        }
+                                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaCandidate);
                                     }
                                     else
                                     {
-                                        m_DeltaFromZeroSolution = deltaCandidate;
-                                        if (m_DeltaFromZeroSolution <= std::max(Utils::epsilon, m_Param.delta))
-                                        {
-                                            return results;
-                                        }
+                                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaCandidate);
+                                    }
+
+                                    if (deltaTargetReached)
+                                    {
+                                        return results;
                                     }
 
                                     // TODO try to optimize using minmax and avoid abs
@@ -591,28 +604,20 @@ namespace l0l2
 
                     results.push_front(std::move(solutionBar));
 
+                    bool deltaTargetReached = false;
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                        m_DeltaFromL2Solution = deltaBar;
-
-                        if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                            || static_cast<Scalar>(0) <= m_Param.delta &&
-                            m_Param.delta <= m_DeltaFromL2Solution)
-                        {
-                            return results;
-                        }
+                        deltaTargetReached = isDeltaTargetReachedFromL2(deltaBar);
                     }
                     else
                     {
-                        m_DeltaFromL2Solution = deltaBar;
+                        deltaTargetReached = isDeltaTargetReachedFromL2(deltaBar);
+                    }
 
-                        if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                            || static_cast<Scalar>(0) <= m_Param.delta &&
-                            m_Param.delta <= m_DeltaFromL2Solution)
-                        {
-                            return results;
-                        }
+                    if (deltaTargetReached)
+                    {
+                        return results;
                     }
                 }
 
@@ -672,28 +677,20 @@ namespace l0l2
 
                         results.push_front(std::move(solutionNew));
 
+                        bool deltaTargetReached = false;
                         if (m_Param.strategy == Strategy::FromBothSolutions)
                         {
                             const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                            m_DeltaFromL2Solution = deltaNew;
-
-                            if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                                || static_cast<Scalar>(0) <= m_Param.delta &&
-                                m_Param.delta <= m_DeltaFromL2Solution)
-                            {
-                                return results;
-                            }
+                            deltaTargetReached = isDeltaTargetReachedFromL2(deltaNew);
                         }
                         else
                         {
-                            m_DeltaFromL2Solution = deltaNew;
+                            deltaTargetReached = isDeltaTargetReachedFromL2(deltaNew);
+                        }
 
-                            if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                                || static_cast<Scalar>(0) <= m_Param.delta &&
-                                m_Param.delta <= m_DeltaFromL2Solution)
-                            {
-                                return results;
-                            }
+                        if (deltaTargetReached)
+                        {
+                            return results;
                         }
                     }
 
@@ -728,28 +725,20 @@ namespace l0l2
 
                                 results.emplace_front(deltaCandidate, solutionLast.x, solutionLast.grad);
 
+                                bool deltaTargetReached = false;
                                 if (m_Param.strategy == Strategy::FromBothSolutions)
                                 {
                                     const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                                    m_DeltaFromL2Solution = deltaCandidate;
-
-                                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                                        || static_cast<Scalar>(0) <= m_Param.delta &&
-                                        m_Param.delta <= m_DeltaFromL2Solution)
-                                    {
-                                        return results;
-                                    }
+                                    deltaTargetReached = isDeltaTargetReachedFromL2(deltaCandidate);
                                 }
                                 else
                                 {
-                                    m_DeltaFromL2Solution = deltaCandidate;
+                                    deltaTargetReached = isDeltaTargetReachedFromL2(deltaCandidate);
+                                }
 
-                                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                                        || static_cast<Scalar>(0) <= m_Param.delta &&
-                                        m_Param.delta <= m_DeltaFromL2Solution)
-                                    {
-                                        return results;
-                                    }
+                                if (deltaTargetReached)
+                                {
+                                    return results;
                                 }
 
                                 // TODO Not necessary to check zero a second time!
