@@ -1,5 +1,5 @@
-#ifndef L0L2_SPARSE_PCA_H
-#define L0L2_SPARSE_PCA_H
+#ifndef L0L2_SPARSE_PCA_HPP
+#define L0L2_SPARSE_PCA_HPP
 
 #include <iostream>
 #include <algorithm>
@@ -9,10 +9,10 @@
 #include <limits>
 #include <concepts>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/cycliccoordinatedescent/solver.h"
-#include "leastsquares/fullpath/solver.h"
-#include "pca/generic.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/cycliccoordinatedescent/solver.hpp"
+#include "leastsquares/fullpath/solver.hpp"
+#include "pca/generic.hpp"
 
 namespace l0l2
 {
@@ -139,4 +139,4 @@ namespace l0l2
         using FullPathL0L2SPCA = SPCA<FullPathL0L2SPCAModelImplementation<ScalarType>>;
     }
 }
-#endif //L0L2_SPARSE_PCA_H
+#endif //L0L2_SPARSE_PCA_HPP

@@ -1,5 +1,5 @@
-#ifndef L0L2_GENERIC_SPARSE_PCA_H
-#define L0L2_GENERIC_SPARSE_PCA_H
+#ifndef L0L2_GENERIC_SPARSE_PCA_HPP
+#define L0L2_GENERIC_SPARSE_PCA_HPP
 
 #include <iostream>
 #include <algorithm>
@@ -13,7 +13,7 @@
 
 #include "thread_pool/thread_pool.h"
 
-#include "leastsquares/utils.h"
+#include "leastsquares/utils.hpp"
 
 namespace l0l2
 {
@@ -193,4 +193,4 @@ namespace l0l2
         }
     }
 }
-#endif //L0L2_GENERIC_SPARSE_PCA_H
+#endif //L0L2_GENERIC_SPARSE_PCA_HPP

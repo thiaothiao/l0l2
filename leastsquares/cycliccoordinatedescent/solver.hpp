@@ -1,5 +1,5 @@
-#ifndef L0L2_COORDINATE_DESCENT_SOLVER_H
-#define L0L2_COORDINATE_DESCENT_SOLVER_H
+#ifndef L0L2_COORDINATE_DESCENT_SOLVER_HPP
+#define L0L2_COORDINATE_DESCENT_SOLVER_HPP
 
 #include <future>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include <concepts>
 #include <utility>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/cycliccoordinatedescent/generic.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/cycliccoordinatedescent/generic.hpp"
 
 namespace l0l2
 {
@@ -91,4 +91,4 @@ namespace l0l2
         }
     }
 }
-#endif //L0L2_COORDINATE_DESCENT_SOLVER_H
+#endif //L0L2_COORDINATE_DESCENT_SOLVER_HPP

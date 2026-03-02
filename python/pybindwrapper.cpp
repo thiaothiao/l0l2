@@ -7,10 +7,10 @@
 #include <pybind11/detail/common.h>
 #include <pybind11/eigen.h>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/cycliccoordinatedescent/solver.h"
-#include "leastsquares/fullpath/solver.h"
-#include "pca/solver.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/cycliccoordinatedescent/solver.hpp"
+#include "leastsquares/fullpath/solver.hpp"
+#include "pca/solver.hpp"
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)

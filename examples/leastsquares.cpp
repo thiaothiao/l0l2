@@ -10,10 +10,10 @@
 #include <utility>
 #include <concepts>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/cycliccoordinatedescent/solver.h"
-#include "leastsquares/fullpath/solver.h"
-#include "examples/simu.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/cycliccoordinatedescent/solver.hpp"
+#include "leastsquares/fullpath/solver.hpp"
+#include "examples/simu.hpp"
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
     l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;

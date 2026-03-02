@@ -1,7 +1,7 @@
-#ifndef L0L2_SIMU_H
-#define L0L2_SIMU_H
+#ifndef L0L2_SIMU_HPP
+#define L0L2_SIMU_HPP
 
-#include "leastsquares/utils.h"
+#include "leastsquares/utils.hpp"
 
 namespace l0l2
 {
@@ -237,4 +237,4 @@ namespace l0l2
         }
 	}
 }
-#endif //L0L2_SIMU_H
+#endif //L0L2_SIMU_HPP

@@ -1,5 +1,5 @@
-#ifndef L0L2_FULL_PATH_STEP_H
-#define L0L2_FULL_PATH_STEP_H
+#ifndef L0L2_FULL_PATH_STEP_HPP
+#define L0L2_FULL_PATH_STEP_HPP
 
 #include <iostream>
 #include <concepts>
@@ -12,7 +12,7 @@
 #include <limits>
 #include <execution>
 
-#include "leastsquares/utils.h"
+#include "leastsquares/utils.hpp"
 
 namespace l0l2
 {
@@ -895,4 +895,4 @@ namespace l0l2
         }
     }
 }
-#endif //L0L2_FULL_PATH_STEP_H
+#endif //L0L2_FULL_PATH_STEP_HPP
