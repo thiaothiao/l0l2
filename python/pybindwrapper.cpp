@@ -20,22 +20,14 @@ template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
 template<>
-const std::streamsize l0l2::linearmodel::leastsquares::Solution<float>::streamSize = 7;
-template<>
 const float l0l2::Utils<float>::epsilon = 1e-6f;
-template<>
-const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<float>::streamSize = 7;
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
 template<>
-const std::streamsize l0l2::linearmodel::leastsquares::Solution<double>::streamSize = 9;
-template<>
 const double l0l2::Utils<double>::epsilon = 1e-8;
-template<>
-const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<double>::streamSize = 9;
 
 namespace
 {
@@ -123,8 +115,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("grad", &Solutionf::grad)
         .def_readwrite("intercept", &Solutionf::intercept)
         .def("isValidFor", &Solutionf::isValidFor,
-            pybind11::arg("beta"), "A member function that checks solution validity.")
-        .def("__str__", &Solutionf::toString);
+            pybind11::arg("beta"), "A member function that checks solution validity.");
 
     pybind11::class_<L0L2RegressorParamf>(m, "L0L2RegressorParamf")
         .def(pybind11::init<float, float, Strategy, float, unsigned int, float, unsigned int>(),
@@ -159,8 +150,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutionf::dualityGap)
         .def_readwrite("status", &CDSolutionf::status)
         .def_readwrite("x", &CDSolutionf::x)
-        .def_readwrite("intercept", &CDSolutionf::intercept)
-        .def("__str__", &CDSolutionf::toString);
+        .def_readwrite("intercept", &CDSolutionf::intercept);
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
         .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
@@ -238,8 +228,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("grad", &Solutiond::grad)
         .def_readwrite("intercept", &Solutiond::intercept)
         .def("isValidFor", &Solutiond::isValidFor,
-            pybind11::arg("beta"), "A member function that checks solution validity.")
-        .def("__str__", &Solutiond::toString);
+            pybind11::arg("beta"), "A member function that checks solution validity.");
 
     pybind11::class_<L0L2RegressorParamd>(m, "L0L2RegressorParamd")
         .def(pybind11::init<double, double, Strategy, double, unsigned int, double, unsigned int>(),
@@ -274,8 +263,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("dualityGap", &CDSolutiond::dualityGap)
         .def_readwrite("status", &CDSolutiond::status)
         .def_readwrite("x", &CDSolutiond::x)
-        .def_readwrite("intercept", &CDSolutiond::intercept)
-        .def("__str__", &CDSolutiond::toString);
+        .def_readwrite("intercept", &CDSolutiond::intercept);
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
         .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),

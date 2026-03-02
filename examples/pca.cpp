@@ -18,20 +18,12 @@
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
 template<>
-const std::streamsize l0l2::linearmodel::leastsquares::Solution<float>::streamSize = 7;
-template<>
 const float l0l2::Utils<float>::epsilon = 1e-6f;
-template<>
-const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<float>::streamSize = 7;
 
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
 template<>
-const std::streamsize l0l2::linearmodel::leastsquares::Solution<double>::streamSize = 9;
-template<>
 const double l0l2::Utils<double>::epsilon = 1e-8;
-template<>
-const std::streamsize l0l2::linearmodel::leastsquares::CDSolution<double>::streamSize = 9;
 
 int main()
 {
@@ -54,7 +46,7 @@ int main()
     std::cout << "Finding path...\n\n";
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(0.01); //static_cast<Scalar>(2.5);//static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+    const auto delta = static_cast<Scalar>(0.5); //static_cast<Scalar>(2.5);//static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
 
     std::cout << std::boolalpha;
     std::cout << "\nMatrixIsCovariance: " << matrixIsCovariance;
@@ -77,6 +69,7 @@ int main()
     const auto regressorMaximumNumberOfIterations = 100000U;
     const auto regressorInnerEpsilon = static_cast<Scalar>(1e-6);
     const auto intregressorInnerMaximumNumberOfIterations = 100000U;
+
 
     {
         const auto start = std::chrono::high_resolution_clock::now();
@@ -207,7 +200,7 @@ int main()
             param,
             nbJobs,
             epsilon,
-            numberOfTrialsMax }.run(Mat, matrixIsCovariance);
+            2*numberOfTrialsMax }.run(Mat, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 

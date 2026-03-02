@@ -562,7 +562,7 @@ namespace l0l2
 
             template<std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::solveFromL2(const Matrix<Scalar>& matData/*colmajor*/,
+                FullPathSolver<ScalarType>::solveFromL2(const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
             {

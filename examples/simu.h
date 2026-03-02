@@ -107,10 +107,59 @@ namespace l0l2
                 (std::move(MatData), std::move(Vect));
         }
 
+        template<std::floating_point ScalarType>
+        std::string toString(
+            const l0l2::linearmodel::leastsquares::Solution<ScalarType>& solution,
+            std::streamsize streamSize)
+        {
+            using Scalar = ScalarType;
+            using Utils = Utils<Scalar>;
+
+            std::stringstream out;
+
+            out << std::fixed << std::setprecision(streamSize);
+
+            out << solution.delta << ": [";
+
+            out << Utils::print(streamSize, solution.x);
+
+            out << "\t\t";
+
+            out << Utils::print(streamSize, solution.grad);
+
+            out << "\t\t" << solution.intercept;
+
+            out << "]";
+
+            return out.str();
+        }
+
+        template<std::floating_point ScalarType>
+        std::string toString(
+            const l0l2::linearmodel::leastsquares::CDSolution<ScalarType>& solution,
+            std::streamsize streamSize)
+        {
+            using Scalar = ScalarType;
+            using Utils = Utils<Scalar>;
+
+            std::stringstream out;
+
+            out << std::fixed << std::setprecision(streamSize);
+            out << "NumberOfIterations: " << solution.numberOfIterations << "\n";
+            out << "GlobalChange: " << solution.globalChange << "\n";
+
+            out << Utils::print(streamSize, solution.x);
+
+            out << "\t\t" << solution.intercept;
+
+            return out.str();
+        }
+
         template<std::floating_point Scalar>
         static void save(Scalar beta,
             const std::list<l0l2::linearmodel::leastsquares::Solution<Scalar>>& results,
-            const std::string& filename)
+            const std::string& filename,
+            std::streamsize streamSize)
         {
             std::ofstream file;
             file.open(filename);
@@ -119,7 +168,7 @@ namespace l0l2
             {
                 const auto& result = *it;
 
-                file << result.toString();
+                file << toString(result, streamSize);
 
                 if (result.isValidFor(beta))
                 {
