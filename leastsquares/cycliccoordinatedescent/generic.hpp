@@ -1,5 +1,5 @@
-#ifndef L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_H
-#define L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_H
+#ifndef L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_HPP
+#define L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_HPP
 
 #include <future>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include <concepts>
 #include <utility>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/l2regressor/solver.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/l2regressor/solver.hpp"
 
 namespace l0l2
 {
@@ -36,21 +36,18 @@ namespace l0l2
             * It produces solutions using cyclical coordinate descent algorithm.
             */
             template <ModelLike ModelImplementationType>
-            class CyclicalCoordinateDescent final
+            class CyclicCoordinateDescent final
             {
             public:
                 using ModelImplementation = ModelImplementationType;/*!< Alias for the model implementation type */
                 using Param = typename ModelImplementation::Param; /*!< Alias for the used parameter type */
                 using Scalar = typename ModelImplementation::Scalar; /*!< Alias for the used scalar type */
 
-                /*! \brief A solver object constructor.
-                  \param delta sparsity regularization parameter.
-                  \param beta l2 regularization parameter.
-                  \param strategy enum indicating a strategy: from zero, or l2 or both solutions.
-                  \param tolerance covergence tolerance on the coordinates changes.
-                  \param maximumNumberOfIterations maximum number of iterations allowed.
+                /*! \brief A cyclic coordinate descent solver object constructor.
+                  \param param regularization parameters.
+                  \param withIntercept boolean indicating with intercept or not. Default is false.
                 */
-                CyclicalCoordinateDescent(const Param& param,
+                CyclicCoordinateDescent(const Param& param,
                     bool withIntercept = false)
                     :m_Param{ param },
                     m_WithIntercept{ withIntercept },
@@ -58,7 +55,7 @@ namespace l0l2
                 {
                 }
 
-                /*! \brief Fit full path solutions.
+                /*! \brief Fit model.
                    \param matData contiguous data container representing matrix in column major layout.
                    \param vectData contiguous data container representing target vector.
                    \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
@@ -101,7 +98,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fitFrom(
+                CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
                     const Matrix<Scalar>& matData,
                     bool matrixIsCovariance,
                     const Vector<Scalar>& vectData,
@@ -199,7 +196,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fit(
+                CyclicCoordinateDescent<ModelImplementationType>::fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
@@ -221,7 +218,7 @@ namespace l0l2
 
             template <ModelLike ModelImplementationType>
             CDSolution<typename ModelImplementationType::Scalar>
-                CyclicalCoordinateDescent<ModelImplementationType>::fitNoIntercept(
+                CyclicCoordinateDescent<ModelImplementationType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
@@ -247,7 +244,7 @@ namespace l0l2
                     m_FromBothConverged.clear(std::memory_order_relaxed);
 
                     auto fromZeroFuture =
-                        std::async(std::launch::async, &CyclicalCoordinateDescent::fitFrom, this,
+                        std::async(std::launch::async, &CyclicCoordinateDescent::fitFrom, this,
                             matData,
                             matrixIsCovariance,
                             vectData,
@@ -283,4 +280,4 @@ namespace l0l2
         }
     }
 }
-#endif //L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_H
+#endif //L0L2_GENERIC_COORDINATE_DESCENT_SOLVER_HPP

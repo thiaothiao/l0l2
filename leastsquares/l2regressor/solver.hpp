@@ -1,5 +1,5 @@
-#ifndef L0L2_L2_REGRESSORS_H
-#define L0L2_L2_REGRESSORS_H
+#ifndef L0L2_L2_REGRESSORS_HPP
+#define L0L2_L2_REGRESSORS_HPP
 
 #include <concepts>
 
@@ -275,4 +275,4 @@ namespace l0l2
         }
     }
 }
-#endif //L0L2_L2_REGRESSORS_H
+#endif //L0L2_L2_REGRESSORS_HPP

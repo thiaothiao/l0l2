@@ -1,5 +1,5 @@
-#ifndef L0L2_COORDINATE_DESCENT_SOLVER_H
-#define L0L2_COORDINATE_DESCENT_SOLVER_H
+#ifndef L0L2_COORDINATE_DESCENT_SOLVER_HPP
+#define L0L2_COORDINATE_DESCENT_SOLVER_HPP
 
 #include <future>
 #include <cmath>
@@ -8,8 +8,8 @@
 #include <concepts>
 #include <utility>
 
-#include "leastsquares/utils.h"
-#include "leastsquares/cycliccoordinatedescent/generic.h"
+#include "leastsquares/utils.hpp"
+#include "leastsquares/cycliccoordinatedescent/generic.hpp"
 
 namespace l0l2
 {
@@ -27,6 +27,13 @@ namespace l0l2
 
                 struct Param final
                 {
+                    /*! \brief l0l2 model parameter object constructor.
+                      \param deltaInput sparsity regularization parameter.
+                      \param betaInput l2 regularization parameter.
+                      \param strategyInput enum indicating a strategy: from zero, or l2 or both solutions.
+                      \param toleranceInput covergence tolerance on the coordinates changes.
+                      \param maximumNumberOfIterationsInput maximum number of iterations allowed.
+                    */
                     Param(
                         Scalar deltaInput = static_cast<Scalar>(0),
                         Scalar betaInput = static_cast<Scalar>(1),
@@ -80,8 +87,8 @@ namespace l0l2
             }
 
             template<std::floating_point ScalarType>
-            using L0L2Regressor = CyclicalCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
+            using L0L2Regressor = CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
         }
     }
 }
-#endif //L0L2_COORDINATE_DESCENT_SOLVER_H
+#endif //L0L2_COORDINATE_DESCENT_SOLVER_HPP
