@@ -83,10 +83,10 @@ namespace l0l2
 
             // Generate a random matrix using NullaryExpr
             // The lambda function captures the generator and distribution by reference [&]
-            Matrix AData = Eigen::MatrixXd::NullaryExpr(m, n, [&]() { return uniform(engine); }).cast<Scalar>();
+            Matrix AData = Eigen::MatrixXd::NullaryExpr(m, n, [&]() { return uniform(engine); }).template cast<Scalar>();
             AData.array() -= static_cast<Scalar>(0.5);
 
-            Vector alphaData = Eigen::VectorXd::NullaryExpr(n, [&]() { return uniform(engine); }).cast<Scalar>();;
+            Vector alphaData = Eigen::VectorXd::NullaryExpr(n, [&]() { return uniform(engine); }).template cast<Scalar>();;
 
             alphaData[0] = static_cast<Scalar>(0);
             alphaData[4] = static_cast<Scalar>(0);
