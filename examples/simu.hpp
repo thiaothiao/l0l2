@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <list>
 
-#include "leastsquares/utils.hpp"
+#include "l0l2/core.hpp"
 
 namespace l0l2
 {

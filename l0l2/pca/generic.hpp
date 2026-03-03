@@ -13,7 +13,7 @@
 
 #include "thread_pool/thread_pool.h"
 
-#include "leastsquares/utils.hpp"
+#include "l0l2/leastsquares/utils.hpp"
 
 namespace l0l2
 {

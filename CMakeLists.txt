@@ -15,7 +15,5 @@ message(STATUS "Using thread-pool")
 include_directories(${PROJECT_SOURCE_DIR} "$ENV{EIGEN3_INCLUDE_DIR}" "$ENV{THREAD_POOL_INCLUDE_DIR}")
 
 # Add the subdirectories
-add_subdirectory(leastsquares)
-add_subdirectory(pca)
 add_subdirectory(examples)
 add_subdirectory(python)

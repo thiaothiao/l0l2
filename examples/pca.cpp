@@ -2,9 +2,8 @@
 #include <ios>
 #include <chrono>
 
-#include "leastsquares/utils.hpp"
-#include "pca/solver.hpp"
-#include "examples/simu.hpp"
+#include "l0l2/core.hpp"
+#include "simu.hpp"
 
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
