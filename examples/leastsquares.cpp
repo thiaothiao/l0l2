@@ -1,14 +1,8 @@
 #include <iostream>
 #include <ios>
 #include <chrono>
-#include <random>
-#include <list>
-#include <fstream>
+
 #include <string>
-#include <iomanip>
-#include <algorithm>
-#include <utility>
-#include <concepts>
 
 #include "leastsquares/utils.hpp"
 #include "leastsquares/cycliccoordinatedescent/solver.hpp"

@@ -1,15 +1,6 @@
 #include <iostream>
 #include <ios>
 #include <chrono>
-#include <random>
-#include <list>
-#include <fstream>
-#include <string>
-#include <utility>
-#include <iomanip>
-#include <algorithm>
-#include <concepts>
-
 
 #include "leastsquares/utils.hpp"
 #include "pca/solver.hpp"

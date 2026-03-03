@@ -1,6 +1,17 @@
 #ifndef L0L2_SIMU_HPP
 #define L0L2_SIMU_HPP
 
+#include <ios>
+#include <iomanip>
+#include <random>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <concepts>
+#include <utility>
+#include <algorithm>
+#include <list>
+
 #include "leastsquares/utils.hpp"
 
 namespace l0l2
