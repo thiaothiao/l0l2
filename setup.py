@@ -28,20 +28,20 @@ class BuildExt(build_ext):
             
         super().build_extensions()
 
-  
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 EIGEN3_INCLUDE_DIR = os.environ.get('EIGEN3_INCLUDE_DIR')
 THREAD_POOL_INCLUDE_DIR = os.environ.get('THREAD_POOL_INCLUDE_DIR')
   
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 ext_modules = [
     Pybind11Extension(
         "l0l2", 
         sources=["python/pybindwrapper.cpp"],
-        include_dirs=[pybind11.get_include(), EIGEN3_INCLUDE_DIR, THREAD_POOL_INCLUDE_DIR],
+        include_dirs=[pybind11.get_include(), CURRENT_DIR, EIGEN3_INCLUDE_DIR, THREAD_POOL_INCLUDE_DIR],
         language='c++',
         cxx_std='latest',# Use C++23 or later
-        define_macros = [('VERSION_INFO', __version__), ('_CRT_SECURE_NO_WARNINGS', None), ('_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS', None)],
+        define_macros = [('_CRT_SECURE_NO_WARNINGS', None), ('_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS', None)],
     ),
 ]
 
@@ -58,5 +58,5 @@ setup(
     setup_requires=['pybind11>=3.0.0'],
     zip_safe=False,
     python_requires=">=3.13",
-    extras_require={"linearalgebra": "eigen3", "threadpool": "threadpool", "parallel" = "openmp"},
+    extras_require={"linearalgebra": "eigen3", "threadpool": "threadpool", "parallel": "openmp"},
 )
