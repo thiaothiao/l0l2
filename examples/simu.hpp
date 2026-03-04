@@ -3,14 +3,11 @@
 
 #include <ios>
 #include <iomanip>
-#include <random>
 #include <string>
-#include <fstream>
 #include <sstream>
 #include <concepts>
 #include <utility>
 #include <algorithm>
-#include <list>
 
 #include "l0l2/core.hpp"
 
@@ -587,34 +584,6 @@ namespace l0l2
             out << "\t\t" << solution.intercept;
 
             return out.str();
-        }
-
-        template<std::floating_point Scalar>
-        static void save(Scalar beta,
-            const std::list<l0l2::linearmodel::leastsquares::Solution<Scalar>>& results,
-            const std::string& filename,
-            std::streamsize streamSize)
-        {
-            std::ofstream file;
-            file.open(filename);
-
-            for (auto it = results.begin(); it != results.end(); ++it)
-            {
-                const auto& result = *it;
-
-                file << toString(result, streamSize);
-
-                if (result.isValidFor(beta))
-                {
-                    file << " OK\n";
-                }
-                else
-                {
-                    file << " NOK! Failed.\n";
-                }
-            }
-
-            file.close();
         }
 	}
 }

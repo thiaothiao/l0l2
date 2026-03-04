@@ -63,8 +63,6 @@ int main()
 
     if (fullpath)
     {
-        std::string resultsfilename = R"(Results.txt)";
-
         const auto start = std::chrono::high_resolution_clock::now();
 
         auto results = FullPathSolver::fitAll(
@@ -77,11 +75,18 @@ int main()
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
-        l0l2::linearmodel::save<Scalar>(beta, results, resultsfilename, streamSize);
-
         // Calculate the duration and cast to microseconds
         const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
         std::cout << "\n\nJOB DONE in " << duration_us.count() << " microseconds!\n\n";
+
+        for (auto it = results.begin(); it != results.end(); ++it)
+        {
+            const auto& result = *it;
+            std::cout << l0l2::linearmodel::toString(result, streamSize);
+            
+            const std::string tag = result.isValidFor(beta) ? " OK\n" : " NOK! Failed.\n";
+            std::cout << tag;
+        }
     }
     else
     {
