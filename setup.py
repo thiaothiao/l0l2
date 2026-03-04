@@ -45,7 +45,6 @@ ext_modules = [
     ),
 ]
 
-
 setup(
     name='l0l2',
     version=__version__,
@@ -54,9 +53,6 @@ setup(
     license = 'Boost Software License - Version 1.0 - August 17th, 2003',
     ext_modules=ext_modules,
     cmdclass={"build_ext": BuildExt},
-    # The following ensures pybind11 is available during the build process
-    setup_requires=['pybind11>=3.0.0'],
-    zip_safe=False,
     python_requires=">=3.13",
     extras_require={"linearalgebra": "eigen3", "threadpool": "threadpool", "parallel": "openmp"},
 )
