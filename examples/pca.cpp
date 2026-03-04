@@ -1,7 +1,9 @@
 #include <iostream>
 #include <ios>
 #include <chrono>
+#include <string_view>
 
+#include "l0l2/version.hpp"
 #include "l0l2/core.hpp"
 #include "simu.hpp"
 
@@ -23,7 +25,10 @@ int main()
     using FullPathL0L2SPCA = l0l2::linearmodel::FullPathL0L2SPCA<Scalar>;
     using FullPathParam = FullPathL0L2SPCA::Param;
 
-    std::cout << "Finding path...\n\n";
+    constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
+    std::cout << "l0l2 library version " << version << "\n";
+
+    std::cout << "Finding sparse principal components...\n\n";
 
     const auto CovarianceMatrix = l0l2::linearmodel::pitprops<Scalar>();
 

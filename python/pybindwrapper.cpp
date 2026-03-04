@@ -5,10 +5,8 @@
 #include <pybind11/detail/common.h>
 #include <pybind11/eigen.h>
 
+#include "l0l2/version.hpp"
 #include "l0l2/core.hpp"
-
-#define STRINGIFY(x) #x
-#define MACRO_STRINGIFY(x) STRINGIFY(x)
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
@@ -294,8 +292,8 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
 
-#ifdef VERSION_INFO
-    mainmodule.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#ifdef L0L2_VERSION
+    mainmodule.attr("__version__") = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
 #else
     mainmodule.attr("__version__") = "dev";
 #endif
