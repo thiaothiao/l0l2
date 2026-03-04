@@ -108,9 +108,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutionf::delta)
         .def_readwrite("x", &Solutionf::x)
         .def_readwrite("grad", &Solutionf::grad)
-        .def_readwrite("intercept", &Solutionf::intercept)
-        .def("isValidFor", &Solutionf::isValidFor,
-            pybind11::arg("beta"), "A member function that checks solution validity.");
+        .def_readwrite("intercept", &Solutionf::intercept);
 
     pybind11::class_<L0L2RegressorParamf>(m, "L0L2RegressorParamf")
         .def(pybind11::init<float, float, Strategy, float, unsigned int, float, unsigned int>(),
@@ -221,9 +219,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutiond::delta)
         .def_readwrite("x", &Solutiond::x)
         .def_readwrite("grad", &Solutiond::grad)
-        .def_readwrite("intercept", &Solutiond::intercept)
-        .def("isValidFor", &Solutiond::isValidFor,
-            pybind11::arg("beta"), "A member function that checks solution validity.");
+        .def_readwrite("intercept", &Solutiond::intercept);
 
     pybind11::class_<L0L2RegressorParamd>(m, "L0L2RegressorParamd")
         .def(pybind11::init<double, double, Strategy, double, unsigned int, double, unsigned int>(),

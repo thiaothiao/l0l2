@@ -83,9 +83,7 @@ int main()
         {
             const auto& result = *it;
             std::cout << l0l2::linearmodel::toString(result, streamSize);
-            
-            const std::string tag = result.isValidFor(beta) ? " OK\n" : " NOK! Failed.\n";
-            std::cout << tag;
+            std::cout << " \n";
         }
     }
     else
