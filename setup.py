@@ -48,7 +48,10 @@ ext_modules = [
 setup(
     name='l0l2',
     version=__version__,
-    author='Mamadou Thiao',
+    author='Dr. Mamadou Thiao',
+    author_email='mamadou.thiao@gmail.com',
+    maintainer='Dr. Mamadou Thiao',
+    maintainer_email='mamadou.thiao@gmail.com',
     description='l0l2 sparse modeling solver pybind11 package',
     license = 'Boost Software License - Version 1.0 - August 17th, 2003',
     ext_modules=ext_modules,
