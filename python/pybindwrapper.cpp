@@ -8,12 +8,14 @@
 #include "l0l2/version.hpp"
 #include "l0l2/core.hpp"
 
-template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
+template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
+    l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
 
-template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
+template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
+    l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
@@ -67,7 +69,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::enum_<Strategy>(m, "Strategy", pybind11::arithmetic(), "Choosen strategy")
         .value("FromZeroSolution", Strategy::FromZeroSolution, "From zero solution")
-        .value("FromL2Solution", Strategy::FromL2Solution, "From ridge solution")
+        .value("FromL2Solution", Strategy::FromL2Solution, "From l2 solution")
         .value("FromBothSolutions", Strategy::FromBothSolutions, "From both sides")
         .export_values();
 
@@ -87,14 +89,14 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &FullPathSolverf::fit, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
+            pybind11::arg("matrixIsCovariance"))
         .def_static("fitAll", &FullPathSolverf::fitAll, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
             pybind11::arg("withintercept") = false,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
+            pybind11::arg("strategy") = Strategy::FromZeroSolution);
 
     pybind11::class_<Solutionf>(m, "Solutionf")
         .def(pybind11::init<Index>())
@@ -128,7 +130,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
+            pybind11::arg("matrixIsCovariance"));
 
     pybind11::class_<CDSolutionf>(m, "CDSolutionf")
         .def(pybind11::init<Index>(), pybind11::arg("n") = static_cast<Index>(0))
@@ -160,7 +162,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAf::run,
             pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
+            pybind11::arg("matrixIsCovariance"));
 
     pybind11::class_<FullPathL0L2SPCAParamf>(m, "FullPathL0L2SPCAParamf")
         .def(pybind11::init<float, float, Index, Strategy>(),
@@ -179,7 +181,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAf::run,
             pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
+            pybind11::arg("matrixIsCovariance"));
 
 
     pybind11::class_<FullPathSolverParamd>(m, "FullPathSolverParamd")
@@ -198,14 +200,14 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &FullPathSolverd::fit, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.")
+            pybind11::arg("matrixIsCovariance"))
         .def_static("fitAll", &FullPathSolverd::fitAll, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("beta"),
             pybind11::arg("withintercept") = false,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution, "A member function that fits data on all path.");
+            pybind11::arg("strategy") = Strategy::FromZeroSolution);
 
     pybind11::class_<Solutiond>(m, "Solutiond")
         .def(pybind11::init<Index>())
@@ -239,7 +241,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data on one delta value.");
+            pybind11::arg("matrixIsCovariance"));
 
     pybind11::class_<CDSolutiond>(m, "CDSolutiond")
         .def(pybind11::init<Index>(), pybind11::arg("n") = static_cast<Index>(0))
@@ -271,7 +273,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &L0L2SPCAd::run, 
             pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
+            pybind11::arg("matrixIsCovariance"));
 
     pybind11::class_<FullPathL0L2SPCAParamd>(m, "FullPathL0L2SPCAParamd")
         .def(pybind11::init<double, double, Index, Strategy>(),
@@ -290,7 +292,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("numberOfTrialsMax") = 10000U)
         .def("run", &FullPathL0L2SPCAd::run,
             pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"), "A member function that fits data.");
+            pybind11::arg("matrixIsCovariance"));
 
 #ifdef L0L2_VERSION
     mainmodule.attr("__version__") = L0L2_MACRO_STRINGIFY(L0L2_VERSION);

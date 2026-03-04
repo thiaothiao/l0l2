@@ -28,8 +28,6 @@ int main()
     constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
     std::cout << "l0l2 library version " << version << "\n";
 
-    std::cout << "Finding sparse principal components...\n\n";
-
     const auto CovarianceMatrix = l0l2::linearmodel::pitprops<Scalar>();
 
     const auto n = static_cast<Index>(CovarianceMatrix.cols());
@@ -52,34 +50,26 @@ int main()
     const auto regressorTolerance = static_cast<Scalar>(1e-6);
     const auto regressorMaximumNumberOfIterations = 100000U;
     const auto regressorInnerEpsilon = static_cast<Scalar>(1e-6);
-    const auto intregressorInnerMaximumNumberOfIterations = 100000U;
+    const auto regressorInnerMaximumNumberOfIterations = 100000U;
 
     {
         const auto start = std::chrono::high_resolution_clock::now();
 
         const Strategy regressorStrategy = Strategy::FromZeroSolution;
 
-        Param param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy,
-            regressorTolerance,
-            regressorMaximumNumberOfIterations,
-            regressorInnerEpsilon,
-            intregressorInnerMaximumNumberOfIterations };
+        Param param{ delta, beta, nbComponents, regressorStrategy,
+            regressorTolerance, regressorMaximumNumberOfIterations,
+            regressorInnerEpsilon, regressorInnerMaximumNumberOfIterations };
 
-        auto components = L0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            numberOfTrialsMax}.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = L0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs = 
+            std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nFrom Zero JOB DONE in " << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
@@ -89,27 +79,19 @@ int main()
 
         const Strategy regressorStrategy = Strategy::FromL2Solution;
 
-        Param param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy,
-            regressorTolerance,
-            regressorMaximumNumberOfIterations,
-            regressorInnerEpsilon,
-            intregressorInnerMaximumNumberOfIterations };
+        Param param{ delta, beta, nbComponents, regressorStrategy,
+            regressorTolerance, regressorMaximumNumberOfIterations,
+            regressorInnerEpsilon, regressorInnerMaximumNumberOfIterations };
 
-        auto components = L0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            numberOfTrialsMax }.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = L0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs = 
+            std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nFrom L2 JOB DONE in " << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
@@ -119,27 +101,19 @@ int main()
 
         const Strategy regressorStrategy = Strategy::FromBothSolutions;
 
-        Param param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy,
-            regressorTolerance,
-            regressorMaximumNumberOfIterations,
-            regressorInnerEpsilon,
-            intregressorInnerMaximumNumberOfIterations };
+        Param param{ delta, beta, nbComponents, regressorStrategy,
+            regressorTolerance, regressorMaximumNumberOfIterations,
+            regressorInnerEpsilon, regressorInnerMaximumNumberOfIterations };
 
-        auto components = L0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            numberOfTrialsMax }.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = L0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom Both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs 
+            = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nFrom Both JOB DONE in " << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
@@ -149,23 +123,18 @@ int main()
 
         const Strategy regressorStrategy = Strategy::FromZeroSolution;
 
-        FullPathParam param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy };
+        FullPathParam param{ delta, beta, nbComponents, regressorStrategy };
 
-        auto components = FullPathL0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            2*numberOfTrialsMax }.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = FullPathL0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs 
+            = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nOne solution From Zero JOB DONE in " 
+            << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
@@ -175,23 +144,18 @@ int main()
 
         const Strategy regressorStrategy = Strategy::FromL2Solution;
 
-        FullPathParam param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy };
+        FullPathParam param{ delta, beta, nbComponents, regressorStrategy };
 
-        auto components = FullPathL0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            numberOfTrialsMax}.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = FullPathL0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs 
+            = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nOne solution From L2 JOB DONE in " 
+            << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
@@ -201,23 +165,17 @@ int main()
 
         const Strategy regressorStrategy = Strategy::FromBothSolutions;
 
-        FullPathParam param{
-            delta,
-            beta,
-            nbComponents,
-            regressorStrategy };
+        FullPathParam param{ delta, beta, nbComponents, regressorStrategy };
 
-        auto components = FullPathL0L2SPCA{
-            param,
-            nbJobs,
-            epsilon,
-            numberOfTrialsMax}.run(CovarianceMatrix, matrixIsCovariance);
+        auto components = FullPathL0L2SPCA{ param, nbJobs, epsilon, numberOfTrialsMax }
+        .run(CovarianceMatrix, matrixIsCovariance);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs 
+            = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nOne solution From both JOB DONE in " << durationUs.count() << " microseconds!\n\n";
 
         std::cout << "Components\n" << components.transpose() << "\n";
     }
