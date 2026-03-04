@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include <string>
+#include <string_view>
 
 #include "l0l2/version.hpp"
 #include "l0l2/core.hpp"
@@ -22,7 +23,7 @@ int main()
     using Utils = l0l2::Utils<Scalar>;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
 
-    constexpr std::string version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
+    constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
     std::cout << "l0l2 library version " << version << "\n";
 
     std::cout << "Finding path...\n\n";
