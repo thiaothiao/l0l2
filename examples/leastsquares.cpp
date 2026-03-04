@@ -7,14 +7,6 @@
 #include "l0l2/core.hpp"
 #include "simu.hpp"
 
-template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
-    l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
-template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
-
-template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
-    l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
-template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
-
 int main()
 {
     using Scalar = double;
