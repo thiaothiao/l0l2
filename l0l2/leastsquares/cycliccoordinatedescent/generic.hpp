@@ -8,8 +8,8 @@
 #include <concepts>
 #include <utility>
 
-#include "leastsquares/utils.hpp"
-#include "leastsquares/l2regressor/solver.hpp"
+#include "l0l2/leastsquares/utils.hpp"
+#include "l0l2/leastsquares/l2regressor/solver.hpp"
 
 namespace l0l2
 {
