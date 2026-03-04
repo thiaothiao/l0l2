@@ -18,3 +18,5 @@ add_custom_command(TARGET pca POST_BUILD
 )
 
 set_target_properties(leastsquares pca PROPERTIES CXX_STANDARD 23 CXX_STANDARD_REQUIRED ON)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})

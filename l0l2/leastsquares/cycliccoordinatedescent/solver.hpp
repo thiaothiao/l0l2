@@ -8,8 +8,8 @@
 #include <concepts>
 #include <utility>
 
-#include "leastsquares/utils.hpp"
-#include "leastsquares/cycliccoordinatedescent/generic.hpp"
+#include "l0l2/leastsquares/utils.hpp"
+#include "l0l2/leastsquares/cycliccoordinatedescent/generic.hpp"
 
 namespace l0l2
 {

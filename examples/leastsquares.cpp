@@ -1,19 +1,11 @@
 #include <iostream>
 #include <ios>
 #include <chrono>
-#include <random>
-#include <list>
-#include <fstream>
-#include <string>
-#include <iomanip>
-#include <algorithm>
-#include <utility>
-#include <concepts>
 
-#include "leastsquares/utils.hpp"
-#include "leastsquares/cycliccoordinatedescent/solver.hpp"
-#include "leastsquares/fullpath/solver.hpp"
-#include "examples/simu.hpp"
+#include <string>
+
+#include "l0l2/core.hpp"
+#include "simu.hpp"
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
     l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
@@ -41,12 +33,10 @@ int main()
     using Utils = l0l2::Utils<Scalar>;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
 
-
-
     std::cout << "Finding path...\n\n";
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(2.5);//static_cast<Scalar>(-1); //static_cast<Scalar>(0.5);// static_cast<Scalar>(0.1);
+    const auto delta = static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);//static_cast<Scalar>(-1);
 
     const auto withIntercept = false;
 
@@ -60,9 +50,7 @@ int main()
 
     const std::streamsize streamSize = 6;
 
-    const auto [Mat, Vect] = l0l2::linearmodel::simulatedData<Scalar>(matrixIsCovariance);
-
-    //const auto [Mat, Vect] = l0l2::linearmodel::simulatedRandomData<Scalar>(matrixIsCovariance);
+    const auto [Mat, Vect] = l0l2::linearmodel::diabetes<Scalar>();
 
     const auto n = static_cast<Index>(Mat.cols());
     const auto m = static_cast<Index>(Mat.rows());
@@ -118,8 +106,6 @@ int main()
             const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
             std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
-
-            //return 0;
         }
 
         {
@@ -143,8 +129,6 @@ int main()
             const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "\n\nFrom L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
             std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
-
-            //return 0;
         }
 
         {
@@ -168,13 +152,9 @@ int main()
             const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "\n\nFrom Both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
             std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
-
-            //return 0;
         }
 
         {
-            //std::string OneSolutionfilename = R"(OneSolution.txt)";
-
             const auto start = std::chrono::high_resolution_clock::now();
 
             FullPathSolverParam param{ delta, beta, Strategy::FromZeroSolution };
@@ -185,18 +165,13 @@ int main()
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
-            //l0l2::linearmodel::save<Scalar>(beta, { solution }, OneSolutionfilename, streamSize);
-
             // Calculate the duration and cast to microseconds
             const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "\n\n0 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
             std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
-            //return 0;
         }
 
         {
-            //std::string OneSolutionfilename = R"(OneSolution2.txt)";
-
             const auto start = std::chrono::high_resolution_clock::now();
 
             FullPathSolverParam param{ delta, beta, Strategy::FromL2Solution };
@@ -207,13 +182,10 @@ int main()
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
-            //l0l2::linearmodel::save<Scalar>(beta, { solution }, OneSolutionfilename, streamSize);
-
             // Calculate the duration and cast to microseconds
             const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
             std::cout << "\n\nL2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
             std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
-            return 0;
         }
     }
 

@@ -9,10 +9,10 @@
 #include <limits>
 #include <concepts>
 
-#include "leastsquares/utils.hpp"
-#include "leastsquares/cycliccoordinatedescent/solver.hpp"
-#include "leastsquares/fullpath/solver.hpp"
-#include "pca/generic.hpp"
+#include "l0l2/leastsquares/utils.hpp"
+#include "l0l2/leastsquares/cycliccoordinatedescent/solver.hpp"
+#include "l0l2/leastsquares/fullpath/solver.hpp"
+#include "l0l2/pca/generic.hpp"
 
 namespace l0l2
 {
