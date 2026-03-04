@@ -199,11 +199,27 @@ namespace l0l2
 
                 if (strategy == Strategy::FromZeroSolution)
                 {
-                    return regressor.solveFromZero(matData, vectData, matrixIsCovariance);
+                    auto  results = regressor.solveFromZero(matData, vectData, matrixIsCovariance);
+
+                    // remove delta infinity solution
+                    if (!results.empty())
+                    {
+                        results.pop_front();
+                    }
+
+                    return results;
                 }
                 else if (strategy == Strategy::FromL2Solution)
                 {
-                    return regressor.solveFromL2(matData, vectData, matrixIsCovariance);
+                    auto results = regressor.solveFromL2(matData, vectData, matrixIsCovariance);
+
+                    // remove delta 0 solution
+                    if (!results.empty())
+                    {
+                        results.pop_back();
+                    }
+
+                    return results;
                 }
                 else
                 {
@@ -215,6 +231,16 @@ namespace l0l2
                         regressor.solveFromL2(matData, vectData, matrixIsCovariance);
 
                     auto fromZeroSolutionResults = fromZeroFuture.get();
+
+                    if (!fromZeroSolutionResults.empty())
+                    {// clean delta infinity solution
+                        fromZeroSolutionResults.pop_front();
+                    }
+
+                    if (!fromL2SolutionResults.empty())
+                    {// clean delta 0 solution
+                        fromL2SolutionResults.pop_back();
+                    }
 
                     const auto fromZeroSmallestDelta = fromZeroSolutionResults.back().delta - Utils::epsilon;
 
