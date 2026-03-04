@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "l0l2/version.hpp"
 #include "l0l2/core.hpp"
 #include "simu.hpp"
 
@@ -21,7 +22,11 @@ int main()
     using Utils = l0l2::Utils<Scalar>;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
 
+    constexpr std::string version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
+    std::cout << "l0l2 library version " << version << "\n";
+
     std::cout << "Finding path...\n\n";
+
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
     const auto delta = static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);//static_cast<Scalar>(-1);
