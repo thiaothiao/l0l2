@@ -14,15 +14,11 @@ template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::li
 template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<float>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<float>>;
-template<>
-const float l0l2::Utils<float>::epsilon = 1e-6f;
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::L0L2SPCAModelImplementation<double>>;
 template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelImplementation<double>>;
-template<>
-const double l0l2::Utils<double>::epsilon = 1e-8;
 
 namespace
 {

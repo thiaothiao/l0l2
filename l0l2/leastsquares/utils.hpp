@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <concepts>
+#include <type_traits>
 
 #include <Eigen/Dense>
 
@@ -31,7 +32,8 @@ namespace l0l2
 	public:
 		using Scalar = ScalarType;
 
-		const static Scalar epsilon;
+		static constexpr Scalar epsilon = 
+			std::is_same_v<Scalar, float> ? static_cast<Scalar>(1e-6) : static_cast<Scalar>(1e-8);
 
 		static Scalar sign(Scalar value);
 
