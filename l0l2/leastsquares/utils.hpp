@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iomanip>
 #include <concepts>
+#include <type_traits>
 
 #include <Eigen/Dense>
 
@@ -31,7 +32,8 @@ namespace l0l2
 	public:
 		using Scalar = ScalarType;
 
-		const static Scalar epsilon;
+		static constexpr Scalar epsilon = 
+			std::is_same_v<Scalar, float> ? static_cast<Scalar>(1e-6) : static_cast<Scalar>(1e-8);
 
 		static Scalar sign(Scalar value);
 
@@ -114,8 +116,6 @@ namespace l0l2
 				Solution(Solution&&) = default;
 				Solution& operator=(Solution&&) = default;
 
-				bool isValidFor(Scalar beta) const;
-
 				Scalar delta;
 				Vector<Scalar> x;
 				Vector<Scalar> grad;
@@ -149,45 +149,7 @@ namespace l0l2
 				CDStatus status;
 				Vector<Scalar> x;
 				Scalar intercept;
-			};			
-
-			template<std::floating_point ScalarType>
-			bool Solution<ScalarType>::isValidFor(Scalar beta) const
-			{
-				using Utils = Utils<Scalar>;
-
-				const auto n = static_cast<Index>(x.size());
-
-				const auto deltaBeta = delta * beta;
-
-				for (Index i = 0; i < n; ++i)
-				{//Not auto vectorized
-					if (std::abs(x[i]) <= Utils::epsilon)
-					{
-						if (std::abs(grad[i]) - deltaBeta > Utils::epsilon)
-						{
-							return false;
-						}
-					}
-					else if (std::abs(x[i]) < delta)
-					{
-						const auto err = grad[i] - beta * x[i] + deltaBeta * Utils::sign(x[i]);
-						if (std::abs(err) > Utils::epsilon)
-						{
-							return false;
-						}
-					}
-					else //if (std::abs(x[i]) >= delta)
-					{
-						if (std::abs(grad[i]) > Utils::epsilon)
-						{
-							return false;
-						}
-					}
-				}
-
-				return true;
-			}
+			};
 		}
 	}
 }

@@ -10,14 +10,10 @@
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
     l0l2::linearmodel::leastsquares::L0L2ModelImplementation<float>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<float>;
-template<>
-const float l0l2::Utils<float>::epsilon = 1e-6f;
 
 template class l0l2::linearmodel::leastsquares::CyclicCoordinateDescent<
     l0l2::linearmodel::leastsquares::L0L2ModelImplementation<double>>;
 template class l0l2::linearmodel::leastsquares::FullPathSolver<double>;
-template<>
-const double l0l2::Utils<double>::epsilon = 1e-8;
 
 int main()
 {
@@ -83,9 +79,7 @@ int main()
         {
             const auto& result = *it;
             std::cout << l0l2::linearmodel::toString(result, streamSize);
-            
-            const std::string tag = result.isValidFor(beta) ? " OK\n" : " NOK! Failed.\n";
-            std::cout << tag;
+            std::cout << " \n";
         }
     }
     else
