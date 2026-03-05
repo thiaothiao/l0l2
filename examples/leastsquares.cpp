@@ -26,11 +26,9 @@ int main()
     constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
     std::cout << "l0l2 library version " << version << "\n";
 
-    std::cout << "Finding path...\n\n";
-
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);//static_cast<Scalar>(-1);
+    const auto delta = static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);
 
     const auto withIntercept = false;
 
@@ -44,10 +42,10 @@ int main()
 
     const std::streamsize streamSize = 6;
 
-    const auto [Mat, Vect] = l0l2::linearmodel::diabetes<Scalar>();
+    const auto [mat, vect] = l0l2::linearmodel::diabetes<Scalar>();
 
-    const auto n = static_cast<Index>(Mat.cols());
-    const auto m = static_cast<Index>(Mat.rows());
+    const auto n = static_cast<Index>(mat.cols());
+    const auto m = static_cast<Index>(mat.rows());
 
     const Scalar tolerance = static_cast<Scalar>(1e-6);
     const unsigned int maximumNumberOfIterations = 100000U;
@@ -59,19 +57,15 @@ int main()
     {
         const auto start = std::chrono::high_resolution_clock::now();
 
-        auto results = FullPathSolver::fitAll(
-            Mat, 
-            Vect, 
-            matrixIsCovariance, 
-            beta,
-            withIntercept,
-            Strategy::FromL2Solution);
+        auto results = FullPathSolver::fitAll( mat, vect, matrixIsCovariance, 
+            beta, withIntercept, Strategy::FromL2Solution);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nJOB DONE in " << duration_us.count() << " microseconds!\n\n";
+        const auto durationUs = 
+            std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "\n\nJOB DONE in " << durationUs.count() << " microseconds!\n\n";
 
         for (auto it = results.begin(); it != results.end(); ++it)
         {
@@ -87,22 +81,21 @@ int main()
 
             const Strategy strategy = Strategy::FromZeroSolution;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
-            innerEpsilon, innerMaximumNumberOfIterations };
+            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+                maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            L0L2Regressor regressor{ param, withIntercept };
-
-            const auto solution = regressor.fit(
-                Mat,
-                Vect,
-                matrixIsCovariance);
+            const auto solution = L0L2Regressor{param, withIntercept}
+                .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
             // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Zero JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
+            const auto durationUs = 
+                std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "\n\nFrom Zero JOB DONE in " 
+                << durationUs.count() << " microseconds!\n\n";
+            std::cout << "\nSolution\n" 
+                << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
         {
@@ -110,22 +103,21 @@ int main()
 
             const Strategy strategy = Strategy::FromL2Solution;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
-            innerEpsilon, innerMaximumNumberOfIterations };
+            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+                maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            L0L2Regressor regressor{ param, withIntercept };
-
-            const auto solution = regressor.fit(
-                Mat,
-                Vect,
-                matrixIsCovariance);
+            const auto solution = L0L2Regressor{param, withIntercept}
+                .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
             // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom L2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
+            const auto durationUs = 
+                std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "\n\nFrom L2 JOB DONE in " 
+                << durationUs.count() << " microseconds!\n\n";
+            std::cout << "\nSolution\n" 
+                << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
         {
@@ -133,22 +125,21 @@ int main()
 
             const Strategy strategy = Strategy::FromBothSolutions;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, maximumNumberOfIterations,
-            innerEpsilon, innerMaximumNumberOfIterations };
+            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+                maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            L0L2Regressor regressor{ param, withIntercept };
-
-            const auto solution = regressor.fit(
-                Mat,
-                Vect,
-                matrixIsCovariance);
+            const auto solution = L0L2Regressor{param, withIntercept}
+                .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
             // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Both JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
+            const auto durationUs = 
+                std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "\n\nFrom Both JOB DONE in " 
+                << durationUs.count() << " microseconds!\n\n";
+            std::cout << "\nSolution\n" 
+                << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
         {
@@ -156,16 +147,18 @@ int main()
 
             FullPathSolverParam param{ delta, beta, Strategy::FromZeroSolution };
 
-            FullPathSolver regressor{ param , withIntercept };
-
-            auto solution = regressor.fit(Mat, Vect, matrixIsCovariance);
+            auto solution = FullPathSolver{param , withIntercept}
+                .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
             // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\n0 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
+            const auto durationUs = 
+                std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "\n\n0 JOB DONE in " 
+                << durationUs.count() << " microseconds!\n\n";
+            std::cout << "\nSolution\n" 
+                << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
         {
@@ -173,16 +166,18 @@ int main()
 
             FullPathSolverParam param{ delta, beta, Strategy::FromL2Solution };
 
-            FullPathSolver regressor{ param , withIntercept };
-
-            auto solution = regressor.fit(Mat, Vect, matrixIsCovariance);
+            auto solution = FullPathSolver{param , withIntercept}
+                .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
             // Calculate the duration and cast to microseconds
-            const auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nL2 JOB DONE in " << duration_us.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" << l0l2::linearmodel::toString(solution, streamSize) << "\n";
+            const auto durationUs 
+                = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+            std::cout << "\n\nL2 JOB DONE in " 
+                << durationUs.count() << " microseconds!\n\n";
+            std::cout << "\nSolution\n" 
+                << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
     }
 
