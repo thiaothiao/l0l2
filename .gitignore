@@ -1,3 +1,9 @@
+build*/
+*egg-info
+
+# Pdfs
+*.synctex*
+
 # Prerequisites
 *.d
 
@@ -21,6 +27,7 @@
 *.so
 *.dylib
 *.dll
+*.pyd
 
 # Fortran module files
 *.mod

@@ -1,0 +1,657 @@
+
+
+% This is a simple sample document.  For more complicated documents take a look in the exercise tab. Note that everything that comes after a % symbol is treated as comment and ignored when the code is compiled.
+
+\documentclass[fleqn]{report} % \documentclass{} is the first command in any LaTeX code.  It is used to define what kind of document you are creating such as an article or a book, and begins the document preamble
+
+\usepackage{amsmath} % \usepackage is a command that allows you to add functionality to your LaTeX code
+\usepackage{amsfonts}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\newcommand\ddfrac[2]{\frac{\displaystyle #1}{\displaystyle #2}}
+%\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+
+
+
+\title{Technical report\\Sparsifying $l_2$ regularized least squares regression by biconjugate convex relaxation} % Sets article title
+\author{Dr. Mamadou THIAO} % Sets authors name
+\date{\today} % Sets date for date compiled
+\newtheorem{thm}{Proposition}[subsection]
+\newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
+\newtheorem{crly}{Corollary}[subsection]
+
+% The preamble ends with the command \begin{document}
+\begin{document} % All begin commands must be paired with an end command somewhere
+    \maketitle % creates title using information in preamble (title, author, date)
+    \tableofcontents
+    \section{Linear least squares} % creates a section
+\begin{equation}
+		\label{Ridge_Regularization}
+		(\text{RIDGE}^{\beta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2
+			+ \beta\left\|x\right\|_2^2\\
+			s.t.&\;x\in\mathbb{R}^n,\\
+		\end{array} 
+		\right.
+    \end{equation}
+		where $\beta> 0$ is a parameter.
+    \section{Sparsifying linear least squares} % creates a section
+We use a $l_0$ regularization approach to promote sparse solutions as expressed in the following problem
+		\begin{equation}
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \rho\left\|x\right\|_0 + \beta\left\|x\right\|^2_2  \\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+		where $\rho \geq 0$ is a parameter which controls the sparsity of the solutions. \\
+With $\delta := \sqrt{\ddfrac{\rho}{\beta}}$, we have $\rho = \beta\delta^2$. The previous problem  becomes
+\begin{equation}
+		\label{L0_L2_Regularized_Sparse_Approximation}
+		(\mathbb{P}^{\beta, \delta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta\delta^2\left\|x\right\|_0 + \beta\left\|x\right\|^2_2 \\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+
+		\section{Relaxation $(\mathbb{Q}^{\beta,\delta})$}
+Replacing $\left\|.\right\|_0 +\frac{1}{\delta^2} \left\|.\right\|^2_2$ by its tightest convex under approximation, its biconjugate, 
+		\[
+			\left(\left\|.\right\|_0 + \frac{1}{\delta^2} \left\|.\right\|_2^2\right)^{**}(x),
+		\]
+		see Le Thi et al., we obtain the following biconjugate relaxation (\textbf{B}i\textbf{C}onjugate \textbf{R}elaxation,  \textbf{BCR} )
+		\[
+		(\mathbb{Q}^{\beta,\delta})\left\{\begin{array}{ll}\min & F(x):=\left\|Ax-b\right\|^2_2 + \beta\delta^2\left(\left\|.\right\|_0 + \frac{1}{\delta^2}\left\|.\right\|_2^2\right)^{**}(x)\\
+		s.t.&\;x\in\mathbb{R}^n.
+		\end{array} \right.
+		\]
+$(\mathbb{Q}^{\beta,\delta})$ is a convex under approximation of $(\mathbb{P}^{\beta,\delta})$ and $(\mathbb{Q}^{\beta,\delta})$ solves $(\mathbb{P}^{\beta,\delta})$ when its solution satisfies particular global optimality conditions (see Le Thi et al.).
+		\[
+			\left(\left\|.\right\|_0 + \ddfrac{1}{\delta^2}\left\|.\right\|_2^2\right)^{**}(x) = \sum_{i}^{n}\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i),
+		\]
+\[
+\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i)=\ddfrac{1}{\delta^2} x_i^2  - \ddfrac{1}{\delta^2} \left[\left(\delta-\left|x_i\right|\right)^+\right]^2 +1=\left\{ \begin{array}{ll}
+ \ddfrac{1}{\delta^2}x_i^2 + 1 &\;\text{if}\;\left|x_i\right|\geq \delta.\\
+&\\
+ 2\ddfrac{1}{\delta}\left|x_i\right|& \text{otherwise}.
+\end{array}
+\right.
+\]
+\subsection{Optimality conditions for $(\mathbb{Q}^{\beta,\delta})$}
+The following  form for the optimality conditions are very useful for the theoretical study of the links between the biconjugate relaxation BCR, Ridge, Lasso and ElasticNet.
+\subsubsection{Optimality condition for $(\mathbb{Q}^{\beta,\delta})$}
+The optimality condition for the convex relaxation $(\mathbb{Q}^{\beta,\delta})$ is given by, Le Thi et al.
+\[
+	-2A^T(Ax-b)\in \beta\delta^2\partial \left(\left\|.\right\|_0 +  \ddfrac{1}{\delta^2} \left\|.\right\|_2^2\right)^{**}(x).
+\]
+As
+\[
+\partial\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{**}(x_i)=\left\{ \begin{array}{ll}
+\Bigg\{2\ddfrac{1}{\delta^2}  x_i\Bigg\}&\;\text{if}\; \left|x_i\right|\geq \delta,\\
+&\\
+\Bigg\{2\ddfrac{1}{\delta} \;\text{sign}(x_i)\Bigg\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta,\\
+&\\
+\Bigg[-2\ddfrac{1}{\delta} , 2\ddfrac{1}{\delta} \Bigg]&\;\text{if}\; x_i=0,
+\end{array}
+\right.
+\]
+the condition becomes
+\[
+\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)\;
+\left[A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\beta x_i\right\}&\;\text{if}\; \left|x_i\right|\geq\delta\\
+\left\{-\delta\beta\;\text{sign}(x_i)\right\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x_i=0.
+\end{array}
+\right.
+\]
+or
+\[
+\left[A^T(Ax-b) +\beta x\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{0\right\}&\;\text{if}\; \left|x_i\right|\geq\delta\\
+\left\{\beta x_i-\delta\beta\;\text{sign}(x_i)\right\} &\;\text{if}\; 0<\left|x_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x_i=0.
+\end{array}
+\right.
+\]
+\begin{thm}
+$x=0$ will be an optimal solution for $(\mathbb{Q}^{\beta,\delta})$ if and only if $\left\|A^Tb\right\|_{\infty}\leq\delta\beta $.
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\begin{thm}If  $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta<
+\underset{i\in \text{supp}(x)}{\min}\left|x_i\right|$,\\ then $x$ is a solution for $(\mathbb{Q}^{\beta,\delta^{\prime}})$, for all $\delta^{\prime}$, $\delta\leq \delta^{\prime}\leq \underset{i\in \text{supp}(x)}{\min}\left|x_i\right|$.
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsection{Dual of $(\mathbb{Q}^{\beta,\delta})$}
+Lagrangian dual of $(\mathbb{D}^{\beta,\delta})$ is 
+\[
+		(\mathbb{D}^{\beta,\delta})\;\left\{\begin{array}{ll}
+\max & G(\nu):=-\ddfrac{1}{4}\left\|\nu\right\|^2_2 - b^T\nu - \beta\delta^2\left(\left\|.\right\|_0 + \ddfrac{1}{\delta^2}  \left\|.\right\|_2^2\right)^{*}(-\ddfrac{A^T\nu}{\beta\delta^2})\\
+		s.t.&\;\nu\in\mathbb{R}^m.
+		\end{array} \right.
+		\]
+With 
+		\[
+			\left(\left\|.\right\|_0 + \ddfrac{1}{\delta^2}  \left\|.\right\|_2^2\right)^{*}(z) = \sum_{i}^{m}\left(\left|.\right|_0 + \ddfrac{1}{\delta^2} \left|.\right|_2^2\right)^{*}(z_i),
+		\]
+\[
+			\left(\left|.\right|_0 + \ddfrac{1}{\delta^2}  \left|.\right|_2^2\right)^{*}(z_i) = \left(\ddfrac{\delta^2}{4}z_i^2 - 1\right)^+=\left\{ \begin{array}{ll}
+\ddfrac{\delta^2}{4}z_i^2 - 1 &\;\text{if}\; \left|z_i\right|\geq \ddfrac{2}{\delta}\\
+0& \text{otherwise}.
+\end{array}
+\right.
+		\]
+
+Weak duality holds. As Slater's conditition is satisfied, strong duality holds for $(\mathbb{D}^{\beta,\delta})$.
+\subsubsection{Optimality condition for $(\mathbb{D}^{\beta,\delta})$}
+The optimality condition for the convex program $(\mathbb{D}^{\beta,\delta})$ is given by,
+\[
+	\ddfrac{1}{2}\nu+b\in A\partial (\left\|.\right\|_0 + \ddfrac{1}{\delta^2}  \left\|.\right\|_2^2)^{*}(-\ddfrac{A^T\nu}{\beta\delta^2}).
+\]
+As
+\[
+\partial (\left\|.\right\|_0 + \ddfrac{1}{\delta^2}  \left\|.\right\|_2^2)^{*}(z_i)=\left\{ \begin{array}{ll}
+\left\{\ddfrac{\delta^2}{2}z_i\right\}&\;\text{if}\; \left|z_i\right|> \ddfrac{2}{\delta}  \\
+\left\{0\right\} &\;\text{if}\; \left|z_i\right|<  \ddfrac{2}{\delta} \\
+\left[0, \delta\right]&\;\text{if}\; z_i=  \ddfrac{2}{\delta} ,\\
+\left[-\delta, 0\right]&\;\text{if}\; z_i= - \ddfrac{2}{\delta} ,
+\end{array}
+\right.
+\]
+the condition becomes
+\[
+\left(\underset{opt}{\mathbb{D}^{\beta,\delta}}\right)\;
+\ddfrac{1}{2}\nu+b = Ay,\; 
+y_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\ddfrac{1}{2\beta}\left[A^T\nu\right]_i\right\}&\;\text{if}\; \left|\left[A^T\nu\right]_i\right|> 2\delta\beta\\
+\left\{0\right\} &\;\text{if}\; \left|\left[A^T\nu\right]_i\right|< 2\delta\beta\\
+\left[0, \delta\right]&\;\text{if}\; \left[A^T\nu\right]_i= -2\delta\beta,\\
+\left[-\delta, 0\right]&\;\text{if}\; \left[A^T\nu\right]_i= 2\delta\beta.
+\end{array}
+\right.
+\]
+\subsubsection{Finding a dual feasible from a primal feasible}
+The previous primal and dual optimality conditions show that if $x$ is a primal solution then $\nu=Ax-b$ is a dual solution.\\ 
+Therefore for an arbitray feasible primal point $x$ we define a dual feasible point $\nu = s\nu_0$,  $\nu_0 = (Ax-b)$. The scalar $s$ will be the argmax of the following 1D convex program:
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 - b^T\nu_0 s - \beta\delta^2\left(\left\|.\right\|_0 + \ddfrac{1}{\delta^2} \left\|.\right\|_2^2\right)^{*}(-\ddfrac{A^T\nu_0}{\beta\delta^2}s)\\
+		s.t.&\;s\in\mathbb{R},
+		\end{array} \right.
+		\]
+say 
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 - b^T\nu_0 s - \beta\delta^2\sum_{i=1}^{n} \left(\ddfrac{\left[A^T\nu_0\right]_i^2}{4\delta^2\beta^2}s^2 - 1\right)^+\\
+		s.t.&\;s\in\mathbb{R}.
+		\end{array} \right.
+		\]
+This is a piecewise 1D quadratic convex program. A solution will have necessarily the opposite sign of $b^T\nu_0$.\\
+ We will first solve 
+\[
+		\left\{\begin{array}{ll}
+\max & -\ddfrac{1}{4}\left\|\nu_0\right\|^2_2 s^2 + \left|b^T\nu_0\right| s -  \beta\delta^2\sum_{i=1}^{n} \left(\ddfrac{\left[A^T\nu_0\right]_i^2}{4\delta^2\beta^2}s^2 - 1\right)^+\\
+		s.t.&\;s\geq0,
+		\end{array} \right.
+		\]
+and then update the sign of $s$.
+\subsubsection{Duality gap}
+$G(\nu)$ lower bounds $F(x)$ and the corresponding duality gap
+\[
+\eta := F(x) - G(\nu)
+\]
+is always nonnegative from weak duality. $x$ is no more than $\eta$-suboptimal. At the optimum the gap is zero from strong duality.
+\subsection{Theoretical links with Ridge and Lasso}
+\subsubsection{Theoretical links with Ridge}
+Recall
+\begin{equation}
+		(\text{RIDGE}^{\beta})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta\left\|x\right\|_2^2\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+Ridge optimality condition ($2A^T(Ax-b) + 2\beta x = 0$) can be written as
+\[
+\left(\underset{opt}{\text{RIDGE}^{\beta}}\right)
+\left[A^T(Ax-b)\right]_i\in 
+\left\{ 
+-\beta x_i\right\}.
+\]
+\begin{thm}A $\text{RIDGE}$ is always a $(\mathbb{Q}^{\beta,\delta})$.\\\\
+More precisely, assume $A$ has no null column,
+\begin{enumerate}
+\item If $x$ is a solution for $(\text{RIDGE}^{\beta})$,\\ then $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ for all $\delta\leq \underset{i}{\min}\left|x_i\right|$.
+\item If $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta\leq \underset{i}{\min}\left|x_i\right|$,\\ then $x$ is a solution for $(\text{RIDGE}^{\beta})$.
+\end{enumerate}
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\text{RIDGE}^{\beta}}\right)$ and $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsubsection{Theoretical links with Lasso}
+\begin{equation}
+		\label{Lasso_Regularization}
+		(\text{LASSO}^{\gamma})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \gamma\left\|x\right\|_1\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+Lasso optimality condition can be written as
+\[
+\left(\underset{opt}{\text{LASSO}^{\gamma}}\right)\;\left[A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\ddfrac{\gamma}{2}\;\text{sign}(x_i)\right\} &\;\text{if}\; x_i\neq 0\\
+\left[-\ddfrac{\gamma}{2}, \ddfrac{\gamma}{2}\right]&\;\text{if}\; x_i =0.
+\end{array}
+\right.
+\]
+\begin{thm} A $\text{LASSO}$ is always a $(\mathbb{Q}^{\beta,\delta})$.\\\\
+More precisely,
+\begin{enumerate}
+\item If $x$ is a solution for $(\text{LASSO}^{\gamma})$,\\ then  $x$ is a solution for $(\mathbb{Q}^{\ddfrac{\gamma}{2\delta},\delta})$ for all $\delta\geq
+\underset{i\in\text{supp}(x)}{\max}\left|x_i\right|$.
+\item If $x$ is a solution for $(\mathbb{Q}^{\beta,\delta})$ and $\delta\geq\underset{i\in\text{supp}(x)}{\max}\left|x_i\right|$, \\ then $x$ is a solution for $(\text{LASSO}^{2\delta\beta})$.
+\end{enumerate}
+\end{thm}
+\begin{proof}
+    Direct use of $\left(\underset{opt}{\text{LASSO}^{\gamma}}\right)$ and $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$.
+\end{proof}
+\subsubsection{From Ridge to Lasso. How navigate $(\mathbb{Q}^{\beta,\delta})$}
+Consider $(\text{RIDGE}^{\beta})$, for a $\beta>0$. (Assume $A$ has no null column)\\ Define 
+\[
+\delta_{\text{RIDGE}^{\beta}}:=\underset{i\in\text{supp}(x^{\text{RIDGE}^{\beta}})}{\min} \left|x^{\text{RIDGE}^{\beta}}_i\right|.
+\]
+Let us analyze $\delta$s values.\\
+\\
+We already have $x^{\text{RIDGE}^{\beta}}$ solution of  $(\mathbb{Q}^{\beta,\delta})$ for all $\delta\leq\delta_{\text{RIDGE}^{\beta}}$.\\\\
+We will consider $\delta_{\text{RIDGE}^{\beta}} > \delta$.\\
+\\
+From inequality $F(x^{\mathbb{Q}^{\beta,\delta}}) \leq F(0)$, we deduce
+\[
+  \left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq\left\|x^{\mathbb{Q}^{\beta,\delta}}\right\|_{1}  \leq\ddfrac{1}{2\delta\beta}F(0),\forall\;i.
+\]
+So it suffices to constrain $\ddfrac{1}{2\delta\beta}F(0)\leq \delta$ to ensure $\left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq \delta,$ for all $i$.\\\\
+So $x^{\mathbb{Q}^{\beta,\delta}}$ is a solution of $( \text{LASSO}^{2\delta\beta})$,  for all $\delta > \max\left\{\sqrt{\ddfrac{1}{2\beta}F(0)},  \delta_{\text{RIDGE}^{\beta}}\right\}$.\\
+\\
+Define 
+\[
+\delta_{\text{RIDGE}^{\beta},\text{LASSO}} :=\inf\left\{\delta  >  \delta_{\text{RIDGE}^{\beta}}:\;x^{\mathbb{Q}^{\beta,\delta}}\; \text{is a solution of }( \text{LASSO}^{2\delta\beta})\right\}.
+\]
+We also have necessarily  
+\[\rho_{\text{RIDGE}^{\beta},\text{LASSO}}\leq\max\left\{\sqrt{\ddfrac{1}{2\beta}F(0)},  \delta_{\text{RIDGE}^{\beta}}\right\}.
+\]
+\begin{thm} 
+\begin{enumerate}
+\item When $\delta$ moves from $ \delta_{\text{RIDGE}^{\beta}}$ to $\delta_{\text{RIDGE}^{\beta},\text{LASSO}}$ , $(\mathbb{Q}^{\beta,\delta})$ moves from $\text{RIDGE}$ to $\text{LASSO}$.
+\begin{itemize}
+\item before $ \delta_{\text{RIDGE}^{\beta}}$, $(\mathbb{Q}^{\beta,\delta})$ is a $\text{RIDGE}$,
+\item after $ \delta_{\text{RIDGE}^{\beta},\text{LASSO}}$, $(\mathbb{Q}^{\beta,\delta})$ is a $\text{LASSO}$.
+\end{itemize}
+\item When $\delta$ moves strictly between $ \delta_{\text{RIDGE}^{\beta}}$ and $\delta_{\text{RIDGE}^{\beta},\text{LASSO}}$ , $(\mathbb{Q}^{\beta,\delta})$ cannot be a $\text{RIDGE}$ nor a $\text{LASSO}$.\\
+The components of $x^{\mathbb{Q}^{\beta,\delta} }$ satisfy $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}}\right)$
+\[
+\left[A^T(Ax^{\mathbb{Q}^{\beta,\delta}}-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-\beta x^{\mathbb{Q}^{\beta,\delta}}_i\right\}&\;\text{if}\; \left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\geq \delta\\
+\left\{-\delta\beta\;\text{sign}(x^{\mathbb{Q}^{\beta,\delta}}_i)\right\} &\;\text{if}\; 0<\left|x^{\mathbb{Q}^{\beta,\delta}}_i\right|\leq \delta\\
+\left[-\delta\beta, \delta\beta\right]&\;\text{if}\; x^{\mathbb{Q}^{\beta,\delta}}_i=0.
+\end{array}
+\right.
+\]
+\end{enumerate}
+\end{thm}
+The second point of the previous proposition highlights the mixing role (on the components of $x$) played by $(\mathbb{Q}^{\beta,\delta} )$. The first line of the optimality condition is for RIDGE, with $\beta$, and the followings are for LASSO,  with $\gamma:=2\delta\beta$. The value $\delta=\ddfrac{\gamma}{2\beta}$ defines a trade-off line on the coordinates value.
+\subsection{Mixing roles: $(\mathbb{Q}^{\beta,\delta} )$  vs $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$}
+\subsubsection{Theoretical links with ElasticNet}
+\begin{equation}
+		\label{ElasticNet_Regularization}
+		(\text{ELASTICNET}^{\beta^{\prime},\gamma})\;
+		\left\{
+		\begin{array}{ll}\min & \left\|Ax-b\right\|^2_2 + \beta^{\prime}\left\|x\right\|_2^2 + \gamma\left\|x\right\|_1\\
+			s.t.&\;x\in\mathbb{R}^n.\\
+		\end{array} 
+		\right.
+    \end{equation}
+ElasticNet optimality condition can be written as
+\[
+\left(\underset{opt}{\text{ELASTICNET}^{\beta^{\prime},\gamma}}\right)\;\left[2A^T(Ax-b)\right]_i\in 
+\left\{ \begin{array}{ll}
+\left\{-2\beta^{\prime} x_i -\gamma\;\text{sign}(x_i)\right\} &\;\text{if}\; x_i\neq 0\\
+\left[-\gamma,  \gamma\right]&\;\text{if}\; x_i =0.
+\end{array}
+\right.
+\]
+\begin{thm} $x$ is a common solution for $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$ and $(\mathbb{Q}^{\beta,\delta} )$ if and only if 
+$x$ is a solution of $(\text{ELASTICNET}^{\beta^{\prime},\gamma})$ or $(\mathbb{Q}^{\beta,\delta} )$ and 
+one of the following conditions holds:
+\begin{enumerate}
+    \item there exists $C_1$, such that
+\[\left|x_i\right|=C_1,\forall\;i,\;x_i\neq0,
+\]
+\[C_1 \geq \delta,\;\beta=\beta^{\prime} + \ddfrac{\gamma}{2C_1}.
+\]
+    \item there exists $C_2$, such that
+\[\left|x_i\right|=C_2,\forall\;i,\;x_i\neq0,
+\]
+\[C_2 \leq \delta,\;\delta\beta=\ddfrac{\gamma}{2}+\beta^{\prime} C_2.
+\]
+    \item there exist $C_1$ and $C_2$, $C_2 \leq C_1$, such that
+\[\left|x_i\right|=C_1\;\text{or}\;C_2,\forall\;i,\;x_i\neq0,
+\]
+\[ \delta = \ddfrac{C_1(\gamma+2\beta^{\prime} C_2)}{\gamma+2\beta^{\prime} C_1},\;\delta\beta=\ddfrac{\gamma}{2}+\beta^{\prime} C_2.
+\]
+\end{enumerate}\end{thm}
+\begin{proof}
+    Use $\left(\underset{opt}{\text{ELASTICNET}^{\beta^{\prime},\gamma}}\right)$,  $\left(\underset{opt}{\mathbb{Q}^{\beta,\delta}} \right)$ and compare solutions.
+\end{proof}
+\section{Solving $(\mathbb{Q}^{\beta,\delta})$}
+Let $\beta>0$ and let us denote by $x^{\beta}(\delta)$ a solution for $(\mathbb{Q}^{\beta,\delta})$. The solution set with respect to $\delta$ is called the path and can be expressed as 
+\[
+	\textbf{PATH}^{\beta}:= \left\{x^{\beta}(\delta):\;\delta\geq 0\right\}.
+\] 
+\subsubsection{Computing a new solution on the path from a known one}
+Here we will consider that we have $(\mathbb{Q}^{\beta,\underline{\delta}})$, $\underline{\delta}>0$ and a corresponding solution $\underline{x}:=x^{\beta}(\underline{\delta})$.\\
+\\
+Let us define the following partition of the indices $i$, $i=1,..., n$.
+\[
+\begin{array}{l}
+\underline{\mathbb{K}}_0:=\left\{i:\;\left|\underline{x}_i\right|>\underline{\delta} \right\},\\
+\underline{\mathbb{K}}_1\cup\underline{\mathbb{K}}_2:=\left\{i:\;\left|\underline{x}_i\right|=\underline{\delta} \right\},\; \underline{\mathbb{K}}_1\cap\underline{\mathbb{K}}_2=\emptyset,\\
+\underline{\mathbb{K}}_3:=\left\{i:\;0<\left|\underline{x}_i\right|<\underline{\delta} \right\},\\
+\underline{\mathbb{K}}_4\cup\underline{\mathbb{K}}_5:=\left\{i:\;\underline{x}_i=0,\;\left|\left[A^T(A\underline{x} -b)\right]_i\right|=\underline{\delta} \beta\right\},\;\underline{\mathbb{K}}_4\cap\underline{\mathbb{K}}_5=\emptyset,\\
+\underline{\mathbb{K}}_6:=\left\{i:\;\underline{x}_i=0,\;0<\left|\left[A^T(A\underline{x} -b)\right]_i\right|<\underline{\delta} \beta \right\},\\
+\underline{\mathbb{K}}_7:=\left\{i:\;\underline{x}_i=0,\;\left[A^T(A\underline{x} -b)\right]_i=0\right\},\\
+\underline{M}:=\text{diag}(\underline{\theta}),\\
+\underline{\theta}_i:=\text{sign}(\underline{x}_i):=
+\left\{
+\begin{array}{ll}
++1& \text{if}\;\underline{x}_i >0,\\
+- 1& \text{if}\;\underline{x}_i <0,\\
+- \text{sign}(\left[A^T(A\underline{x} -b)\right]_i)& \text{if}\;\underline{x}_i=0,\;\left[A^T(A\underline{x} -b)\right]_i\neq0,\\
++1& \text{otherwise}.
+\end{array}
+\right.
+\end{array} 
+\]
+Let $\tau\in\left\{-1, +1\right\}$ given and consider the following polyhedra
+\[
+\begin{array}{lrrrrll}
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_0\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_1\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_2\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_3\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{red}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_4\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_5\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_6\\
+(A^TA\underline{M})_iu&&-\beta\underline{\theta}_i\textcolor{green}{s_i}&&+\beta\underline{\theta}_iw_i&=(A^Tb)_i&i\in\underline{\mathbb{K}}_7\\
+u_i&+\tau\gamma&&-\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_0\\
+u_i&+\tau\gamma&&-\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_1\\
+u_i&+\tau\gamma&&+\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_2\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_3\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_4\\
+&\tau\gamma&+s_i&&+\textcolor{red}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_5\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_6\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_7\\
+u_i&&&&&=0&i\in\underline{\mathbb{K}}_5\\
+u_i&&&&&=0&i\in\underline{\mathbb{K}}_6\\
+u_i&&&&&=0&i\in\underline{\mathbb{K}}_7\\
+&&&&&\\
+u\geq0&\gamma\geq0&s\geq0&t\geq0&w\geq0&.\\
+\end{array} 
+\]
+The polyhedra contains $u:=\left|\underline{x}\right|$, $\gamma:=0$, ... so is nonempty.
+\begin{thm} $x:=\underline{M}u$ satisfies $(\mathbb{Q}^{\beta,\underline{\delta}-\tau\gamma})$ optimality conditions.
+\end{thm}
+\begin{proof} With $x:=\underline{M}u$, and $\delta:=\underline{\delta}-\tau\gamma$, we have 
+\[
+\begin{array}{ll}
+\left[A^T(Ax -b)+\beta x\right]_i &= \left\{
+\begin{array}{ll}
+0&i\in\underline{\mathbb{K}}_0\\
+0&i\in\underline{\mathbb{K}}_1\\
+-\beta\underline{\theta}_it_i&i\in\underline{\mathbb{K}}_2\\
+-\beta\underline{\theta}_it_i&i\in\underline{\mathbb{K}}_3\\
+-\beta\underline{\theta}_it_i&i\in\underline{\mathbb{K}}_4\\
+-\beta\underline{\theta}_is_i&i\in\underline{\mathbb{K}}_5\\
+-\beta\underline{\theta}_is_i&i\in\underline{\mathbb{K}}_6\\
+\beta\underline{\theta}_is_i-\beta\underline{\theta}_iw_i&i\in\underline{\mathbb{K}}_7\\
+\end{array} 
+\right.\\
+&\\
+& = \left\{
+\begin{array}{lll}
+0&i\in\underline{\mathbb{K}}_0\\
+0&i\in\underline{\mathbb{K}}_1\\
+\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_2\\
+\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_3\\
+\beta x - \delta\beta\text{sign}(x_i)&i\in\underline{\mathbb{K}}_4\\
+-(\delta\beta - w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_5\\
+-(\delta\beta - w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_6\\
+-(-\delta\beta + 2w_i\beta)\text{sign}(x_i)&i\in\underline{\mathbb{K}}_7\\
+\end{array} 
+\right.
+\end{array} 
+\]
+Then apply polyhedra constraints on the previous expression.
+\end{proof}
+\subsubsection{Escaping point with $\gamma=0$ with simplex method.}
+Our goal is to maximize $\left|\delta -\underline{\delta}\right|=\left|-\tau\gamma\right|=\gamma$ while keeping the polyhedral constraints valid and  starting with green and red ones as basis.
+\[
+\begin{array}{lrrrrll}
+\text{max}\;\gamma&&&&&&\\
+&&&&&&\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_0\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_1\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_2\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{green}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_3\\
+(A^TA\underline{M})_iu+\beta\underline{\theta}_i\textcolor{red}{u_i}&&&+\beta\underline{\theta}_it_i&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_4\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_5\\
+(A^TA\underline{M})_iu&&+\beta\underline{\theta}_i\textcolor{green}{s_i}&&&=(A^Tb)_i&i\in\underline{\mathbb{K}}_6\\
+(A^TA\underline{M})_iu&&-\beta\underline{\theta}_i\textcolor{green}{s_i}&&+\beta\underline{\theta}_iw_i&=(A^Tb)_i&i\in\underline{\mathbb{K}}_7\\
+u_i&+\tau\gamma&&-\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_0\\
+u_i&+\tau\gamma&&-\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_1\\
+u_i&+\tau\gamma&&+\textcolor{red}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_2\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_3\\
+u_i&+\tau\gamma&&+\textcolor{green}{t_i}&&=\underline{\delta}&i\in\underline{\mathbb{K}}_4\\
+&\tau\gamma&+s_i&&+\textcolor{red}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_5\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_6\\
+&\tau\gamma&+s_i&&+\textcolor{green}{w_i}&=\underline{\delta}&i\in\underline{\mathbb{K}}_7\\
+&&&&&\\
+u\geq0&\gamma\geq0&s\geq0&t\geq0&w\geq0&.\\
+\end{array} 
+\]
+One can see that the constraint matrix is full rank, with $rank = 2n$.\\\\
+
+\begin{algorithm}[H]
+        \caption{Escaping $\gamma=0$ }
+        \label{alg:gamma0}
+        \begin{algorithmic}[1] % [1] adds line numbering
+	 \State Inputs $(\underline{\delta}, \underline{x})$.
+	  \State Perform Gauss-Jordan elimination with green and red as basis.
+            \State Apply one Simplex method change of basis step.
+	 \If {there is no row with a nonnegative value on the $\gamma$ column and  a 0 value on the right hand side}
+	\State  We've found a point with $\gamma>0$, and it is simplex optimal.
+	\State $\bar{x}:=\underline{M}u$, and $\bar{\delta}:=\underline{\delta}-\tau\gamma$.
+	\Else
+	\State  For each concerned row, do as follow, 
+		\[
+		\begin{array}{l}
+		\text{if}\;i\in\underline{\mathbb{K}}_1\Rightarrow\;\underline{\mathbb{K}}_1:=\underline{\mathbb{K}}_1\setminus\left\{i\right\},\;\underline{\mathbb{K}}_2:=\underline{\mathbb{K}}_2\cup\left\{i\right\}\\
+		\text{if}\;i\in\underline{\mathbb{K}}_2\Rightarrow\;\underline{\mathbb{K}}_2:=\underline{\mathbb{K}}_2\setminus\left\{i\right\},\;\underline{\mathbb{K}}_1:=\underline{\mathbb{K}}_1\cup\left\{i\right\}\\
+		\text{if}\;i\in\underline{\mathbb{K}}_4\Rightarrow\;\underline{\mathbb{K}}_4:=\underline{\mathbb{K}}_4\setminus\left\{i\right\},\;\underline{\mathbb{K}}_5:=\underline{\mathbb{K}}_5\cup\left\{i\right\}\\
+		\text{if}\;i\in\underline{\mathbb{K}}_5\Rightarrow\;\underline{\mathbb{K}}_5:=\underline{\mathbb{K}}_5\setminus\left\{i\right\},\;\underline{\mathbb{K}}_4:=\underline{\mathbb{K}}_4\cup\left\{i\right\}\\
+		\end{array} 
+		\]
+	\State and go to 1.
+	\EndIf
+	\State Return $(\bar{\delta}, \bar{x})$.
+        \end{algorithmic}
+    \end{algorithm}
+
+\begin{thm}
+\begin{enumerate}
+\item At most two Gauss-Jordan eliminations  and two Simplex Method change of basis steps are performed to obtain $\gamma>0$.
+\item $x^{\beta}(\delta)$ is a piecewise linear function with respect to $\delta\geq 0$.
+\end{enumerate}
+\end{thm}
+\begin{proof}
+\begin{enumerate}
+\item ...
+\item ...
+\end{enumerate}
+\end{proof}
+\subsubsection{Entire path direct solutions}
+This is a first approach that allow entire path solutions computation using Gauss-Jordan eliminations and Simplex Method. LARS like algorithm is also under progress!\\\\
+Recall that 
+\begin{itemize}
+\item $\underline{x}:=0$ is a solution for  $(\mathbb{Q}^{\beta,\delta})$, 
+for all $\delta\geq \delta^0:=\ddfrac{1}{\beta}\left\|A^Tb\right\|_{\infty}$.
+\item $\underline{x}:=x^{Ridge^{\beta}}$ is a solution for  $(\mathbb{Q}^{\beta,\delta})$, 
+\[\text{for all} \;\delta\leq\delta^{Ridge^{\beta}}:=
+\underset{x^{Ridge^{\beta}}_i\neq 0}{\min}\left|x^{Ridge^{\beta}}_i\right|.\]
+\end{itemize}
+\begin{algorithm}[H]
+        \caption{Full path computation $(\mathbb{Q}^{\beta,\delta})$, $\delta\geq 0$}
+        \label{alg:full0}
+        \begin{algorithmic}[1] % [1] adds line numbering
+            \State  $\underline{\delta}:=\delta^0$ and $\underline{x}:=0$, $\tau:=+1$,
+          \State $L := \left\{(\underline{\delta}, \underline{x})\right\}$
+	 \While{ $\underline{\delta} > \underset{i=1,...,n}{\min}\left|\underline{x}_i\right|$}
+		\State $(\underline{\delta}, \underline{x})$ := output of Algorithm~\ref{alg:gamma0},
+                     \State $L := L\cup\left\{(\underline{\delta}, \underline{x})\right\}$.
+	\EndWhile
+            \State \Return $\hat{x}$
+        \end{algorithmic}
+    \end{algorithm}
+
+\begin{algorithm}[H]
+        \caption{Full path computation $(\mathbb{Q}^{\beta,\delta})$, $\delta\geq 0$}
+        \label{alg:fullRidge}
+        \begin{algorithmic}[1] % [1] adds line numbering
+            \State  $\underline{\delta}:=\delta^{Ridge^{\beta}}$ and $\underline{x}:=x^{Ridge^{\beta}}$, $\tau:=-1$,
+          \State $L := \left\{(\underline{\delta}, \underline{x})\right\}$
+	 \While{ $\underline{x}\neq 0$}
+		\State $(\underline{\delta}, \underline{x})$ := output of Algorithm~\ref{alg:gamma0},
+                     \State $L := L\cup\left\{(\underline{\delta}, \underline{x})\right\}$.
+	\EndWhile
+            \State \Return $\hat{x}$
+        \end{algorithmic}
+    \end{algorithm}
+
+We also implemented a parallel version using both Algorithm~\ref{alg:full0} and Algorithm~\ref{alg:fullRidge}, with a critical common section.
+\subsection{Cyclic coordinate descent for solving $(\mathbb{Q}^{\beta,\delta})$}
+\begin{algorithm}[H]
+        \caption{A cyclic coordinate descent for $(\mathbb{Q}^{\beta,\delta})$}
+        \label{alg:cda}
+        \begin{algorithmic}[1] % [1] adds line numbering
+	  \State Precompute $z_j := \sum_{i}^{m}A_{i,j}^2 =\left\|A_{.,j}\right\|^2_2$
+            \State Initialize $\hat{x} := 0$, (or something else)
+	 \While{ not converged}
+		\For{$j=1, ..., n$}
+			\State Compute $\alpha_j := \sum_{i}^{m}A_{i,j}(b_i - \sum_{k\neq j} \hat{x}_k A_{i,k}),$
+			\State  and set 
+\[
+\hat{x}_j := 
+\left\{ \begin{array}{ll}
+0& \left|\alpha_j\right|\leq \delta\beta,\\
+\ddfrac{\alpha_j - \delta\beta\text{sign}(\alpha_j)}{ z_j} & \delta\beta <\left|\alpha_j\right|\leq \delta(\beta +z_j),\\
+\ddfrac{\alpha_j}{\beta + z_j} &\delta(\beta +z_j) \leq \left|\alpha_j\right|.
+\end{array}
+\right.
+\]
+           	 \EndFor
+	\EndWhile
+            \State \Return $\hat{x}$
+        \end{algorithmic}
+    \end{algorithm}
+\subsection{Interior point method}
+We will consider the convex quadratic form of $(\mathbb{Q}^{\beta,\delta})$, see Le Thi et al.
+
+\[
+	\left\{\begin{array}{ll}
+\min & \left\|Ax-b\right\|^2_2 + \beta\left\| s + \delta v\right\|_2^2 - 2\beta\delta^2 e^Tv\\
+		s.t.&\;-s_i\leq x_i\leq s_i,\;0\leq v_i, i=1,...n.
+		\end{array} \right.
+		\]
+Logarithmic barrier for the bounds
+\[
+\Phi(x, s, v) = -\sum_{i}^{n}log(s_i+x_i)-\sum_{i}^{n}log(s_i-x_i)-\sum_{i}^{n}log(v_i).
+\]
+\[
+\text{dom}\;\Phi = \left\{\left(\begin{array}{l}
+x\\
+s\\
+v\\
+\end{array}\right) : -s_i< x_i< s_i,\; 0<v_i,\; i=1,...n.
+		     \right\}.
+\]
+The central path consists of the unique minimizer $(x(t),s(t), v(t))$ of the convex function 
+\[
+\phi_t(x, s, v) =t\left[ \left\|Ax-b\right\|^2_2 + \beta\left\| s + \delta v\right\|_2^2 - 2\beta\delta^2 e^Tv\right] + \Phi(x, s, v).
+\]
+
+Newton method is used to minimize $\phi_t$, i.e, the search direction is computed as the exact solution to Newton system
+\[
+H\left(\begin{array}{l}
+\Delta x\\
+\Delta s\\
+\Delta v\\
+\end{array}\right) = -g.
+\]
+The Hessian 
+\[
+H =\nabla^2\phi_t(x, s, v),
+\]
+and the gradient 
+\[
+g =\nabla\phi_t(x, s, v),
+\]
+at the current iterate $(x, s, v)$.\\
+...
+\section{Sparse Principal Component}
+Consider a covariance matrix $Q$.\\\\ 
+Writing $Q = A^TA$ and $b := A\alpha$, we can see that 
+\[\left\|Ax-b\right\|^2_2=(x-\alpha)^TQ(x-\alpha),
+\]
+\[
+A^T(Ax-b)=Q(x-\alpha)
+\]
+and 
+\[
+A^Tb = Q\alpha.
+\]
+A first approach is to replace ELASTICNET engine by  $(\mathbb{Q}^{\beta,\delta})$ in SPCA algorithm from Zou et al..
+\section*{References}
+\begin{thebibliography}{99} % The '9' handles up to 9 references
+
+\bibitem{Lethi2016}
+Le Thi, H. A. L., Pham Dinh, T., \& Thiao, M.: \textit{Efficient approaches for l2-l0 regularization
+and applications to feature selection in SVM.} Applied Intelligence (2016), 45:549–565.
+
+\bibitem{Zou2006}
+Zou, H., Hastie, T., \& Tibshirani, R.: \textit{Sparse Principal Component Analysis.} Journal of Computational and Graphical Statistics (2006), 15(2), 265–286.
+
+\bibitem{Friedman2007}
+Friedman, J., Hastie, T., Hofling, H., \& Tibshirani, R.: \textit{Pathwise coordinate optimization.} In Annals
+of Applied Statistics  (2007).
+
+\bibitem{Kim2007}
+Kim, S.J., Koh, K., Lustig, M., Boyd, S. \& Gorinevsky. D.: \textit{An Interior-Point Method for Large-Scale l1-Regularized Least Squares.} IEEE Journal on Selected Topics in Signal Processing (2007), 1(4):606-617.
+
+\end{thebibliography}
+\end{document} % This is the end of the document
