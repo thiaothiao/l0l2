@@ -17,6 +17,10 @@ Implemented solutions:
 - Cyclical Coordinante Descent.
 - Interior Point Method. WIP
 
+![description](https://github.com/thiaothiao/l0l2/blob/develop/examples/python/diabetes_path_0.png)
+
+![description](https://github.com/thiaothiao/l0l2/blob/develop/examples/python/diabetes_path_1.png)
+
 Interfaces for Sparse PCA cases are also availlable.
 
 For the technical details see the technical report and references therein.
