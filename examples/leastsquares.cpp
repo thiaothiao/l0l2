@@ -35,10 +35,10 @@ int main()
     const auto fullpath = delta < static_cast<Scalar>(0);
 
     std::cout << std::boolalpha;
-    std::cout << "\nMatrixIsCovariance: " << matrixIsCovariance;
-    std::cout << "\nBeta: " << beta;
-    std::cout << "\nDelta: " << delta;
-    std::cout << "\nFullpath: " << fullpath << "\n";
+    std::cout << "\nmatrix is covariance: " << matrixIsCovariance;
+    std::cout << "\nbeta: " << beta;
+    std::cout << "\ndelta: " << delta;
+    std::cout << "\nfullpath: " << fullpath << "\n";
 
     const std::streamsize streamSize = 6;
 
@@ -65,7 +65,7 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs = 
             std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nJOB DONE in " << durationUs.count() << " microseconds!\n\n";
+        std::cout << "\n\njob done in " << durationUs.count() << " microseconds!\n\n";
 
         for (auto it = results.begin(); it != results.end(); ++it)
         {
@@ -92,9 +92,9 @@ int main()
             // Calculate the duration and cast to microseconds
             const auto durationUs = 
                 std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Zero JOB DONE in " 
+            std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" 
+            std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
@@ -114,9 +114,9 @@ int main()
             // Calculate the duration and cast to microseconds
             const auto durationUs = 
                 std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom L2 JOB DONE in " 
+            std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" 
+            std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
@@ -136,9 +136,9 @@ int main()
             // Calculate the duration and cast to microseconds
             const auto durationUs = 
                 std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nFrom Both JOB DONE in " 
+            std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" 
+            std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
@@ -155,9 +155,9 @@ int main()
             // Calculate the duration and cast to microseconds
             const auto durationUs = 
                 std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\n0 JOB DONE in " 
+            std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" 
+            std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
 
@@ -174,9 +174,9 @@ int main()
             // Calculate the duration and cast to microseconds
             const auto durationUs 
                 = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-            std::cout << "\n\nL2 JOB DONE in " 
+            std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
-            std::cout << "\nSolution\n" 
+            std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
     }
