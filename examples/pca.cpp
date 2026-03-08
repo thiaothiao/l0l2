@@ -38,10 +38,10 @@ int main()
     const auto delta = static_cast<Scalar>(15);
 
     std::cout << std::boolalpha;
-    std::cout << "\nMatrixIsCovariance: " << matrixIsCovariance;
-    std::cout << "\nBeta: " << beta;
-    std::cout << "\nDelta: " << delta;
-    std::cout << "\nFullpath: " << (delta < static_cast<Scalar>(0)) << "\n";
+    std::cout << "\nmatrix is covariance: " << matrixIsCovariance;
+    std::cout << "\nbeta: " << beta;
+    std::cout << "\ndelta: " << delta;
+    std::cout << "\nfullpath: " << (delta < static_cast<Scalar>(0)) << "\n";
 
     const auto nbComponents = static_cast<Index>(3);
     const auto nbJobs = 1U;
@@ -69,9 +69,9 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs = 
             std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom Zero JOB DONE in " << durationUs.count() << " microseconds!\n\n";
+        std::cout << "\n\njob done in " << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     {
@@ -91,9 +91,9 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs = 
             std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom L2 JOB DONE in " << durationUs.count() << " microseconds!\n\n";
+        std::cout << "\n\njob done in " << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     {
@@ -113,9 +113,9 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs 
             = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nFrom Both JOB DONE in " << durationUs.count() << " microseconds!\n\n";
+        std::cout << "\n\njob done in " << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     {
@@ -133,10 +133,10 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs 
             = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From Zero JOB DONE in " 
+        std::cout << "\n\njob done in " 
             << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     {
@@ -154,10 +154,10 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs 
             = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From L2 JOB DONE in " 
+        std::cout << "\n\njob done in " 
             << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     {
@@ -175,9 +175,9 @@ int main()
         // Calculate the duration and cast to microseconds
         const auto durationUs 
             = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-        std::cout << "\n\nOne solution From both JOB DONE in " << durationUs.count() << " microseconds!\n\n";
+        std::cout << "\n\njob done in " << durationUs.count() << " microseconds!\n\n";
 
-        std::cout << "Components\n" << components.transpose() << "\n";
+        std::cout << "components\n" << components.transpose() << "\n";
     }
 
     return 0;
