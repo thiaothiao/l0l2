@@ -13,7 +13,7 @@ The considered Biconjugate Convex Relaxation is given by
 (\mathbb{Q}^{\beta, \delta}) \min \left\|Ax-b\right\|^2_2 + \beta\delta^2(\left\|.\right\|_0 + \frac{1}{\delta^2}\left\|.\right\|_2^2)^{**}(x),\;x\in\mathbb{R}^n.
 ```
 Implemented solutions:
-- Full path solutions using a Gauss-Jordan elimination and the piece linearity of the solutions with respect to $\delta$.
+- Full path solutions using a Gauss-Jordan elimination and the piecewise linearity of the solutions with respect to $\delta$.
 - Cyclical Coordinante Descent.
 - Interior Point Method. WIP
 
