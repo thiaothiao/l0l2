@@ -607,9 +607,7 @@ namespace l0l2
                 const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
 
                 {
-                    Solution solutionBar{ n };
-
-                    solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
+                    auto solutionBar = L2Regressor(m_Param.beta, false).fit(matData, vectData, matrixIsCovariance);
 
                     auto deltaBar = std::numeric_limits<Scalar>::max();
                     for (Index i = 0; i < n; ++i)
