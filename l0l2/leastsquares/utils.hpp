@@ -37,6 +37,8 @@ namespace l0l2
 
 		static Scalar sign(Scalar value);
 
+		static Scalar solveMaxConcaveQP1D(Scalar a, Scalar b, Scalar c, Scalar s0, Scalar s1);
+
 		static std::string print(std::streamsize size,
 			const Vector<Scalar>& other);
 	};
@@ -45,6 +47,28 @@ namespace l0l2
 	inline Utils<ScalarType>::Scalar Utils<ScalarType>::sign(Scalar value)
 	{
 		return std::signbit(value) ? static_cast<Scalar>(-1) : static_cast<Scalar>(1);
+	}
+
+	template<std::floating_point ScalarType>
+	Utils<ScalarType>::Scalar Utils<ScalarType>::solveMaxConcaveQP1D(
+		Scalar a, Scalar b, Scalar c, Scalar s0, Scalar s1)
+	{
+		if (a == static_cast<Scalar>(0))
+		{
+			return std::max(b * s0, b * s1) + c;
+		}
+
+		auto sol = -static_cast<Scalar>(0.5) * b / a;
+		if (sol < s0)
+		{
+			sol = s0;
+		}
+		else if (sol > s1)
+		{
+			sol = s1;
+		}
+
+		return  a * sol * sol + b * sol + c;
 	}
 
 	template<std::floating_point ScalarType>
