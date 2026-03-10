@@ -70,7 +70,7 @@ int main()
         for (auto it = results.begin(); it != results.end(); ++it)
         {
             const auto& result = *it;
-            std::cout << l0l2::linearmodel::toString(result, streamSize);
+            std::cout << l0l2::linearmodel::toStringAll(result, streamSize);
             std::cout << " \n";
         }
     }
@@ -81,10 +81,10 @@ int main()
 
             const Strategy strategy = Strategy::FromZeroSolution;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+            L0L2RegressorParam param{ delta, beta, withIntercept, strategy, tolerance,
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            const auto solution = L0L2Regressor{param, withIntercept}
+            const auto solution = L0L2Regressor{param}
                 .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
@@ -103,10 +103,10 @@ int main()
 
             const Strategy strategy = Strategy::FromL2Solution;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+            L0L2RegressorParam param{ delta, beta, withIntercept, strategy, tolerance,
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            const auto solution = L0L2Regressor{param, withIntercept}
+            const auto solution = L0L2Regressor{param}
                 .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();
@@ -125,10 +125,10 @@ int main()
 
             const Strategy strategy = Strategy::FromBothSolutions;
 
-            L0L2RegressorParam param{ delta, beta, strategy, tolerance, 
+            L0L2RegressorParam param{ delta, beta, withIntercept, strategy, tolerance,
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
-            const auto solution = L0L2Regressor{param, withIntercept}
+            const auto solution = L0L2Regressor{param}
                 .fit(mat, vect, matrixIsCovariance);
 
             const auto stop = std::chrono::high_resolution_clock::now();

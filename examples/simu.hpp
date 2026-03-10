@@ -539,7 +539,7 @@ namespace l0l2
         }        
 
         template<std::floating_point ScalarType>
-        std::string toString(
+        std::string toStringAll(
             const l0l2::linearmodel::leastsquares::Solution<ScalarType>& solution,
             std::streamsize streamSize)
         {
@@ -567,7 +567,7 @@ namespace l0l2
 
         template<std::floating_point ScalarType>
         std::string toString(
-            const l0l2::linearmodel::leastsquares::CDSolution<ScalarType>& solution,
+            const l0l2::linearmodel::leastsquares::Solution<ScalarType>& solution,
             std::streamsize streamSize)
         {
             using Scalar = ScalarType;
@@ -576,12 +576,12 @@ namespace l0l2
             std::stringstream out;
 
             out << std::fixed << std::setprecision(streamSize);
-            out << "NumberOfIterations: " << solution.numberOfIterations << "\n";
-            out << "GlobalChange: " << solution.globalChange << "\n";
 
             out << Utils::print(streamSize, solution.x);
 
             out << "\t\t" << solution.intercept;
+
+            out << "\t\t" << solution.dualityGap;
 
             return out.str();
         }
