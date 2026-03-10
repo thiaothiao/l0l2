@@ -105,17 +105,30 @@ namespace l0l2
                     intercept = static_cast<Scalar>(0);
                 }
 
-                auto R = matrixIsCovariance
-                    ? static_cast<Vector>(matData * (vectData - x))
-                    : static_cast<Vector>(vectData - matData * x);
+                Vector R;
+                if (matrixIsCovariance)
+                {
+                    R = matData * (vectData - x);
+                }
+                else 
+                {
+                    R = vectData - matData * x;
+                }
 
                 if (hasIntercept)
                 {
                     R.array() -= intercept;
                 }
 
-                const auto zJs = matrixIsCovariance ? static_cast<Vector>(matData.diagonal())
-                    : static_cast<Vector>(matData.colwise().squaredNorm().transpose());
+                Vector zJs;
+                if (matrixIsCovariance)
+                {
+                    zJs = matData.diagonal();
+                }
+                else
+                {
+                    zJs = matData.colwise().squaredNorm().transpose();
+                }
 
                 const ModelImplementation modelImplementation{ m_Param };
 

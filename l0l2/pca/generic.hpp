@@ -134,12 +134,16 @@ namespace l0l2
                 {
                     for (Index j = 0; j < alpha.cols(); ++j)
                     {
-                        futures.push_back(pool.enqueue(ModelImplementation::fitRegressor,
-                            matData,
-                            matrixIsCovariance
-                                ? static_cast<Vector>(alpha.col(j))
-                                : static_cast<Vector>(matData * alpha.col(j)),
-                            matrixIsCovariance, m_Param));
+                        if (matrixIsCovariance)
+                        {
+                            futures.push_back(pool.enqueue(ModelImplementation::fitRegressor,
+                                matData, alpha.col(j), matrixIsCovariance, m_Param));
+                        }
+                        else 
+                        {
+                            futures.push_back(pool.enqueue(ModelImplementation::fitRegressor,
+                                matData, matData * alpha.col(j), matrixIsCovariance, m_Param));
+                        }
                     }
                 }
 
@@ -148,13 +152,18 @@ namespace l0l2
                 {// TODO optimize using move and swaps
                     const Vector oldWeights = result.col(j);
 
-                    //const auto resultj 
-                    result.col(j) = multipleJobs ? futures[j].get()
-                        : ModelImplementation::fitRegressor(matData,
-                            matrixIsCovariance
-                                ? static_cast<Vector>(alpha.col(j))
-                                : static_cast<Vector>(matData * alpha.col(j)),
-                            matrixIsCovariance, m_Param);
+                    if (matrixIsCovariance)
+                    {
+                        result.col(j) = multipleJobs ? futures[j].get()
+                            : ModelImplementation::fitRegressor(matData, alpha.col(j),
+                                matrixIsCovariance, m_Param);
+                    }
+                    else
+                    {
+                        result.col(j) = multipleJobs ? futures[j].get()
+                            : ModelImplementation::fitRegressor(matData, matData * alpha.col(j),
+                                matrixIsCovariance, m_Param);
+                    }
 
                     changes = std::max(changes, (oldWeights - result.col(j)).norm());
                 }
@@ -165,14 +174,21 @@ namespace l0l2
                     futures.clear();
                 }
 
-                Eigen::JacobiSVD<Matrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd
-                (matrixIsCovariance ? static_cast<Matrix>(matData * result)
-                    : static_cast<Matrix>(matData.transpose() * (matData * result)));
+                Eigen::JacobiSVD<Matrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd;
+
+                if (matrixIsCovariance)
+                {
+                    svd.compute(matData * result);
+                }
+                else
+                {
+                    svd.compute(matData.transpose() * (matData * result));
+                }
 
                 for (Index j = 0; j < m_Param.nbComponents; ++j)
                 {
                     alpha.col(j) = svd.matrixU() * svd.matrixV().transpose().col(j);
-                }
+                }                
 
                 ++trial;
 

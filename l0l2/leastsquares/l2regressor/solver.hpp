@@ -46,19 +46,19 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance) const
             {
-                const auto hasIntercept = m_HasIntercept && !matrixIsCovariance;
-
-                auto solution = fitNoIntercept(hasIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
-                    : matData,
-                    hasIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
-                    matrixIsCovariance);
-
-                if (hasIntercept)
+                if (m_HasIntercept && !matrixIsCovariance)
                 {
+                    auto solution = fitNoIntercept(
+                        matData.rowwise() - matData.colwise().mean(),
+                        vectData.array() - vectData.mean(),
+                        matrixIsCovariance);
+
                     solution.intercept = (vectData - matData * solution.x).mean();
+
+                    return solution;
                 }
 
-                return solution;
+                return fitNoIntercept(matData, vectData, matrixIsCovariance);
             }
 
             template<std::floating_point ScalarType>
@@ -73,13 +73,25 @@ namespace l0l2
 
                 const auto n = static_cast<Index>(matData.cols());
 
-                auto ATA = matrixIsCovariance
-                    ? static_cast<Matrix>(matData)
-                    : static_cast<Matrix>(matData.transpose() * matData);
+                Matrix ATA;
+                if (matrixIsCovariance)
+                {
+                    ATA = matData;
+                }
+                else
+                {
+                    ATA = matData.transpose() * matData;
+                }
 
-                auto ATb = matrixIsCovariance
-                    ? static_cast<Vector>(matData * vectData)
-                    : static_cast<Vector>(matData.transpose() * vectData);
+                Vector ATb;// Avoiding ternary operator as suggested by lib eigen c++
+                if (matrixIsCovariance)
+                {
+                    ATb = matData * vectData;
+                }
+                else
+                {
+                    ATb = matData.transpose() * vectData;
+                }
 
                 ATA.diagonal().array() += m_Beta;
 
@@ -277,21 +289,20 @@ namespace l0l2
                     Scalar epsilon,
                     unsigned int maxNumberOfIterations) const
             {
-                const auto hasIntercept = m_HasIntercept && !matrixIsCovariance;
-
-                auto solution = fitNoIntercept(hasIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
-                    : matData,
-                    hasIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
-                    matrixIsCovariance,
-                    epsilon,
-                    maxNumberOfIterations);
-
-                if (hasIntercept)
+                if (m_HasIntercept && !matrixIsCovariance)
                 {
+                    auto solution = fitNoIntercept(
+                        matData.rowwise() - matData.colwise().mean(),
+                        vectData.array() - vectData.mean(),
+                        matrixIsCovariance, epsilon, maxNumberOfIterations);
+
                     solution.intercept = (vectData - matData * solution.x).mean();
+
+                    return solution;
                 }
 
-                return solution;
+                return fitNoIntercept(matData, vectData, matrixIsCovariance,
+                    epsilon, maxNumberOfIterations);
             }
 
             template<std::floating_point ScalarType>
