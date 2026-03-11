@@ -161,25 +161,23 @@ namespace l0l2
                     Scalar beta,
                     bool withIntercept,
                     Strategy strategy)
-            {// TODO optimize intercept case
-                const auto consideringIntercept = withIntercept && !matrixIsCovariance;
-
-                auto results = fitAllNoIntercept(consideringIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
-                    : matData,
-                    consideringIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
-                    matrixIsCovariance,
-                    beta,
-                    strategy);
-
-                if (consideringIntercept)
+            {
+                if (withIntercept && !matrixIsCovariance)
                 {
+                    auto results = fitAllNoIntercept(
+                        matData.rowwise() - matData.colwise().mean(),
+                        vectData.array() - vectData.mean(),
+                        matrixIsCovariance, beta, strategy);
+
                     for (auto& result : results)
                     {
                         result.intercept = (vectData - matData * result.x).mean();// TODO use grad!
                     }
+
+                    return results;
                 }
 
-                return results;
+                return fitAllNoIntercept(matData, vectData, matrixIsCovariance, beta, strategy);
             }
 
             template<std::floating_point ScalarType>
@@ -264,19 +262,18 @@ namespace l0l2
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
             {
-                const auto withIntercept = m_WithIntercept && !matrixIsCovariance;
-
-                auto solution = fitNoIntercept(withIntercept ? (matData.rowwise() - matData.colwise().mean()).eval()
-                    : matData,
-                    withIntercept ? (vectData.array() - vectData.mean()).matrix() : vectData,
-                    matrixIsCovariance);
-
-                if (withIntercept)
+                if (m_WithIntercept && !matrixIsCovariance)
                 {
+                    auto solution = fitNoIntercept(
+                        matData.rowwise() - matData.colwise().mean(),
+                        vectData.array() - vectData.mean(), matrixIsCovariance);
+
                     solution.intercept = (vectData - matData * solution.x).mean();// TODO use grad!
+
+                    return solution;
                 }
 
-                return solution;
+                return fitNoIntercept(matData, vectData, matrixIsCovariance);
             }
 
             template<std::floating_point ScalarType>
@@ -395,7 +392,7 @@ namespace l0l2
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
-                using L2Regressor = L2Regressor<Scalar>;
+                using L2Regressor = LDLTL2Regressor<Scalar>;
                 using FullPathStep = FullPathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
@@ -595,7 +592,7 @@ namespace l0l2
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
-                using L2Regressor = L2Regressor<Scalar>;
+                using L2Regressor = LDLTL2Regressor<Scalar>;
                 using FullPathStep = FullPathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
@@ -607,9 +604,7 @@ namespace l0l2
                 const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
 
                 {
-                    Solution solutionBar{ n };
-
-                    solutionBar.x = L2Regressor(m_Param.beta).fitNoIntercept(matData, vectData, matrixIsCovariance);
+                    auto solutionBar = L2Regressor(m_Param.beta, false).fit(matData, vectData, matrixIsCovariance);
 
                     auto deltaBar = std::numeric_limits<Scalar>::max();
                     for (Index i = 0; i < n; ++i)

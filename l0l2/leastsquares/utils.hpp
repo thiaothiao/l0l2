@@ -37,6 +37,8 @@ namespace l0l2
 
 		static Scalar sign(Scalar value);
 
+		static Scalar solveMaxConcaveQP1D(Scalar a, Scalar b, Scalar c, Scalar s0, Scalar s1);
+
 		static std::string print(std::streamsize size,
 			const Vector<Scalar>& other);
 	};
@@ -45,6 +47,28 @@ namespace l0l2
 	inline Utils<ScalarType>::Scalar Utils<ScalarType>::sign(Scalar value)
 	{
 		return std::signbit(value) ? static_cast<Scalar>(-1) : static_cast<Scalar>(1);
+	}
+
+	template<std::floating_point ScalarType>
+	Utils<ScalarType>::Scalar Utils<ScalarType>::solveMaxConcaveQP1D(
+		Scalar a, Scalar b, Scalar c, Scalar s0, Scalar s1)
+	{
+		if (a == static_cast<Scalar>(0))
+		{
+			return std::max(b * s0, b * s1) + c;
+		}
+
+		auto sol = -static_cast<Scalar>(0.5) * b / a;
+		if (sol < s0)
+		{
+			sol = s0;
+		}
+		else if (sol > s1)
+		{
+			sol = s1;
+		}
+
+		return  a * sol * sol + b * sol + c;
 	}
 
 	template<std::floating_point ScalarType>
@@ -73,13 +97,6 @@ namespace l0l2
 	{
 		namespace leastsquares
 		{
-			enum class CDStatus : std::uint8_t
-			{
-				Converged = 0U,
-				LimitReached,
-				Unknown
-			};
-
 			enum class Strategy : std::uint8_t
 			{
 				FromZeroSolution = 0U,
@@ -97,16 +114,26 @@ namespace l0l2
 					const Vector<Scalar>& gradInput = {}) :
 					delta{ deltaInput },
 					x{ xInput },
-					grad{ gradInput },
-					intercept{ static_cast<Scalar>(0) }
+					intercept{ static_cast<Scalar>(0) },
+					dualityGap{ static_cast<Scalar>(0) },
+					grad{ gradInput }
+				{
+				}
+
+				Solution(Vector<Scalar>&& xInput, Scalar interceptInput=static_cast<Scalar>(0)) :
+					delta{ static_cast<Scalar>(0) },
+					x{ std::move(xInput) },// TODO check move
+					intercept{ interceptInput },
+					dualityGap{ static_cast<Scalar>(0) }
 				{
 				}
 
 				Solution(Index n) :
 					delta{ std::numeric_limits<Scalar>::max() },
 					x{ Vector<Scalar>::Zero(n) },
-					grad{ Vector<Scalar>::Zero(n) },
-					intercept{ static_cast<Scalar>(0) }
+					intercept{ static_cast<Scalar>(0) },
+					dualityGap{ static_cast<Scalar>(0) },
+					grad{ Vector<Scalar>::Zero(n) }
 				{
 				}
 
@@ -118,37 +145,9 @@ namespace l0l2
 
 				Scalar delta;
 				Vector<Scalar> x;
-				Vector<Scalar> grad;
 				Scalar intercept;
-			};
-
-			template<std::floating_point ScalarType>
-			struct CDSolution
-			{
-				using Scalar = ScalarType;
-
-				CDSolution(Index n = 0) :
-					numberOfIterations{ 0 },
-					globalChange{ static_cast<Scalar>(0) },
-					dualityGap{ static_cast<Scalar>(0) },
-					status{ CDStatus::Unknown },
-					x{ Vector<Scalar>::Zero(n) },
-					intercept{ static_cast<Scalar>(0) }
-				{
-				}
-
-				CDSolution(const CDSolution&) = default;
-				CDSolution& operator=(const CDSolution&) = default;
-
-				CDSolution(CDSolution&&) = default;
-				CDSolution& operator=(CDSolution&&) = default;
-
-				unsigned int numberOfIterations;
-				Scalar globalChange;
 				Scalar dualityGap;
-				CDStatus status;
-				Vector<Scalar> x;
-				Scalar intercept;
+				Vector<Scalar> grad;
 			};
 		}
 	}

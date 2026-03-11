@@ -37,7 +37,7 @@ namespace l0l2
                     unsigned int maximumNumberOfIterationsInput = 10000U,
                     Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
                     unsigned int innerMaximumNumberOfIterationsInput = 100000U)
-                    :regressorParam{ deltaInput, betaInput , strategyInput, 
+                    :regressorParam{ deltaInput, betaInput, false, strategyInput, 
                     toleranceInput, maximumNumberOfIterationsInput,
                     innerEpsilonInput, innerMaximumNumberOfIterationsInput },
                     nbComponents{ nbComponentsInput }//to optimize

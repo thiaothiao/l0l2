@@ -22,7 +22,6 @@ template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelI
 
 namespace
 {
-    using CDStatus = l0l2::linearmodel::leastsquares::CDStatus;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     using Index = l0l2::Index;
 
@@ -33,7 +32,6 @@ namespace
     using Solutionf = l0l2::linearmodel::leastsquares::Solution<float>;
     using L0L2Regressorf = l0l2::linearmodel::leastsquares::L0L2Regressor<float>;
     using L0L2RegressorParamf = L0L2Regressorf::Param;
-    using CDSolutionf = l0l2::linearmodel::leastsquares::CDSolution<float>;
     using Utilsf = l0l2::Utils<float>;
     using L0L2SPCAf = l0l2::linearmodel::L0L2SPCA<float>;
     using L0L2SPCAParamf = L0L2SPCAf::Param;
@@ -47,7 +45,6 @@ namespace
     using Solutiond = l0l2::linearmodel::leastsquares::Solution<double>;
     using L0L2Regressord = l0l2::linearmodel::leastsquares::L0L2Regressor<double>;
     using L0L2RegressorParamd = L0L2Regressord::Param;
-    using CDSolutiond = l0l2::linearmodel::leastsquares::CDSolution<double>;
     using Utilsd = l0l2::Utils<double>;
     using L0L2SPCAd = l0l2::linearmodel::L0L2SPCA<double>;
     using L0L2SPCAParamd = L0L2SPCAd::Param;
@@ -60,12 +57,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
     mainmodule.doc() = "l0l2 sparse modeling module.";
 
     auto m = mainmodule.def_submodule("linearmodel", "Linear model module.");
-
-    pybind11::enum_<CDStatus>(m, "CDStatus", pybind11::arithmetic(), "Convergence status")
-        .value("Converged", CDStatus::Converged, "Converged status")
-        .value("LimitReached", CDStatus::LimitReached, "LimitReached status")
-        .value("Unknown", CDStatus::Unknown, "Notfitted status")
-        .export_values();
 
     pybind11::enum_<Strategy>(m, "Strategy", pybind11::arithmetic(), "Choosen strategy")
         .value("FromZeroSolution", Strategy::FromZeroSolution, "From zero solution")
@@ -104,12 +95,14 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutionf::delta)
         .def_readwrite("x", &Solutionf::x)
         .def_readwrite("grad", &Solutionf::grad)
-        .def_readwrite("intercept", &Solutionf::intercept);
+        .def_readwrite("intercept", &Solutionf::intercept)
+        .def_readwrite("dualityGap", &Solutionf::dualityGap);
 
     pybind11::class_<L0L2RegressorParamf>(m, "L0L2RegressorParamf")
-        .def(pybind11::init<float, float, Strategy, float, unsigned int, float, unsigned int>(),
+        .def(pybind11::init<float, float, bool, Strategy, float, unsigned int, float, unsigned int>(),
             pybind11::arg("delta") = 0.f,
             pybind11::arg("beta") = 1.f,
+            pybind11::arg("hasIntercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4f,
             pybind11::arg("maximumNumberOfIterations") = 10000U, 
@@ -117,6 +110,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamf::delta)
         .def_readonly("beta", &L0L2RegressorParamf::beta)
+        .def_readonly("hasIntercept", &L0L2RegressorParamf::hasIntercept)
         .def_readonly("strategy", &L0L2RegressorParamf::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamf::tolerance)
         .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamf::maximumNumberOfIterations)
@@ -124,22 +118,12 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamf::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
-        .def(pybind11::init<L0L2RegressorParamf, bool>(), 
-            pybind11::arg("param"),
-            pybind11::arg("withintercept") = false)
+        .def(pybind11::init<L0L2RegressorParamf>(), 
+            pybind11::arg("param"))
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"));
-
-    pybind11::class_<CDSolutionf>(m, "CDSolutionf")
-        .def(pybind11::init<Index>(), pybind11::arg("n") = static_cast<Index>(0))
-        .def_readwrite("numberOfIterations", &CDSolutionf::numberOfIterations)
-        .def_readwrite("globalChange", &CDSolutionf::globalChange)
-        .def_readwrite("dualityGap", &CDSolutionf::dualityGap)
-        .def_readwrite("status", &CDSolutionf::status)
-        .def_readwrite("x", &CDSolutionf::x)
-        .def_readwrite("intercept", &CDSolutionf::intercept);
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
         .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
@@ -215,12 +199,14 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readwrite("delta", &Solutiond::delta)
         .def_readwrite("x", &Solutiond::x)
         .def_readwrite("grad", &Solutiond::grad)
-        .def_readwrite("intercept", &Solutiond::intercept);
+        .def_readwrite("intercept", &Solutiond::intercept)
+        .def_readwrite("dualityGap", &Solutiond::dualityGap);
 
     pybind11::class_<L0L2RegressorParamd>(m, "L0L2RegressorParamd")
-        .def(pybind11::init<double, double, Strategy, double, unsigned int, double, unsigned int>(),
+        .def(pybind11::init<double, double, bool, Strategy, double, unsigned int, double, unsigned int>(),
             pybind11::arg("delta") = 0.0,
             pybind11::arg("beta") = 1.0,
+            pybind11::arg("hasIntercept") = false,
             pybind11::arg("strategy") = Strategy::FromZeroSolution,
             pybind11::arg("tolerance") = 1e-4,
             pybind11::arg("maximumNumberOfIterations") = 10000U,
@@ -228,6 +214,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("innerMaximumNumberOfIterations") = 100000U)
         .def_readonly("delta", &L0L2RegressorParamd::delta)
         .def_readonly("beta", &L0L2RegressorParamd::beta)
+        .def_readonly("hasIntercept", &L0L2RegressorParamd::hasIntercept)
         .def_readonly("strategy", &L0L2RegressorParamd::strategy)
         .def_readonly("tolerance", &L0L2RegressorParamd::tolerance)
         .def_readonly("maximumNumberOfIterations", &L0L2RegressorParamd::maximumNumberOfIterations)
@@ -235,22 +222,12 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamd::innerMaximumNumberOfIterations);
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
-        .def(pybind11::init<L0L2RegressorParamd, bool>(), 
-            pybind11::arg("param"),
-            pybind11::arg("withintercept") = false)
+        .def(pybind11::init<L0L2RegressorParamd>(), 
+            pybind11::arg("param"))
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"));
-
-    pybind11::class_<CDSolutiond>(m, "CDSolutiond")
-        .def(pybind11::init<Index>(), pybind11::arg("n") = static_cast<Index>(0))
-        .def_readwrite("numberOfIterations", &CDSolutiond::numberOfIterations)
-        .def_readwrite("globalChange", &CDSolutiond::globalChange)
-        .def_readwrite("dualityGap", &CDSolutiond::dualityGap)
-        .def_readwrite("status", &CDSolutiond::status)
-        .def_readwrite("x", &CDSolutiond::x)
-        .def_readwrite("intercept", &CDSolutiond::intercept);
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
         .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
