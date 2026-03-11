@@ -192,12 +192,9 @@ namespace l0l2
 
                     for (Index j = 0; j < n; ++j)
                     {
-                        if (subIndicesCase)
-                        {
-                            if (coordinateStates[j] == CoordinateState::ZERO)
-                            {
-                                continue;
-                            }
+                        if (subIndicesCase && coordinateStates[j] == CoordinateState::ZERO)
+                        {//&& uses left first then right. short-circuiting iso standard [expr.log.and]
+                            continue;
                         }
 
                         const auto zJ = zJs[j];
@@ -211,10 +208,8 @@ namespace l0l2
 
                         const auto uJ = matrixIsCovariance ? R[j] + zJ * oldxJ : matData.col(j).dot(R) + zJ * oldxJ;
 
-                        const auto newxJ = subIndicesCase ?
-                            ((coordinateStates[j] == CoordinateState::L0)
-                            ? modelImplementation.stepJ(zJ, uJ)
-                            : modelImplementation.otherJ(zJ, uJ))
+                        const auto newxJ = (subIndicesCase && coordinateStates[j] == CoordinateState::FREE)
+                            ? modelImplementation.otherJ(zJ, uJ)
                             : modelImplementation.stepJ(zJ, uJ);
 
                         x[j] = newxJ;
