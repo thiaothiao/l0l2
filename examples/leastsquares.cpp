@@ -24,6 +24,8 @@ int main()
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     using SimpleBranchAndBound = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<Scalar>;
     using SimpleBranchAndBoundParam = SimpleBranchAndBound::Param;
+    using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
+    using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
 
     constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
     std::cout << "l0l2 library version " << version << "\n";
@@ -55,7 +57,7 @@ int main()
     const Scalar innerEpsilon = static_cast<Scalar>(1e-6);
     const unsigned int innerMaximumNumberOfIterations = 100000U;
 
-    std::vector<L0L2Regressor::ConstraintsType> indices(n, L0L2Regressor::ConstraintsType::L0);
+    auto coordinateStates = CoordinateStates::Constant(n, CoordinateState::L0);
 
     if (fullpath)
     {
@@ -183,7 +185,7 @@ int main()
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
             const auto solution = L0L2Regressor{ param }
-            .fitPartial(mat, vect, matrixIsCovariance, indices);
+            .fit(mat, vect, matrixIsCovariance, coordinateStates);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -205,7 +207,7 @@ int main()
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
             const auto solution = L0L2Regressor{ param }
-            .fitPartial(mat, vect, matrixIsCovariance, indices);
+            .fit(mat, vect, matrixIsCovariance, coordinateStates);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -227,7 +229,7 @@ int main()
                 maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
 
             const auto solution = L0L2Regressor{ param }
-            .fitPartial(mat, vect, matrixIsCovariance, indices);
+            .fit(mat, vect, matrixIsCovariance, coordinateStates);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
