@@ -22,6 +22,7 @@ template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelI
 
 namespace
 {
+    using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     using Index = l0l2::Index;
 
@@ -57,6 +58,12 @@ PYBIND11_MODULE(l0l2, mainmodule)
     mainmodule.doc() = "l0l2 sparse modeling module.";
 
     auto m = mainmodule.def_submodule("linearmodel", "Linear model module.");
+
+    pybind11::enum_<CoordinateState>(m, "CoordinateState", pybind11::arithmetic(), "State of a coordinate")
+        .value("L0", CoordinateState::L0, "Concerned by l0")
+        .value("FREE", CoordinateState::FREE, "Freed from l0")
+        .value("ZERO", CoordinateState::ZERO, "Forced to zero")
+        .export_values();
 
     pybind11::enum_<Strategy>(m, "Strategy", pybind11::arithmetic(), "Choosen strategy")
         .value("FromZeroSolution", Strategy::FromZeroSolution, "From zero solution")
