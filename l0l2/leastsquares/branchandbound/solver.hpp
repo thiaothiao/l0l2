@@ -205,14 +205,16 @@ namespace l0l2
                         break;
                     }
 
-                    auto branchSolution = Regressor{ m_Param.regressorParam}
+                    auto relaxationSolution = Regressor{ m_Param.regressorParam}
                     .fit(matData, vectData, matrixIsCovariance, branch.coordinateStates);
 
                     const auto ub =
-                        objectiveValue(matData, vectData, matrixIsCovariance, branchSolution);
+                        objectiveValue(matData, vectData, matrixIsCovariance, relaxationSolution);
 
-                    const auto lb =
-                        relaxationValue(matData, vectData, matrixIsCovariance, branch.coordinateStates, branchSolution);
+                    const auto primal =
+                        relaxationValue(matData, vectData, matrixIsCovariance, branch.coordinateStates, relaxationSolution);
+
+                    const auto lb = primal * (static_cast<Scalar>(1) - relaxationSolution.dualityGap);
 
                     const auto localGap = (ub - lb) / ub;
                     if (localGap > localEpsilon)
@@ -223,13 +225,11 @@ namespace l0l2
                         {
                             if (branch.coordinateStates[j] == CoordinateState::L0)
                             {
-                                const auto absXj = std::abs(branchSolution.x[j]);
+                                const auto absXj = std::abs(relaxationSolution.x[j]);
                                 if (Utils::epsilon < absXj && absXj < minAbsXj)
                                 {
                                     minAbsXj = absXj;
                                     splitIndex = j;
-
-                                    //break;
                                 }
                             }
                         }
@@ -249,7 +249,7 @@ namespace l0l2
                     if (ub < upperBound)
                     {
                         upperBound = ub;
-                        solution = std::move(branchSolution);
+                        solution = std::move(relaxationSolution);
                     }
 
                     ++numberOfIterations;
