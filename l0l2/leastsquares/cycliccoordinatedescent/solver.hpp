@@ -78,6 +78,10 @@ namespace l0l2
 
                 Scalar stepJ(Scalar zJ, Scalar uJ) const;
 
+                Scalar stepIntercept(Scalar zJ, Scalar uIntercept) const;
+
+                Scalar otherJ(Scalar zJ, Scalar uJ) const;
+
                 Scalar computeDualityGap(const Matrix<Scalar>& matData, const Vector<Scalar>& vectData,
                     bool matrixIsCovariance, const CoordinateStates& coordinateStates, 
                     const Solution<Scalar>& solution) const;
@@ -92,6 +96,20 @@ namespace l0l2
                 return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta) ? (uJ / (param.beta + zJ))
                     : ((std::abs(uJ) > param.deltaBeta) ? ((uJ - param.deltaBeta * Utils<ScalarType>::sign(uJ)) / zJ)
                         : static_cast<Scalar>(0));
+            }
+
+            template<std::floating_point ScalarType>
+            inline L0L2ModelImplementation<ScalarType>::Scalar
+                L0L2ModelImplementation<ScalarType>::stepIntercept(Scalar zJ, Scalar uIntercept) const
+            {
+                return uIntercept / zJ;
+            }
+
+            template<std::floating_point ScalarType>
+            inline L0L2ModelImplementation<ScalarType>::Scalar
+                L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ, Scalar uJ) const
+            {
+                return uJ / (zJ + param.beta);
             }
 
             template<std::floating_point ScalarType>

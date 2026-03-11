@@ -28,6 +28,16 @@ namespace l0l2
                 } ->std::convertible_to<typename ModelImplementationType::Scalar>;
 
                 {
+                    std::as_const(impl).stepIntercept(typename ModelImplementationType::Scalar{},
+                        typename ModelImplementationType::Scalar{})
+                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+
+                {
+                    std::as_const(impl).otherJ(typename ModelImplementationType::Scalar{},
+                        typename ModelImplementationType::Scalar{})
+                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+
+                {
                     std::as_const(impl).computeDualityGap(
                         Matrix<typename ModelImplementationType::Scalar>{}, 
                         Vector<typename ModelImplementationType::Scalar>{},
@@ -163,7 +173,7 @@ namespace l0l2
 
                         const auto uIntercept = R.sum() + zJ * oldIntercept;
 
-                        intercept = uIntercept / zJ;
+                        intercept = modelImplementation.stepIntercept(zJ, uIntercept);
 
                         const auto interceptDiff = oldIntercept - intercept;
 
@@ -204,7 +214,7 @@ namespace l0l2
                         const auto newxJ = subIndicesCase ?
                             ((coordinateStates[j] == CoordinateState::L0)
                             ? modelImplementation.stepJ(zJ, uJ)
-                            : (uJ / (zJ + m_Param.beta)))
+                            : modelImplementation.otherJ(zJ, uJ))
                             : modelImplementation.stepJ(zJ, uJ);
 
                         x[j] = newxJ;
