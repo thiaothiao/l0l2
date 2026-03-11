@@ -97,7 +97,7 @@ namespace l0l2
 	{
 		namespace leastsquares
 		{
-			enum class CoordinateState : Index
+			enum class CoordinateState : std::uint8_t
 			{
 				L0 = 0U,
 				FREE,
