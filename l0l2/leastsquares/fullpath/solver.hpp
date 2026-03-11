@@ -392,7 +392,7 @@ namespace l0l2
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
-                using L2Regressor = L2Regressor<Scalar>;
+                using L2Regressor = LDLTL2Regressor<Scalar>;
                 using FullPathStep = FullPathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
@@ -592,7 +592,7 @@ namespace l0l2
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
-                using L2Regressor = L2Regressor<Scalar>;
+                using L2Regressor = LDLTL2Regressor<Scalar>;
                 using FullPathStep = FullPathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());

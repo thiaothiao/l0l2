@@ -82,7 +82,7 @@ namespace l0l2
             };
 
             template <ModelLike ModelImplementationType>
-            Solution<typename ModelImplementationType::Scalar>
+            Solution<typename CyclicCoordinateDescent<ModelImplementationType>::Scalar>
                 CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
                     const Matrix<Scalar>& matData,
                     bool matrixIsCovariance,
@@ -228,14 +228,14 @@ namespace l0l2
             }
 
             template <ModelLike ModelImplementationType>
-            Solution<typename ModelImplementationType::Scalar>
+            Solution<typename CyclicCoordinateDescent<ModelImplementationType>::Scalar>
                 CyclicCoordinateDescent<ModelImplementationType>::fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance)
             {
                 using Vector = Vector<Scalar>;
-                using L2Regressor = L2RegressorPCG<Scalar>;
+                using L2Regressor = PCGL2Regressor<Scalar>;
                 using Solution = Solution<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());

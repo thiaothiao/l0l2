@@ -12,13 +12,39 @@ namespace l0l2
 	{
         namespace leastsquares
         {
-            template<std::floating_point ScalarType>
-            class L2Regressor final
+            template <class ModelImplementationType>
+            concept NoInterceptDirectL2RegressorLike = requires(ModelImplementationType impl)
+            {
+                {
+                    std::as_const(impl).fitNoIntercept(
+                        Matrix<typename ModelImplementationType::Scalar>{},
+                        Vector<typename ModelImplementationType::Scalar>{},
+                        bool{})
+                } ->std::convertible_to<Solution<typename ModelImplementationType::Scalar>>;
+            };
+
+            template <class ModelImplementationType>
+            concept NoInterceptIterativeL2RegressorLike = requires(ModelImplementationType impl)
+            {
+                {
+                    std::as_const(impl).fitNoIntercept(
+                        Matrix<typename ModelImplementationType::Scalar>{},
+                        Vector<typename ModelImplementationType::Scalar>{},
+                        bool{},
+                        typename ModelImplementationType::Scalar{},
+                        0U,
+                        Solution<typename ModelImplementationType::Scalar>{})
+                } ->std::convertible_to<Solution<typename ModelImplementationType::Scalar>>;
+            };
+
+            template <NoInterceptDirectL2RegressorLike ModelImplementationType>
+            class L2RegressorDirect final
             {
             public:
-                using Scalar = ScalarType;
+                using ModelImplementation = ModelImplementationType;
+                using Scalar = typename ModelImplementation::Scalar;
 
-                L2Regressor(Scalar beta, bool hasIntercept) : 
+                L2RegressorDirect(Scalar beta, bool hasIntercept) :
                     m_Beta{ beta },
                     m_HasIntercept{ hasIntercept }
                 {
@@ -30,25 +56,22 @@ namespace l0l2
                     bool matrixIsCovariance) const;
 
             private:
-                Solution<Scalar> fitNoIntercept(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const;
-
                 const Scalar m_Beta;
                 const bool m_HasIntercept;
             };
 
-            template<std::floating_point ScalarType>
-            Solution<typename L2Regressor<ScalarType>::Scalar>
-                L2Regressor<ScalarType>::fit(
+            template <NoInterceptDirectL2RegressorLike ModelImplementationType>
+            Solution<typename L2RegressorDirect<ModelImplementationType>::Scalar>
+                L2RegressorDirect<ModelImplementationType>::fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const
+                    bool matrixIsCovariance) const 
             {
+                const ModelImplementation modelImplementation{ m_Beta };
+
                 if (m_HasIntercept && !matrixIsCovariance)
                 {
-                    auto solution = fitNoIntercept(
+                    auto solution = modelImplementation.fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
                         vectData.array() - vectData.mean(),
                         matrixIsCovariance);
@@ -58,20 +81,95 @@ namespace l0l2
                     return solution;
                 }
 
-                return fitNoIntercept(matData, vectData, matrixIsCovariance);
+                return modelImplementation.fitNoIntercept(matData, vectData, matrixIsCovariance);
+            }
+
+            template <NoInterceptIterativeL2RegressorLike ModelImplementationType>
+            class L2RegressorIterative final
+            {
+            public:
+                using ModelImplementation = ModelImplementationType;
+                using Scalar = typename ModelImplementation::Scalar;
+
+                L2RegressorIterative(Scalar beta, bool hasIntercept) :
+                    m_Beta{ beta },
+                    m_HasIntercept{ hasIntercept }
+                {
+                }
+
+                Solution<Scalar> fit(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance,
+                    Scalar epsilon,
+                    unsigned int maxNumberOfIterations,
+                    const Solution<Scalar>& guess = {}) const;
+
+            private:
+                const Scalar m_Beta;
+                const bool m_HasIntercept;
+            };
+
+            template <NoInterceptIterativeL2RegressorLike ModelImplementationType>
+            Solution<typename L2RegressorIterative<ModelImplementationType>::Scalar>
+                L2RegressorIterative<ModelImplementationType>::fit(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance,
+                    Scalar epsilon,
+                    unsigned int maxNumberOfIterations,
+                    const Solution<Scalar>& guess) const
+            {
+                const ModelImplementation modelImplementation{ m_Beta };
+
+                if (m_HasIntercept && !matrixIsCovariance)
+                {
+                    auto solution = modelImplementation.fitNoIntercept(
+                        matData.rowwise() - matData.colwise().mean(),
+                        vectData.array() - vectData.mean(),
+                        matrixIsCovariance,
+                        epsilon,
+                        maxNumberOfIterations,
+                        guess);
+
+                    solution.intercept = (vectData - matData * solution.x).mean();
+
+                    return solution;
+                }
+
+                return modelImplementation.fitNoIntercept(matData, vectData, matrixIsCovariance,
+                    epsilon, maxNumberOfIterations, guess);
             }
 
             template<std::floating_point ScalarType>
-            Solution<typename L2Regressor<ScalarType>::Scalar>
-                L2Regressor<ScalarType>::fitNoIntercept(
+            class LDLTModelImplementation final
+            {
+            public:
+                using Scalar = ScalarType;
+
+                LDLTModelImplementation(Scalar beta) :
+                    m_Beta{ beta }
+                {
+                }
+
+                Solution<Scalar> fitNoIntercept(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance) const;
+
+            private:
+                const Scalar m_Beta;
+            };
+
+            template<std::floating_point ScalarType>
+            Solution<typename LDLTModelImplementation<ScalarType>::Scalar>
+                LDLTModelImplementation<ScalarType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance) const
             {
                 using Vector = Vector<Scalar>;
                 using Matrix = Matrix<Scalar>;
-
-                const auto n = static_cast<Index>(matData.cols());
 
                 Matrix ATA;
                 if (matrixIsCovariance)
@@ -95,9 +193,69 @@ namespace l0l2
 
                 ATA.diagonal().array() += m_Beta;
 
-                //return Solution<Scalar>(ATA.householderQr().solve(ATb));
                 return Solution<Scalar>(ATA.ldlt().solve(ATb));
             }
+
+            template<std::floating_point ScalarType>
+            class QRModelImplementation final
+            {
+            public:
+                using Scalar = ScalarType;
+
+                QRModelImplementation(Scalar beta) :
+                    m_Beta{ beta }
+                {
+                }
+
+                Solution<Scalar> fitNoIntercept(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance) const;
+
+            private:
+                const Scalar m_Beta;
+            };
+
+            template<std::floating_point ScalarType>
+            Solution<typename QRModelImplementation<ScalarType>::Scalar>
+                QRModelImplementation<ScalarType>::fitNoIntercept(
+                    const Matrix<Scalar>& matData,
+                    const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance) const
+            {
+                using Vector = Vector<Scalar>;
+                using Matrix = Matrix<Scalar>;
+
+                Matrix ATA;
+                if (matrixIsCovariance)
+                {
+                    ATA = matData;
+                }
+                else
+                {
+                    ATA = matData.transpose() * matData;
+                }
+
+                Vector ATb;// Avoiding ternary operator as suggested by lib eigen c++
+                if (matrixIsCovariance)
+                {
+                    ATb = matData * vectData;
+                }
+                else
+                {
+                    ATb = matData.transpose() * vectData;
+                }
+
+                ATA.diagonal().array() += m_Beta;
+
+                return Solution<Scalar>(ATA.householderQr().solve(ATb));
+            }
+
+            template<std::floating_point ScalarType>
+            using LDLTL2Regressor = L2RegressorDirect<LDLTModelImplementation<ScalarType>>;
+
+            template<std::floating_point ScalarType>
+            using QRL2Regressor = L2RegressorDirect<QRModelImplementation<ScalarType>>;
         }
 	}
 }
@@ -250,69 +408,37 @@ namespace l0l2
             };
 
             template<std::floating_point ScalarType>
-            class L2RegressorPCG final
+            class PCGModelImplementation final
             {
             public:
                 using Scalar = ScalarType;
 
-                L2RegressorPCG(Scalar beta, bool hasIntercept)
-                    : m_Beta{ beta },
-                    m_HasIntercept{ hasIntercept }
+                PCGModelImplementation(Scalar beta)
+                    : m_Beta{ beta }
                 {
                 }
 
-                Solution<Scalar> fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Scalar epsilon,
-                    unsigned int maxNumberOfIterations) const;
-
-            private:
                 Solution<Scalar> fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar epsilon,
-                    unsigned int maxNumberOfIterations) const;
+                    unsigned int maxNumberOfIterations,
+                    const Solution<Scalar>& guess) const;
 
+            private:
                 const Scalar m_Beta;
-                const bool m_HasIntercept;
             };
 
             template<std::floating_point ScalarType>
-            Solution<typename L2RegressorPCG<ScalarType>::Scalar>
-                L2RegressorPCG<ScalarType>::fit(
+            Solution<typename PCGModelImplementation<ScalarType>::Scalar>
+                PCGModelImplementation<ScalarType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
                     Scalar epsilon,
-                    unsigned int maxNumberOfIterations) const
-            {
-                if (m_HasIntercept && !matrixIsCovariance)
-                {
-                    auto solution = fitNoIntercept(
-                        matData.rowwise() - matData.colwise().mean(),
-                        vectData.array() - vectData.mean(),
-                        matrixIsCovariance, epsilon, maxNumberOfIterations);
-
-                    solution.intercept = (vectData - matData * solution.x).mean();
-
-                    return solution;
-                }
-
-                return fitNoIntercept(matData, vectData, matrixIsCovariance,
-                    epsilon, maxNumberOfIterations);
-            }
-
-            template<std::floating_point ScalarType>
-            Solution<typename L2RegressorPCG<ScalarType>::Scalar>
-                L2RegressorPCG<ScalarType>::fitNoIntercept(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Scalar epsilon,
-                    unsigned int maxNumberOfIterations) const
+                    unsigned int maxNumberOfIterations,
+                    [[maybe_unused]] const Solution<Scalar>& guess) const
             {
                 using Matrix = Matrix<Scalar>;
                 using Vector = Vector<Scalar>;
@@ -348,6 +474,9 @@ namespace l0l2
                     return Solution<Scalar>(solver.solve((matData.transpose() * vectData).eval()));
                 }
             }
+
+            template<std::floating_point ScalarType>
+            using PCGL2Regressor = L2RegressorIterative<PCGModelImplementation<ScalarType>>;
         }
     }
 }
