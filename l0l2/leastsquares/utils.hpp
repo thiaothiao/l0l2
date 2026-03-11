@@ -97,6 +97,15 @@ namespace l0l2
 	{
 		namespace leastsquares
 		{
+			enum class CoordinateState : Index
+			{
+				L0 = 0U,
+				FREE,
+				ZERO
+			};
+
+			using CoordinateStates = Eigen::Array<CoordinateState, Eigen::Dynamic, 1>;
+
 			enum class Strategy : std::uint8_t
 			{
 				FromZeroSolution = 0U,

@@ -27,14 +27,13 @@ namespace l0l2
                 using Scalar = ScalarType;
                 using Regressor = L0L2Regressor<Scalar>;
                 using RegressorParam = L0L2Regressor<Scalar>::Param;
-                using ConstraintsType = Regressor::ConstraintsType;
 
                 class Branch
                 {
                 public:
-                    Branch(const std::vector<ConstraintsType>& indices_ = {},
+                    Branch(const CoordinateStates& indices_ = {},
                         double lb_ = 0.0) :
-                        indices{ indices_ },
+                        coordinateStates{ indices_ },
                         lb{ lb_ }
                     {
                     }
@@ -45,7 +44,7 @@ namespace l0l2
                     Branch(Branch&&) = default;
                     Branch& operator=(Branch&&) = default;
 
-                    std::vector<ConstraintsType> indices;
+                    CoordinateStates coordinateStates;
                     Scalar lb;
                 };
 
@@ -95,7 +94,7 @@ namespace l0l2
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
-                    const std::vector<ConstraintsType>& indices,
+                    const CoordinateStates& coordinateStates,
                     const Solution<Scalar>& solution) const;
 
             private:
@@ -124,7 +123,7 @@ namespace l0l2
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
                     bool matrixIsCovariance,
-                    const std::vector<ConstraintsType>& indices,
+                    const CoordinateStates& coordinateStates,
                     const Solution<Scalar>& solution) const
             {
                 const auto n = static_cast<Index>(matData.cols());
@@ -143,7 +142,7 @@ namespace l0l2
 
                 for (Index j = 0; j < n; ++j)
                 {
-                    if (indices[j] == ConstraintsType::L0)
+                    if (coordinateStates[j] == CoordinateState::L0)
                     {
                         if (std::abs(x[j]) >= delta)
                         {
@@ -182,7 +181,7 @@ namespace l0l2
                     [](const Branch& lhs, const Branch& rhs){ return lhs.lb < rhs.lb; };
 
                 std::set<Branch, decltype(compareLambda)> allBranches(compareLambda);
-                allBranches.emplace(std::vector<ConstraintsType>(n, ConstraintsType::L0), 
+                allBranches.emplace(CoordinateStates::Constant(n, CoordinateState::L0),
                         static_cast<Scalar>(0));
 
                 auto solution = Solution(n);
@@ -207,13 +206,13 @@ namespace l0l2
                     }
 
                     auto branchSolution = Regressor{ m_Param.regressorParam}
-                    .fitPartial(matData, vectData, matrixIsCovariance, branch.indices);
+                    .fit(matData, vectData, matrixIsCovariance, branch.coordinateStates);
 
                     const auto ub =
                         objectiveValue(matData, vectData, matrixIsCovariance, branchSolution);
 
                     const auto lb =
-                        relaxationValue(matData, vectData, matrixIsCovariance, branch.indices, branchSolution);
+                        relaxationValue(matData, vectData, matrixIsCovariance, branch.coordinateStates, branchSolution);
 
                     const auto localGap = (ub - lb) / ub;
                     if (localGap > localEpsilon)
@@ -222,7 +221,7 @@ namespace l0l2
                         auto minAbsXj = delta;
                         for (Index j = 0; j < n; ++j)
                         {
-                            if (branch.indices[j] == ConstraintsType::L0)
+                            if (branch.coordinateStates[j] == CoordinateState::L0)
                             {
                                 const auto absXj = std::abs(branchSolution.x[j]);
                                 if (Utils::epsilon < absXj && absXj < minAbsXj)
@@ -239,10 +238,10 @@ namespace l0l2
                         {
                             branch.lb = std::max(lowerBound, lb);
 
-                            branch.indices[splitIndex] = ConstraintsType::ZERO;
-                            allBranches.emplace(branch.indices, branch.lb);
+                            branch.coordinateStates[splitIndex] = CoordinateState::ZERO;
+                            allBranches.emplace(branch.coordinateStates, branch.lb);
 
-                            branch.indices[splitIndex] = ConstraintsType::FREE;
+                            branch.coordinateStates[splitIndex] = CoordinateState::FREE;
                             allBranches.insert(std::move(branch));
                         }
                     }
