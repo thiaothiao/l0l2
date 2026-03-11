@@ -86,11 +86,16 @@ int main()
 
         const Strategy bbstrategy = Strategy::FromZeroSolution;
 
-        //SimpleBranchAndBound::RegressorParam regressorParam{ delta, beta, strategy, tolerance,
-        //    maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
+        SimpleBranchAndBound::RegressorParam regressorParam{ delta, beta, 
+            withIntercept, bbstrategy, tolerance, maximumNumberOfIterations, 
+            innerEpsilon, innerMaximumNumberOfIterations };
 
-        SimpleBranchAndBoundParam param{ delta, beta, withIntercept, bbstrategy, tolerance,
-            maximumNumberOfIterations, innerEpsilon, innerMaximumNumberOfIterations };
+        Scalar globalGapEpsilon = static_cast<Scalar>(1e-8);
+        Scalar localGapEpsilon = static_cast<Scalar>(1e-8);
+        unsigned int maximumNumberOfBranchAndBoundIterations = 1000000U;
+
+        SimpleBranchAndBoundParam param{ regressorParam, globalGapEpsilon,
+            localGapEpsilon, maximumNumberOfBranchAndBoundIterations };
 
         auto branchandbound = SimpleBranchAndBound{ param };
 

@@ -50,18 +50,14 @@ namespace l0l2
 
                 struct Param final
                 {
-                    Param(
-                        Scalar deltaInput = static_cast<Scalar>(0),
-                        Scalar betaInput = static_cast<Scalar>(1),
-                        bool hasInterceptInput = false,
-                        leastsquares::Strategy strategyInput = leastsquares::Strategy::FromZeroSolution,
-                        Scalar toleranceInput = static_cast<Scalar>(1e-4),
-                        unsigned int maximumNumberOfIterationsInput = 10000U,
-                        Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
-                        unsigned int innerMaximumNumberOfIterationsInput = 100000U)
-                        :regressorParam{ deltaInput, betaInput, hasInterceptInput, strategyInput,
-                        toleranceInput, maximumNumberOfIterationsInput,
-                        innerEpsilonInput, innerMaximumNumberOfIterationsInput }
+                    Param(const RegressorParam& regressorParamInput, 
+                        Scalar globalEpsilonInput = static_cast<Scalar>(1e-8),
+                        Scalar localEpsilonInput = static_cast<Scalar>(1e-8),
+                        unsigned int maximumNumberOfIterationsInput = 1000000U)
+                        :regressorParam{ regressorParamInput },
+                        globalEpsilon{ globalEpsilonInput },
+                        localEpsilon{ localEpsilonInput },
+                        maximumNumberOfIterations{ maximumNumberOfIterationsInput }
                     {
                     }
 
@@ -72,6 +68,9 @@ namespace l0l2
                     Param& operator=(Param&&) = default;
 
                     const RegressorParam regressorParam;
+                    const Scalar globalEpsilon;
+                    const Scalar localEpsilon;
+                    const unsigned int maximumNumberOfIterations;
                 };
                 
                 SimpleBranchAndBound(const Param& param)
