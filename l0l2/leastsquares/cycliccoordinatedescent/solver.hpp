@@ -78,8 +78,8 @@ namespace l0l2
 
                 Scalar stepJ(Scalar zJ, Scalar uJ) const;
 
-                Scalar computeDualityGap(const Matrix<Scalar>& A, const Vector<Scalar>& b,
-                    const Solution<Scalar>& solution, bool matrixIsCovariance) const;
+                Scalar computeDualityGap(const Matrix<Scalar>& matData, const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance, const Solution<Scalar>& solution) const;
 
                 Param param;
             };
@@ -95,8 +95,8 @@ namespace l0l2
 
             template<std::floating_point ScalarType>
             L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::computeDualityGap(const Matrix<Scalar>& mat, 
-                    const Vector<Scalar>& vect, const Solution<Scalar>& solution, bool matrixIsCovariance) const
+                L0L2ModelImplementation<ScalarType>::computeDualityGap(const Matrix<Scalar>& matData, 
+                    const Vector<Scalar>& vectData, bool matrixIsCovariance, const Solution<Scalar>& solution) const
             {
                 using Vector = Vector<Scalar>;
                 using Utils = Utils<Scalar>;
@@ -109,11 +109,11 @@ namespace l0l2
                 Vector nu0;
                 if (matrixIsCovariance)
                 {
-                    nu0 = mat * (x - vect);
+                    nu0 = matData * (x - vectData);
                 }
                 else
                 {
-                    nu0 = mat * x - vect;
+                    nu0 = matData * x - vectData;
                 }
 
                 if (hasIntercept)
@@ -123,7 +123,7 @@ namespace l0l2
 
                 const auto betaDeltaSquared = param.beta * param.delta * param.delta;
                 const auto twoDeltaBeta = static_cast<Scalar>(2) * param.deltaBeta;
-                const auto leastSquaresPartValue = matrixIsCovariance ? nu0.dot(x - vect) : nu0.squaredNorm();
+                const auto leastSquaresPartValue = matrixIsCovariance ? nu0.dot(x - vectData) : nu0.squaredNorm();
                 auto primal = leastSquaresPartValue;
                 for (auto xi : x)
                 {
@@ -144,12 +144,12 @@ namespace l0l2
                 }
                 else
                 {
-                    theta = (mat.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
+                    theta = (matData.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
                 }
 
                 std::sort(theta.begin(), theta.end(), [](Scalar u, Scalar v) {return u > v; });
 
-                const auto bTnu0 = vect.dot(nu0);
+                const auto bTnu0 = vectData.dot(nu0);
 
                 Scalar aCoeff = -static_cast<Scalar>(0.25) * leastSquaresPartValue;
                 const Scalar bCoeff = std::abs(bTnu0);
