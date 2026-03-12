@@ -32,7 +32,7 @@ int main()
 
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);
-    const auto delta = static_cast<Scalar>(10000.0); //static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);
+    const auto delta = static_cast<Scalar>(-1); //static_cast<Scalar>(10000.0);
 
     const auto withIntercept = false;
 
