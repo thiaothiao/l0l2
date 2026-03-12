@@ -78,8 +78,13 @@ namespace l0l2
 
                 Scalar stepJ(Scalar zJ, Scalar uJ) const;
 
-                Scalar computeDualityGap(const Matrix<Scalar>& A, const Vector<Scalar>& b,
-                    const Solution<Scalar>& solution, bool matrixIsCovariance) const;
+                Scalar stepIntercept(Scalar zJ, Scalar uIntercept) const;
+
+                Scalar otherJ(Scalar zJ, Scalar uJ) const;
+
+                Scalar computeDualityGap(const Matrix<Scalar>& matData, const Vector<Scalar>& vectData,
+                    bool matrixIsCovariance, const CoordinateStates& coordinateStates, 
+                    const Solution<Scalar>& solution) const;
 
                 Param param;
             };
@@ -94,12 +99,31 @@ namespace l0l2
             }
 
             template<std::floating_point ScalarType>
+            inline L0L2ModelImplementation<ScalarType>::Scalar
+                L0L2ModelImplementation<ScalarType>::stepIntercept(Scalar zJ, Scalar uIntercept) const
+            {
+                return uIntercept / zJ;
+            }
+
+            template<std::floating_point ScalarType>
+            inline L0L2ModelImplementation<ScalarType>::Scalar
+                L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ, Scalar uJ) const
+            {
+                return uJ / (zJ + param.beta);
+            }
+
+            template<std::floating_point ScalarType>
             L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::computeDualityGap(const Matrix<Scalar>& mat, 
-                    const Vector<Scalar>& vect, const Solution<Scalar>& solution, bool matrixIsCovariance) const
+                L0L2ModelImplementation<ScalarType>::computeDualityGap(const Matrix<Scalar>& matData, 
+                    const Vector<Scalar>& vectData, bool matrixIsCovariance, 
+                    const CoordinateStates& coordinateStates, const Solution<Scalar>& solution) const
             {
                 using Vector = Vector<Scalar>;
                 using Utils = Utils<Scalar>;
+
+                const auto n = static_cast<Index>(matData.cols());
+
+                const auto subIndicesCase = static_cast<Index>(coordinateStates.size()) == n;
 
                 const auto& x = solution.x;
                 const auto intercept = solution.intercept;
@@ -109,11 +133,11 @@ namespace l0l2
                 Vector nu0;
                 if (matrixIsCovariance)
                 {
-                    nu0 = mat * (x - vect);
+                    nu0 = matData * (x - vectData);
                 }
                 else
                 {
-                    nu0 = mat * x - vect;
+                    nu0 = matData * x - vectData;
                 }
 
                 if (hasIntercept)
@@ -123,7 +147,7 @@ namespace l0l2
 
                 const auto betaDeltaSquared = param.beta * param.delta * param.delta;
                 const auto twoDeltaBeta = static_cast<Scalar>(2) * param.deltaBeta;
-                const auto leastSquaresPartValue = matrixIsCovariance ? nu0.dot(x - vect) : nu0.squaredNorm();
+                const auto leastSquaresPartValue = matrixIsCovariance ? nu0.dot(x - vectData) : nu0.squaredNorm();
                 auto primal = leastSquaresPartValue;
                 for (auto xi : x)
                 {
@@ -144,24 +168,51 @@ namespace l0l2
                 }
                 else
                 {
-                    theta = (mat.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
+                    theta = (matData.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
+                }
+
+                auto aCoeff = - static_cast<Scalar>(0.25) * leastSquaresPartValue;
+                if (subIndicesCase)
+                {// TODO try eigenlib select() method
+                    auto tmp = static_cast<Scalar>(0);
+                    for (Index j = 0; j < n; ++j)
+                    {
+                        if (coordinateStates[j] == CoordinateState::ZERO)
+                        {
+                            theta[j] = static_cast<Scalar>(0);
+                        }
+                        else if(coordinateStates[j] == CoordinateState::FREE)
+                        {
+                            tmp += theta[j] * theta[j];
+                            theta[j] = static_cast<Scalar>(0);
+                        }
+                    }
+
+                    aCoeff += betaDeltaSquared * (coordinateStates == CoordinateState::FREE).count() 
+                        -static_cast<Scalar>(0.25) * tmp * betaDeltaSquared * betaDeltaSquared / param.beta;
                 }
 
                 std::sort(theta.begin(), theta.end(), [](Scalar u, Scalar v) {return u > v; });
 
-                const auto bTnu0 = vect.dot(nu0);
+                const auto bTnu0 = vectData.dot(nu0);
+                const auto bCoeff = std::abs(bTnu0);
 
-                Scalar aCoeff = -static_cast<Scalar>(0.25) * leastSquaresPartValue;
-                const Scalar bCoeff = std::abs(bTnu0);
-                Scalar cCoeff = static_cast<Scalar>(0);
-
-                bool dualValueFound = false;
-
-                Scalar thetaI = theta[0];
+                auto cCoeff = static_cast<Scalar>(0);
 
                 // solve on [s0,s1]
                 auto dual = Utils::solveMaxConcaveQP1D(aCoeff, bCoeff, cCoeff, 
-                    static_cast<Scalar>(0), static_cast<Scalar>(1) / thetaI);
+                    static_cast<Scalar>(0), 
+                    theta[0] == static_cast<Scalar>(0)
+                    ? std::numeric_limits<Scalar>::max()
+                    : static_cast<Scalar>(1) / theta[0]);
+
+                Scalar thetaI = theta[0];
+                if (thetaI == static_cast<Scalar>(0))
+                {
+                    return (primal - dual) / primal;
+                }
+
+                bool dualValueFound = false;
 
                 bool accumulationTreated = false;
 
