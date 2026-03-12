@@ -176,6 +176,32 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"));
 
+    using SimpleBranchAndBoundf = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<float>;
+    using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::Param;
+
+    pybind11::class_<SimpleBranchAndBoundParamf>(m, "SimpleBranchAndBoundParamf")
+        .def(pybind11::init<L0L2RegressorParamf, float, float, unsigned int>(),
+            pybind11::arg("regressorParam"),
+            pybind11::arg("globalEpsilon") = 1e-8f,
+            pybind11::arg("localEpsilon") = 1e-8f,
+            pybind11::arg("maximumNumberOfIterations") = 1000000U)
+        .def_readonly("regressorParam", &SimpleBranchAndBoundParamf::regressorParam)
+        .def_readonly("globalEpsilon", &SimpleBranchAndBoundParamf::globalEpsilon)
+        .def_readonly("localEpsilon", &SimpleBranchAndBoundParamf::localEpsilon)
+        .def_readonly("maximumNumberOfIterations", &SimpleBranchAndBoundParamf::maximumNumberOfIterations);    
+    
+    pybind11::class_<SimpleBranchAndBoundf>(m, "SimpleBranchAndBoundf")
+        .def(pybind11::init<SimpleBranchAndBoundParamf>(),
+            pybind11::arg("param"))
+        .def("fit", &SimpleBranchAndBoundf::fit,
+            pybind11::arg("matData"),
+            pybind11::arg("vectData"),
+            pybind11::arg("matrixIsCovariance"))
+        .def("objectiveValue", &SimpleBranchAndBoundf::objectiveValue,
+            pybind11::arg("matData"),
+            pybind11::arg("vectData"),
+            pybind11::arg("matrixIsCovariance"),
+            pybind11::arg("solution"));
 
     pybind11::class_<FullPathSolverParamd>(m, "FullPathSolverParamd")
         .def(pybind11::init<double, double, Strategy>(),
@@ -280,6 +306,33 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("run", &FullPathL0L2SPCAd::run,
             pybind11::arg("matData"),
             pybind11::arg("matrixIsCovariance"));
+
+    using SimpleBranchAndBoundd = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<double>;
+    using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::Param;
+
+    pybind11::class_<SimpleBranchAndBoundParamd>(m, "SimpleBranchAndBoundParamd")
+        .def(pybind11::init<L0L2RegressorParamd, double, double, unsigned int>(),
+            pybind11::arg("regressorParam"),
+            pybind11::arg("globalEpsilon") = 1e-8,
+            pybind11::arg("localEpsilon") = 1e-8,
+            pybind11::arg("maximumNumberOfIterations") = 1000000U)
+        .def_readonly("regressorParam", &SimpleBranchAndBoundParamd::regressorParam)
+        .def_readonly("globalEpsilon", &SimpleBranchAndBoundParamd::globalEpsilon)
+        .def_readonly("localEpsilon", &SimpleBranchAndBoundParamd::localEpsilon)
+        .def_readonly("maximumNumberOfIterations", &SimpleBranchAndBoundParamd::maximumNumberOfIterations);
+
+    pybind11::class_<SimpleBranchAndBoundd>(m, "SimpleBranchAndBoundd")
+        .def(pybind11::init<SimpleBranchAndBoundParamd>(),
+            pybind11::arg("param"))
+        .def("fit", &SimpleBranchAndBoundd::fit,
+            pybind11::arg("matData"),
+            pybind11::arg("vectData"),
+            pybind11::arg("matrixIsCovariance"))
+        .def("objectiveValue", &SimpleBranchAndBoundd::objectiveValue,
+            pybind11::arg("matData"),
+            pybind11::arg("vectData"),
+            pybind11::arg("matrixIsCovariance"),
+            pybind11::arg("solution"));
 
 #ifdef L0L2_VERSION
     mainmodule.attr("__version__") = L0L2_MACRO_STRINGIFY(L0L2_VERSION);

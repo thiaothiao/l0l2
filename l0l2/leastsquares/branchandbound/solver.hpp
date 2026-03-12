@@ -31,10 +31,10 @@ namespace l0l2
                 class Branch
                 {
                 public:
-                    Branch(const CoordinateStates& indices_ = {},
-                        double lb_ = 0.0) :
-                        coordinateStates{ indices_ },
-                        lb{ lb_ }
+                    Branch(const CoordinateStates& coordinateStatesInput = {},
+                        Scalar lbInput = static_cast<Scalar>(0)) :
+                        coordinateStates{ coordinateStatesInput },
+                        lb{ lbInput }
                     {
                     }
 
