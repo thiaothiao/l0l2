@@ -23,6 +23,7 @@ template class l0l2::linearmodel::SPCA<l0l2::linearmodel::FullPathL0L2SPCAModelI
 namespace
 {
     using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
+    using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     using Index = l0l2::Index;
 
@@ -130,7 +131,8 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &L0L2Regressorf::fit,
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"));
+            pybind11::arg("matrixIsCovariance"),
+            pybind11::arg("coordinateStates") = CoordinateStates{});
 
     pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
         .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
@@ -234,7 +236,8 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def("fit", &L0L2Regressord::fit, 
             pybind11::arg("matData"),
             pybind11::arg("vectData"),
-            pybind11::arg("matrixIsCovariance"));
+            pybind11::arg("matrixIsCovariance"),
+            pybind11::arg("coordinateStates") = CoordinateStates{});
 
     pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
         .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
