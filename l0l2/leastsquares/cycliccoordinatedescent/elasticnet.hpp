@@ -146,19 +146,19 @@ namespace l0l2
                 const auto aTnu0NormInf = matrixIsCovariance ? (nu0 + param.beta * x).cwiseAbs().maxCoeff()
                     : (matData.transpose() * nu0 + param.beta * x).cwiseAbs().maxCoeff();
 
-                const auto absSBound = static_cast<Scalar>(0.5) * param.gamma / aTnu0NormInf;
+                const auto absSBound = param.gamma / aTnu0NormInf;
                 
                 const auto bTnu0 = vectData.dot(nu0);
 
-                auto s = -bTnu0 / (leastSquaresPartValue + betaXSquaredNorm);
+                auto s = - static_cast<Scalar>(2) * bTnu0 / (leastSquaresPartValue + betaXSquaredNorm);
 
                 if (std::abs(s) > absSBound)
                 {
                     s = Utils::sign(s) * absSBound;
                 }
 
-                const auto dual = -s * s * (leastSquaresPartValue + betaXSquaredNorm) 
-                    - static_cast<Scalar>(2) * s * bTnu0;
+                const auto dual = -static_cast<Scalar>(0.25) * (leastSquaresPartValue + betaXSquaredNorm) * s * s
+                    -  s * bTnu0;
 
                 return (primal - dual) / primal;
             }
