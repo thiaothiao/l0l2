@@ -325,6 +325,22 @@ namespace l0l2
                     }
                 }
             }
+
+            template<std::floating_point ScalarType>
+            class ModelImplementationBase
+            {
+            public:
+                using Scalar = ScalarType;
+
+                Scalar stepIntercept(Scalar zJ, Scalar uIntercept) const;
+            };
+
+            template<std::floating_point ScalarType>
+            inline ModelImplementationBase<ScalarType>::Scalar
+                ModelImplementationBase<ScalarType>::stepIntercept(Scalar zJ, Scalar uIntercept) const
+            {
+                return uIntercept / zJ;
+            }
         }
     }
 }

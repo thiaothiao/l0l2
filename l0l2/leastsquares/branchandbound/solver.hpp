@@ -11,7 +11,7 @@
 #include <set>
 
 #include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/cycliccoordinatedescent/solver.hpp"
+#include "l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp"
 
 namespace l0l2
 {
