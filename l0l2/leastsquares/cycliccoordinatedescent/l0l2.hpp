@@ -19,10 +19,11 @@ namespace l0l2
         {
             // L0L2 coordinate descent stepJ implementation
             template<std::floating_point ScalarType>
-            class L0L2ModelImplementation final
+            class L0L2ModelImplementation final : public ModelImplementationBase<ScalarType>
             {
             public:
-                using Scalar = ScalarType;
+                using Base = ModelImplementationBase<ScalarType>;
+                using typename Base::Scalar;
 
                 struct Param final
                 {
@@ -76,9 +77,9 @@ namespace l0l2
                 {
                 }
 
-                Scalar stepJ(Scalar zJ, Scalar uJ) const;
+                using Base::stepIntercept;
 
-                Scalar stepIntercept(Scalar zJ, Scalar uIntercept) const;
+                Scalar stepJ(Scalar zJ, Scalar uJ) const;
 
                 Scalar otherJ(Scalar zJ, Scalar uJ) const;
 
@@ -94,15 +95,8 @@ namespace l0l2
                 L0L2ModelImplementation<ScalarType>::stepJ(Scalar zJ, Scalar uJ) const
             {
                 return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta) ? (uJ / (param.beta + zJ))
-                    : ((std::abs(uJ) > param.deltaBeta) ? ((uJ - param.deltaBeta * Utils<ScalarType>::sign(uJ)) / zJ)
+                    : ((std::abs(uJ) > param.deltaBeta) ? ((uJ - param.deltaBeta * Utils<Scalar>::sign(uJ)) / zJ)
                         : static_cast<Scalar>(0));
-            }
-
-            template<std::floating_point ScalarType>
-            inline L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::stepIntercept(Scalar zJ, Scalar uIntercept) const
-            {
-                return uIntercept / zJ;
             }
 
             template<std::floating_point ScalarType>
