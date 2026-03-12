@@ -19,7 +19,8 @@ namespace l0l2
                     std::as_const(impl).fitNoIntercept(
                         Matrix<typename ModelImplementationType::Scalar>{},
                         Vector<typename ModelImplementationType::Scalar>{},
-                        bool{})
+                        bool{},
+                        CoordinateStates{})
                 } ->std::convertible_to<Solution<typename ModelImplementationType::Scalar>>;
             };
 
@@ -33,7 +34,8 @@ namespace l0l2
                         bool{},
                         typename ModelImplementationType::Scalar{},
                         0U,
-                        Solution<typename ModelImplementationType::Scalar>{})
+                        Solution<typename ModelImplementationType::Scalar>{},
+                        CoordinateStates{})
                 } ->std::convertible_to<Solution<typename ModelImplementationType::Scalar>>;
             };
 
@@ -53,7 +55,8 @@ namespace l0l2
                 Solution<Scalar> fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const;
+                    bool matrixIsCovariance,
+                    const CoordinateStates& coordinateStates = {}) const;
 
             private:
                 const Scalar m_Beta;
@@ -65,7 +68,8 @@ namespace l0l2
                 L2RegressorDirect<ModelImplementationType>::fit(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const 
+                    bool matrixIsCovariance,
+                    const CoordinateStates& coordinateStates) const
             {
                 const ModelImplementation modelImplementation{ m_Beta };
 
@@ -74,14 +78,15 @@ namespace l0l2
                     auto solution = modelImplementation.fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
                         vectData.array() - vectData.mean(),
-                        matrixIsCovariance);
+                        matrixIsCovariance,
+                        coordinateStates);
 
                     solution.intercept = (vectData - matData * solution.x).mean();
 
                     return solution;
                 }
 
-                return modelImplementation.fitNoIntercept(matData, vectData, matrixIsCovariance);
+                return modelImplementation.fitNoIntercept(matData, vectData, matrixIsCovariance, coordinateStates);
             }
 
             template <NoInterceptIterativeL2RegressorLike ModelImplementationType>
@@ -103,7 +108,8 @@ namespace l0l2
                     bool matrixIsCovariance,
                     Scalar epsilon,
                     unsigned int maxNumberOfIterations,
-                    const Solution<Scalar>& guess = {}) const;
+                    const Solution<Scalar>& guess = {},
+                    const CoordinateStates& coordinateStates = {}) const;
 
             private:
                 const Scalar m_Beta;
@@ -118,7 +124,8 @@ namespace l0l2
                     bool matrixIsCovariance,
                     Scalar epsilon,
                     unsigned int maxNumberOfIterations,
-                    const Solution<Scalar>& guess) const
+                    const Solution<Scalar>& guess,
+                    const CoordinateStates& coordinateStates) const
             {
                 const ModelImplementation modelImplementation{ m_Beta };
 
@@ -130,7 +137,8 @@ namespace l0l2
                         matrixIsCovariance,
                         epsilon,
                         maxNumberOfIterations,
-                        guess);
+                        guess,
+                        coordinateStates);
 
                     solution.intercept = (vectData - matData * solution.x).mean();
 
@@ -138,7 +146,7 @@ namespace l0l2
                 }
 
                 return modelImplementation.fitNoIntercept(matData, vectData, matrixIsCovariance,
-                    epsilon, maxNumberOfIterations, guess);
+                    epsilon, maxNumberOfIterations, guess, coordinateStates);
             }
 
             template<std::floating_point ScalarType>
@@ -155,7 +163,8 @@ namespace l0l2
                 Solution<Scalar> fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const;
+                    bool matrixIsCovariance,
+                    const CoordinateStates& coordinateStates) const;
 
             private:
                 const Scalar m_Beta;
@@ -166,7 +175,8 @@ namespace l0l2
                 LDLTModelImplementation<ScalarType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const
+                    bool matrixIsCovariance,
+                    [[maybe_unused]] const CoordinateStates& coordinateStates) const
             {
                 using Vector = Vector<Scalar>;
                 using Matrix = Matrix<Scalar>;
@@ -210,7 +220,8 @@ namespace l0l2
                 Solution<Scalar> fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const;
+                    bool matrixIsCovariance,
+                    const CoordinateStates& coordinateStates) const;
 
             private:
                 const Scalar m_Beta;
@@ -221,7 +232,8 @@ namespace l0l2
                 QRModelImplementation<ScalarType>::fitNoIntercept(
                     const Matrix<Scalar>& matData,
                     const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance) const
+                    bool matrixIsCovariance,
+                    [[maybe_unused]] const CoordinateStates& coordinateStates) const
             {
                 using Vector = Vector<Scalar>;
                 using Matrix = Matrix<Scalar>;
@@ -424,7 +436,8 @@ namespace l0l2
                     bool matrixIsCovariance,
                     Scalar epsilon,
                     unsigned int maxNumberOfIterations,
-                    const Solution<Scalar>& guess) const;
+                    const Solution<Scalar>& guess,
+                    const CoordinateStates& coordinateStates) const;
 
             private:
                 const Scalar m_Beta;
@@ -438,7 +451,8 @@ namespace l0l2
                     bool matrixIsCovariance,
                     Scalar epsilon,
                     unsigned int maxNumberOfIterations,
-                    [[maybe_unused]] const Solution<Scalar>& guess) const
+                    [[maybe_unused]] const Solution<Scalar>& guess,
+                    [[maybe_unused]] const CoordinateStates& coordinateStates) const
             {
                 using Matrix = Matrix<Scalar>;
                 using Vector = Vector<Scalar>;

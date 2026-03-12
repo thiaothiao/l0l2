@@ -286,7 +286,9 @@ namespace l0l2
                         ? Solution(Vector::Zero(n))
                         : L2Regressor(m_Param.beta, hasIntercept).fit(matData, vectData, matrixIsCovariance,
                             m_Param.innerEpsilon,
-                            m_Param.innerMaximumNumberOfIterations),
+                            m_Param.innerMaximumNumberOfIterations,
+                            {},
+                            coordinateStates),
                         coordinateStates);
                 }
                 else
@@ -306,7 +308,9 @@ namespace l0l2
                         matrixIsCovariance,
                         L2Regressor(m_Param.beta, hasIntercept).fit(matData, vectData, matrixIsCovariance,
                             m_Param.innerEpsilon,
-                            m_Param.innerMaximumNumberOfIterations),
+                            m_Param.innerMaximumNumberOfIterations,
+                            {},
+                            coordinateStates),
                         coordinateStates);
 
                     auto fromZeroSolution = fromZeroFuture.get();
