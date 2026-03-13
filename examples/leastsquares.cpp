@@ -82,12 +82,12 @@ int main()
     }
     else
     {
-        const auto bbstart = std::chrono::high_resolution_clock::now();
+        const auto branchAndBoundStart = std::chrono::high_resolution_clock::now();
 
-        const Strategy bbstrategy = Strategy::FromZeroSolution;
+        const Strategy branchAndBoundStrategy = Strategy::FromZeroSolution;
 
         SimpleBranchAndBound::RegressorParam regressorParam{ delta, beta, 
-            withIntercept, bbstrategy, tolerance, maximumNumberOfIterations, 
+            withIntercept, branchAndBoundStrategy, tolerance, maximumNumberOfIterations,
             innerEpsilon, innerMaximumNumberOfIterations };
 
         Scalar globalGapEpsilon = static_cast<Scalar>(1e-8);
@@ -97,21 +97,21 @@ int main()
         SimpleBranchAndBoundParam param{ regressorParam, globalGapEpsilon,
             localGapEpsilon, maximumNumberOfBranchAndBoundIterations };
 
-        auto branchandbound = SimpleBranchAndBound{ param };
+        auto branchAndBound = SimpleBranchAndBound{ param };
 
-        const auto bbsolution = branchandbound.fit(mat, vect, matrixIsCovariance);
+        const auto branchAndBoundSolution = branchAndBound.fit(mat, vect, matrixIsCovariance);
 
-        const auto bbstop = std::chrono::high_resolution_clock::now();
+        const auto branchAndBoundStop = std::chrono::high_resolution_clock::now();
 
         // Calculate the duration and cast to microseconds
-        const auto bbdurationUs =
-            std::chrono::duration_cast<std::chrono::microseconds>(bbstop - bbstart);
+        const auto branchAndBoundStrategyDurationUs =
+            std::chrono::duration_cast<std::chrono::microseconds>(branchAndBoundStop - branchAndBoundStart);
         std::cout << "\n\nbranch and bound job done in "
-            << bbdurationUs.count() << " microseconds!\n\n";
+            << branchAndBoundStrategyDurationUs.count() << " microseconds!\n\n";
         std::cout << "\nobjective value: "
-            << branchandbound.objectiveValue(mat, vect, matrixIsCovariance, bbsolution) << "\n";
+            << branchAndBound.objectiveValue(mat, vect, matrixIsCovariance, branchAndBoundSolution) << "\n";
         std::cout << "\nsolution\n"
-            << l0l2::linearmodel::toString(bbsolution, streamSize) << "\n";
+            << l0l2::linearmodel::toString(branchAndBoundSolution, streamSize) << "\n";
 
         {
             const auto start = std::chrono::high_resolution_clock::now();
@@ -132,7 +132,7 @@ int main()
             std::cout << "\n\njob done in " 
                 << durationUs.count() << " microseconds!\n\n";
             std::cout << "\nobjective value: "
-                << branchandbound.objectiveValue(mat, vect, matrixIsCovariance, solution) << "\n";
+                << branchAndBound.objectiveValue(mat, vect, matrixIsCovariance, solution) << "\n";
             std::cout << "\nsolution\n" 
                 << l0l2::linearmodel::toString(solution, streamSize) << "\n";
         }
