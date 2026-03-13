@@ -14,7 +14,7 @@ The considered Biconjugate Convex Relaxation is given by
 ```
 Implemented solutions:
 - Full path solutions using a Gauss-Jordan elimination and the piecewise linearity of the solutions with respect to $\delta$.
-- Cyclical Coordinante Descent.
+- Cyclic Coordinate Descent.
 - Interior Point Method. WIP
 
 ![description](https://github.com/thiaothiao/l0l2/blob/develop/examples/python/diabetes_path_0.png)
