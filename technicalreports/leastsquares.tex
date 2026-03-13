@@ -623,6 +623,33 @@ g =\nabla\phi_t(x, s, v),
 \]
 at the current iterate $(x, s, v)$.\\
 ...
+\subsection{Branch and bound method}
+Let us consider a branch $LFZ$ with the partition 
+\[
+(A^{L}, A^{F}, A^{Z}):=A,
+\] 
+\[
+(x^{L}, x^{F}, x^{Z}):=x,
+\]
+where $x^{Z}$ are coordinates forced to zero, $x^{F}$ coordinates forced to nonzero and $x^{L}$ the ones concerned by the sparsity regularizer.
+
+\[
+(\mathbb{P}^{\beta, \delta}_{LFZ})\;
+\left\{
+\begin{array}{ll}\min & \left\|A^{L}x^{L}+A^{F}x^{F}-b\right\|^2_2\\
+& + \beta\delta^2\#F + \beta\left\|x^{F}\right\|^2_2+ \beta\delta^2\left\|x^{L}\right\|_0 + \beta\left\|x^{L}\right\|^2_2  \\
+	s.t.&\;x\in\mathbb{R}^n.\\
+\end{array} 
+\right.
+\]
+is relaxed with
+\[
+(\mathbb{Q}^{\beta,\delta}_{LFZ})\left\{\begin{array}{ll}\min & \left\|A^{L}x^{L}+A^{F}x^{F}-b\right\|^2_2\\
+&+ \beta\delta^2\#F + \beta\left\|x^{F}\right\|^2_2 + \beta\delta^2\left(\left\|.\right\|_0 + \frac{1}{\delta^2}\left\|.\right\|_2^2\right)^{**}(x^{L})\\
+s.t.&\;x\in\mathbb{R}^n.
+\end{array} \right.
+\]
+We first consider a simple branch and bound approach where dual values from $(\mathbb{Q}^{\beta,\delta}_{LFZ})$ will give us lower bounds.  Corresponding primal solutions are also used as candidate solutions.
 \section{Sparse Principal Component}
 Consider a covariance matrix $Q$.\\\\ 
 Writing $Q = A^TA$ and $b := A\alpha$, we can see that 
