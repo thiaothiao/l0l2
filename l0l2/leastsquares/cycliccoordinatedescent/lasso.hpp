@@ -1,12 +1,8 @@
 #ifndef L0L2_LASSO_COORDINATE_DESCENT_SOLVER_HPP
 #define L0L2_LASSO_COORDINATE_DESCENT_SOLVER_HPP
 
-#include <future>
 #include <cmath>
-#include <atomic>
-#include <algorithm>
 #include <concepts>
-#include <utility>
 
 #include "l0l2/leastsquares/utils.hpp"
 #include "l0l2/leastsquares/cycliccoordinatedescent/generic.hpp"

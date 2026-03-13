@@ -1,10 +1,7 @@
 #ifndef L0L2_COORDINATE_DESCENT_SOLVER_HPP
 #define L0L2_COORDINATE_DESCENT_SOLVER_HPP
 
-#include <future>
 #include <cmath>
-#include <atomic>
-#include <algorithm>
 #include <concepts>
 #include <utility>
 

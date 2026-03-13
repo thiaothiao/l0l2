@@ -1,12 +1,6 @@
 #ifndef L0L2_SPARSE_PCA_HPP
 #define L0L2_SPARSE_PCA_HPP
 
-#include <iostream>
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <future>
-#include <limits>
 #include <concepts>
 
 #include "l0l2/leastsquares/utils.hpp"

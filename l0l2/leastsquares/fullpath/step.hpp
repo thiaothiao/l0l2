@@ -418,7 +418,6 @@ namespace l0l2
                             break;
                         }
                         default:
-                            std::cout << "\nNOT POSSIBLE\n";
                             break;
                         }
                     }
