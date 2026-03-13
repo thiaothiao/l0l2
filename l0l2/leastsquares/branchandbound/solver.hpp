@@ -2,10 +2,7 @@
 #define L0L2_BRANCH_AND_BOUND_SOLVER_HPP
 
 #include <iostream>
-#include <future>
 #include <cmath>
-#include <atomic>
-#include <algorithm>
 #include <concepts>
 #include <utility>
 #include <set>
@@ -55,8 +52,6 @@ namespace l0l2
                         return lhs.lb < rhs.lb;
                     }
                 };
-
-
 
                 struct Param final
                 {
@@ -182,9 +177,7 @@ namespace l0l2
                 using Utils = Utils<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
-                const auto m = static_cast<Index>(matData.rows());
                 const auto delta = m_Param.regressorParam.delta;
-                const auto beta = m_Param.regressorParam.beta;
 
                 std::set<Branch, BranchCompare> allBranches;
 
