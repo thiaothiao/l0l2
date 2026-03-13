@@ -48,6 +48,16 @@ namespace l0l2
                     Scalar lb;
                 };
 
+                struct BranchCompare
+                {
+                    bool operator()(const Branch& lhs, const Branch& rhs) const
+                    {
+                        return lhs.lb < rhs.lb;
+                    }
+                };
+
+
+
                 struct Param final
                 {
                     Param(const RegressorParam& regressorParamInput, 
@@ -176,10 +186,8 @@ namespace l0l2
                 const auto delta = m_Param.regressorParam.delta;
                 const auto beta = m_Param.regressorParam.beta;
 
-                auto compareLambda =
-                    [](const Branch& lhs, const Branch& rhs){ return lhs.lb < rhs.lb; };
+                std::set<Branch, BranchCompare> allBranches;
 
-                std::set<Branch, decltype(compareLambda)> allBranches(compareLambda);
                 allBranches.emplace(CoordinateStates::Constant(n, CoordinateState::L0),
                         static_cast<Scalar>(0));
 
