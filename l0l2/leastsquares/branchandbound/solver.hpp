@@ -188,10 +188,6 @@ namespace l0l2
                 auto lowerBound = static_cast<Scalar>(0);
                 auto upperBound = vectData.squaredNorm();
 
-                std::cout << "\nStarting b&b.\n";
-                const auto globalEpsilon = static_cast<Scalar>(1e-8);
-                const auto localEpsilon = static_cast<Scalar>(1e-8);
-                const unsigned int maximumNumberOfIterations = 1000000U;
                 unsigned int numberOfIterations = 0;
                 while (!allBranches.empty())
                 {
@@ -200,7 +196,7 @@ namespace l0l2
                     lowerBound = branch.lb;
 
                     const auto globalGap = (upperBound - lowerBound) / upperBound;
-                    if (globalGap <= globalEpsilon)
+                    if (globalGap <= m_Param.globalEpsilon)
                     {
                         break;
                     }
@@ -217,7 +213,7 @@ namespace l0l2
                     const auto lb = primal * (static_cast<Scalar>(1) - relaxationSolution.dualityGap);
 
                     const auto localGap = (ub - lb) / ub;
-                    if (localGap > localEpsilon)
+                    if (localGap > m_Param.localEpsilon)
                     {//Branching. Taking the smallest non compliant coordinate
                         auto splitIndex = static_cast<Index>(-1);
                         auto minAbsXj = delta;
@@ -253,7 +249,7 @@ namespace l0l2
                     }
 
                     ++numberOfIterations;
-                    if (numberOfIterations > maximumNumberOfIterations)
+                    if (numberOfIterations > m_Param.maximumNumberOfIterations)
                     {// leave too many branches
                         break;
                     }
