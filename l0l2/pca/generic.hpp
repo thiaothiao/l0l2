@@ -75,42 +75,10 @@ namespace l0l2
             const auto n = static_cast<Index>(matData.cols());
             const auto m = static_cast<Index>(matData.rows());
 
-            Matrix alpha;
+            //Eigen::JacobiSVD<Matrix, Eigen::ComputeThinV> svd(matData);
 
-            if (matrixIsCovariance)
-            {
-                Matrix alphaTmp(n, m_Param.nbComponents);
-
-                Eigen::SelfAdjointEigenSolver<Matrix> es(matData);
-
-                const auto& eigenValues = es.eigenvalues();
-                const auto& eigenVectors = es.eigenvectors();
-
-                Index j = 0;
-                Scalar previousEigenValue = std::numeric_limits<Scalar>::max();
-                for (Index idx = eigenValues.size() - 1; idx >= 0; --idx)
-                {
-                    const auto currentEigenvalue = eigenValues[idx];
-                    if (currentEigenvalue < previousEigenValue - Utils<Scalar>::epsilon)
-                    {
-                        if (j >= m_Param.nbComponents)
-                        {
-                            break;
-                        }
-
-                        alphaTmp.col(j) = eigenVectors.col(idx);
-                        ++j;
-                    }
-                }
-
-                alpha = std::move(alphaTmp);
-            }
-            else
-            {
-                Eigen::JacobiSVD<Matrix, Eigen::ComputeThinV> svd(matData);
-
-                alpha = svd.matrixV()(Eigen::seqN(0, n), Eigen::seqN(0, m_Param.nbComponents));
-            }
+            Matrix alpha = Eigen::JacobiSVD<Matrix, Eigen::ComputeThinV>(matData)
+                .matrixV()(Eigen::seqN(0, n), Eigen::seqN(0, m_Param.nbComponents));
 
             const auto multipleJobs = m_NbJobs > 1U;
 
