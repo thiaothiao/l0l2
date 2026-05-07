@@ -1,10 +1,11 @@
-#ifndef L0L2_L2_REGRESSORS_HPP
-#define L0L2_L2_REGRESSORS_HPP
+#pragma once
 
 #include <concepts>
 
 #include <Eigen/Dense>
 #include <Eigen/IterativeLinearSolvers>
+
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -493,5 +494,4 @@ namespace l0l2
             using PCGL2Regressor = L2RegressorIterative<PCGModelImplementation<ScalarType>>;
         }
     }
-}
-#endif //L0L2_L2_REGRESSORS_HPP
+} // namespace l0l2

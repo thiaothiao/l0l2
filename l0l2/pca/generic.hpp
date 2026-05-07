@@ -1,5 +1,4 @@
-#ifndef L0L2_GENERIC_SPARSE_PCA_HPP
-#define L0L2_GENERIC_SPARSE_PCA_HPP
+#pragma once
 
 #include <iostream>
 #include <algorithm>
@@ -11,9 +10,9 @@
 
 #include <Eigen/Dense>
 
-#include "thread_pool/thread_pool.h"
+#include <thread_pool/thread_pool.h>
 
-#include "l0l2/leastsquares/utils.hpp"
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -176,5 +175,4 @@ namespace l0l2
             return result;
         }
     }
-}
-#endif //L0L2_GENERIC_SPARSE_PCA_HPP
+} // namespace l0l2

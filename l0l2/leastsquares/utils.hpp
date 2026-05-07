@@ -1,5 +1,4 @@
-#ifndef L0L2_UTILS_HPP
-#define L0L2_UTILS_HPP
+#pragma once
 
 #include <ios>
 #include <string>
@@ -160,6 +159,4 @@ namespace l0l2
 			};
 		}
 	}
-}
-
-#endif //L0L2_UTILS_HPP
+} // namespace l0l2

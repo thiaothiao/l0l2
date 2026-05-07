@@ -1,5 +1,4 @@
-#ifndef L0L2_BRANCH_AND_BOUND_SOLVER_HPP
-#define L0L2_BRANCH_AND_BOUND_SOLVER_HPP
+#pragma once
 
 #include <iostream>
 #include <cmath>
@@ -7,8 +6,8 @@
 #include <utility>
 #include <set>
 
-#include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp"
+#include <l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp>
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -260,5 +259,4 @@ namespace l0l2
             }
         }
     }
-}
-#endif //L0L2_BRANCH_AND_BOUND_SOLVER_HPP
+} // namespace l0l2

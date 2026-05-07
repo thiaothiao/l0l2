@@ -1,12 +1,11 @@
-#ifndef L0L2_COORDINATE_DESCENT_SOLVER_HPP
-#define L0L2_COORDINATE_DESCENT_SOLVER_HPP
+#pragma once
 
 #include <cmath>
 #include <concepts>
 #include <utility>
 
-#include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/cycliccoordinatedescent/generic.hpp"
+#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -281,5 +280,4 @@ namespace l0l2
             using L0L2Regressor = CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
         }
     }
-}
-#endif //L0L2_COORDINATE_DESCENT_SOLVER_HPP
+} // namespace l0l2

@@ -1,5 +1,4 @@
-#ifndef L0L2_FULL_PATH_STEP_HPP
-#define L0L2_FULL_PATH_STEP_HPP
+#pragma once
 
 #include <iostream>
 #include <concepts>
@@ -12,7 +11,7 @@
 #include <limits>
 #include <execution>
 
-#include "l0l2/leastsquares/utils.hpp"
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -893,5 +892,4 @@ namespace l0l2
             }
         }
     }
-}
-#endif //L0L2_FULL_PATH_STEP_HPP
+} // namespace l0l2

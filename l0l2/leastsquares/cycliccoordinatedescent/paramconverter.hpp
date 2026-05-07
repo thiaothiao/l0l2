@@ -1,5 +1,4 @@
-#ifndef L0L2_PARAM_CONVERTER_HPP
-#define L0L2_PARAM_CONVERTER_HPP
+#pragma once
 
 #include <concepts>
 
@@ -31,5 +30,4 @@ namespace l0l2
             }
         }
     }
-}
-#endif //L0L2_PARAM_CONVERTER_HPP
+} // namespace l0l2

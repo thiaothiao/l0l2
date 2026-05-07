@@ -1,12 +1,11 @@
-#ifndef L0L2_SPARSE_PCA_HPP
-#define L0L2_SPARSE_PCA_HPP
+#pragma once
 
 #include <concepts>
 
-#include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp"
-#include "l0l2/leastsquares/fullpath/solver.hpp"
-#include "l0l2/pca/generic.hpp"
+#include <l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp>
+#include <l0l2/leastsquares/fullpath/solver.hpp>
+#include <l0l2/leastsquares/utils.hpp>
+#include <l0l2/pca/generic.hpp>
 
 namespace l0l2
 {
@@ -132,5 +131,4 @@ namespace l0l2
         template <std::floating_point ScalarType>
         using FullPathL0L2SPCA = SPCA<FullPathL0L2SPCAModelImplementation<ScalarType>>;
     }
-}
-#endif //L0L2_SPARSE_PCA_HPP
+} // namespace l0l2

@@ -1,0 +1,30 @@
+# Use Allman style for braces (opening braces on a new line)
+#BreakBeforeBraces: Allman
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: Always  # Options: Never, MultiLine, Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+# Typical Allman indentation
+IndentWidth: 4
+
+# Optional: Set base style (e.g., LLVM, Google, Chromium)
+BasedOnStyle: LLVM
+
+# Indent all code within a namespace
+NamespaceIndentation: All
+
+
+
