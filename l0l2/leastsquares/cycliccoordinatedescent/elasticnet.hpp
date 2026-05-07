@@ -1,11 +1,10 @@
-#ifndef L0L2_ELASTICNET_COORDINATE_DESCENT_SOLVER_HPP
-#define L0L2_ELASTICNET_COORDINATE_DESCENT_SOLVER_HPP
+#pragma once
 
 #include <cmath>
 #include <concepts>
 
-#include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/cycliccoordinatedescent/generic.hpp"
+#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -163,5 +162,4 @@ namespace l0l2
             using ELASTICNETRegressor = CyclicCoordinateDescent<ELASTICNETModelImplementation<ScalarType>>;
         }
     }
-}
-#endif //L0L2_ELASTICNET_COORDINATE_DESCENT_SOLVER_HPP
+} // namespace l0l2

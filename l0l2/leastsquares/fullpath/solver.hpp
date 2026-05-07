@@ -1,5 +1,4 @@
-#ifndef L0L2_FULL_PATH_SOLVER_HPP
-#define L0L2_FULL_PATH_SOLVER_HPP
+#pragma once
 
 #include <list>
 #include <limits>
@@ -14,9 +13,9 @@
 #include <cstdint>
 #include <concepts>
 
-#include "l0l2/leastsquares/utils.hpp"
-#include "l0l2/leastsquares/l2regressor/solver.hpp"
-#include "l0l2/leastsquares/fullpath/step.hpp"
+#include <l0l2/leastsquares/fullpath/step.hpp>
+#include <l0l2/leastsquares/l2regressor/solver.hpp>
+#include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
 {
@@ -778,5 +777,4 @@ namespace l0l2
             }
         }
     }
-}
-#endif //L0L2_FULL_PATH_SOLVER_HPP
+} // namespace l0l2

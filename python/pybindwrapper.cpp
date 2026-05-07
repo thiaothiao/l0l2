@@ -5,8 +5,8 @@
 #include <pybind11/detail/common.h>
 #include <pybind11/eigen.h>
 
-#include "l0l2/version.hpp"
-#include "l0l2/core.hpp"
+#include <l0l2/core.hpp>
+#include <l0l2/version.hpp>
 
 PYBIND11_MODULE(l0l2, mainmodule)
 {

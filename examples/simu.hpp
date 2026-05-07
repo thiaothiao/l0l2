@@ -1,5 +1,4 @@
-#ifndef L0L2_SIMU_HPP
-#define L0L2_SIMU_HPP
+#pragma once
 
 #include <ios>
 #include <iomanip>
@@ -9,7 +8,7 @@
 #include <utility>
 #include <algorithm>
 
-#include "l0l2/core.hpp"
+#include <l0l2/core.hpp>
 
 namespace l0l2
 {
@@ -586,5 +585,4 @@ namespace l0l2
             return out.str();
         }
 	}
-}
-#endif //L0L2_SIMU_HPP
+} // namespace l0l2
