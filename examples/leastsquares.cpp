@@ -27,8 +27,7 @@ int main()
     using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
     using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
 
-    constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
-    std::cout << "l0l2 library version " << version << "\n";
+    std::cout << "l0l2 library version " << l0l2::metadata::libVersion << "\n";
 
     const auto matrixIsCovariance = false;
     const Scalar beta = static_cast<Scalar>(0.1);

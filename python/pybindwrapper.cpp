@@ -314,9 +314,5 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("solution"));
 
-#ifdef L0L2_VERSION
-    mainmodule.attr("__version__") = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
-#else
-    mainmodule.attr("__version__") = "dev";
-#endif
+    mainmodule.attr("__version__") = l0l2::metadata::libVersion;
 }
