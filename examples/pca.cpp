@@ -25,8 +25,7 @@ int main()
     using FullPathL0L2SPCA = l0l2::linearmodel::FullPathL0L2SPCA<Scalar>;
     using FullPathParam = FullPathL0L2SPCA::Param;
 
-    constexpr std::string_view version = L0L2_MACRO_STRINGIFY(L0L2_VERSION);
-    std::cout << "l0l2 library version " << version << "\n";
+    std::cout << "l0l2 library version " << l0l2::metadata::libVersion << "\n";
 
     const auto CovarianceMatrix = l0l2::linearmodel::pitprops<Scalar>();
 

@@ -1,10 +1,17 @@
 #pragma once
 
-#define L0L2_STRINGIFY(x) #x
-#define L0L2_MACRO_STRINGIFY(x) L0L2_STRINGIFY(x)
+#include <string_view>
 
-#define L0L2_VERSION_MAJOR 0
-#define L0L2_VERSION_MINOR 1
-#define L0L2_VERSION_PATCH 0
-
-#define L0L2_VERSION L0L2_VERSION_MAJOR.L0L2_VERSION_MINOR.L0L2_VERSION_PATCH
+namespace l0l2
+{
+    namespace metadata
+    {
+        inline constexpr std::string_view libVersion = "0.1.0";
+        inline constexpr std::string_view libName = "l0l2";
+        inline constexpr std::string_view libVendor = "Inulo";
+        inline constexpr std::string_view libTitle =
+            "A C++ header-only library for solving Sparse Modeling Problems "
+            "via Biconjugate Convex Relaxations";
+        inline constexpr std::string_view libDomain = "?.com";
+    } // namespace metadata
+} // namespace l0l2
