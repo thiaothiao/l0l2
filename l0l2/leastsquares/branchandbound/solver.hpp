@@ -1,10 +1,10 @@
 #pragma once
 
-#include <iostream>
 #include <cmath>
 #include <concepts>
-#include <utility>
+#include <iostream>
 #include <set>
+#include <utility>
 
 #include <l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp>
 #include <l0l2/leastsquares/utils.hpp>
@@ -16,29 +16,28 @@ namespace l0l2
         namespace leastsquares
         {
             // L0L2 branch and bound implementation
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             class SimpleBranchAndBound final
             {
-            public:
+              public:
                 using Scalar = ScalarType;
                 using Regressor = L0L2Regressor<Scalar>;
                 using RegressorParam = L0L2Regressor<Scalar>::Param;
 
                 class Branch
                 {
-                public:
-                    Branch(const CoordinateStates& coordinateStatesInput = {},
-                        Scalar lbInput = static_cast<Scalar>(0)) :
-                        coordinateStates{ coordinateStatesInput },
-                        lb{ lbInput }
+                  public:
+                    Branch(const CoordinateStates &coordinateStatesInput = {},
+                           Scalar lbInput = static_cast<Scalar>(0))
+                        : coordinateStates{coordinateStatesInput}, lb{lbInput}
                     {
                     }
 
-                    Branch(const Branch&) = delete;
-                    Branch& operator=(const Branch&) = delete;
+                    Branch(const Branch &) = delete;
+                    Branch &operator=(const Branch &) = delete;
 
-                    Branch(Branch&&) = default;
-                    Branch& operator=(Branch&&) = default;
+                    Branch(Branch &&) = default;
+                    Branch &operator=(Branch &&) = default;
 
                     CoordinateStates coordinateStates;
                     Scalar lb;
@@ -46,7 +45,7 @@ namespace l0l2
 
                 struct BranchCompare
                 {
-                    bool operator()(const Branch& lhs, const Branch& rhs) const
+                    bool operator()(const Branch &lhs, const Branch &rhs) const
                     {
                         return lhs.lb < rhs.lb;
                     }
@@ -54,94 +53,88 @@ namespace l0l2
 
                 struct Param final
                 {
-                    Param(const RegressorParam& regressorParamInput, 
+                    Param(
+                        const RegressorParam &regressorParamInput,
                         Scalar globalEpsilonInput = static_cast<Scalar>(1e-8),
                         Scalar localEpsilonInput = static_cast<Scalar>(1e-8),
                         unsigned int maximumNumberOfIterationsInput = 1000000U)
-                        :regressorParam{ regressorParamInput },
-                        globalEpsilon{ globalEpsilonInput },
-                        localEpsilon{ localEpsilonInput },
-                        maximumNumberOfIterations{ maximumNumberOfIterationsInput }
+                        : regressorParam{regressorParamInput},
+                          globalEpsilon{globalEpsilonInput},
+                          localEpsilon{localEpsilonInput},
+                          maximumNumberOfIterations{
+                              maximumNumberOfIterationsInput}
                     {
                     }
 
-                    Param(const Param&) = default;
-                    Param& operator=(const Param&) = default;
+                    Param(const Param &) = default;
+                    Param &operator=(const Param &) = default;
 
-                    Param(Param&&) = default;
-                    Param& operator=(Param&&) = default;
+                    Param(Param &&) = default;
+                    Param &operator=(Param &&) = default;
 
                     const RegressorParam regressorParam;
                     const Scalar globalEpsilon;
                     const Scalar localEpsilon;
                     const unsigned int maximumNumberOfIterations;
                 };
-                
-                SimpleBranchAndBound(const Param& param)
-                    : m_Param{ param }
-                {
-                }
 
-                Solution<Scalar> fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance);
+                SimpleBranchAndBound(const Param &param) : m_Param{param} {}
 
-                Scalar objectiveValue(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    const Solution<Scalar>& solution) const;
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData);
 
-                Scalar relaxationValue(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    const CoordinateStates& coordinateStates,
-                    const Solution<Scalar>& solution) const;
+                Scalar objectiveValue(const Matrix<Scalar> &matData,
+                                      const Vector<Scalar> &vectData,
+                                      const Solution<Scalar> &solution) const;
 
-            private:
+                Scalar relaxationValue(const Matrix<Scalar> &matData,
+                                       const Vector<Scalar> &vectData,
+                                       const CoordinateStates &coordinateStates,
+                                       const Solution<Scalar> &solution) const;
+
+              private:
                 const Param m_Param;
             };
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             inline SimpleBranchAndBound<ScalarType>::Scalar
-                SimpleBranchAndBound<ScalarType>::objectiveValue(
-                const Matrix<Scalar>& matData,
-                const Vector<Scalar>& vectData,
-                bool matrixIsCovariance,
-                const Solution<Scalar>& solution) const
+            SimpleBranchAndBound<ScalarType>::objectiveValue(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                const Solution<Scalar> &solution) const
             {
-                return matrixIsCovariance
-                    ? (vectData - solution.x).dot(matData * (vectData - solution.x))
-                    : ((vectData - matData * solution.x).array() - solution.intercept).matrix().squaredNorm()
-                    + m_Param.regressorParam.beta * solution.x.squaredNorm()
-                    + m_Param.regressorParam.beta * m_Param.regressorParam.delta * m_Param.regressorParam.delta
-                    * (solution.x.cwiseAbs().array() > Utils<Scalar>::epsilon).count();
+                return ((vectData - matData * solution.x).array() -
+                        solution.intercept)
+                           .matrix()
+                           .squaredNorm() +
+                       m_Param.regressorParam.beta * solution.x.squaredNorm() +
+                       m_Param.regressorParam.beta *
+                           m_Param.regressorParam.delta *
+                           m_Param.regressorParam.delta *
+                           (solution.x.cwiseAbs().array() >
+                            Utils<Scalar>::epsilon)
+                               .count();
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             SimpleBranchAndBound<ScalarType>::Scalar
-                SimpleBranchAndBound<ScalarType>::relaxationValue(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    const CoordinateStates& coordinateStates,
-                    const Solution<Scalar>& solution) const
+            SimpleBranchAndBound<ScalarType>::relaxationValue(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                const CoordinateStates &coordinateStates,
+                const Solution<Scalar> &solution) const
             {
                 const auto n = static_cast<Index>(matData.cols());
                 const auto delta = m_Param.regressorParam.delta;
                 const auto beta = m_Param.regressorParam.beta;
 
-                const auto& x = solution.x;
+                const auto &x = solution.x;
                 const auto intercept = solution.intercept;
 
                 const auto twoDeltaBeta = static_cast<Scalar>(2) * delta * beta;
                 const auto betaSquaredDelta = beta * delta * delta;
 
-                auto objVal = matrixIsCovariance
-                    ? (vectData - x).dot(matData * (vectData - x))
-                    : ((vectData - matData * x).array() - intercept).matrix().squaredNorm();
+                auto objVal = ((vectData - matData * x).array() - intercept)
+                                  .matrix()
+                                  .squaredNorm();
 
                 for (Index j = 0; j < n; ++j)
                 {
@@ -165,12 +158,10 @@ namespace l0l2
                 return objVal;
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             Solution<typename SimpleBranchAndBound<ScalarType>::Scalar>
-                SimpleBranchAndBound<ScalarType>::fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance)
+            SimpleBranchAndBound<ScalarType>::fit(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
@@ -180,8 +171,9 @@ namespace l0l2
 
                 std::set<Branch, BranchCompare> allBranches;
 
-                allBranches.emplace(CoordinateStates::Constant(n, CoordinateState::L0),
-                        static_cast<Scalar>(0));
+                allBranches.emplace(
+                    CoordinateStates::Constant(n, CoordinateState::L0),
+                    static_cast<Scalar>(0));
 
                 auto solution = Solution(n);
                 auto lowerBound = static_cast<Scalar>(0);
@@ -190,37 +182,44 @@ namespace l0l2
                 unsigned int numberOfIterations = 0;
                 while (!allBranches.empty())
                 {
-                    Branch branch = std::move(allBranches.extract(allBranches.begin()).value());
-                    
+                    Branch branch = std::move(
+                        allBranches.extract(allBranches.begin()).value());
+
                     lowerBound = branch.lb;
 
-                    const auto globalGap = (upperBound - lowerBound) / upperBound;
+                    const auto globalGap =
+                        (upperBound - lowerBound) / upperBound;
                     if (globalGap <= m_Param.globalEpsilon)
                     {
                         break;
                     }
 
-                    auto relaxationSolution = Regressor{ m_Param.regressorParam}
-                    .fit(matData, vectData, matrixIsCovariance, branch.coordinateStates);
+                    auto relaxationSolution =
+                        Regressor{m_Param.regressorParam}.fit(
+                            matData, vectData, branch.coordinateStates);
 
                     const auto ub =
-                        objectiveValue(matData, vectData, matrixIsCovariance, relaxationSolution);
+                        objectiveValue(matData, vectData, relaxationSolution);
 
-                    const auto primal =
-                        relaxationValue(matData, vectData, matrixIsCovariance, branch.coordinateStates, relaxationSolution);
+                    const auto primal = relaxationValue(matData, vectData,
+                                                        branch.coordinateStates,
+                                                        relaxationSolution);
 
-                    const auto lb = primal * (static_cast<Scalar>(1) - relaxationSolution.dualityGap);
+                    const auto lb = primal * (static_cast<Scalar>(1) -
+                                              relaxationSolution.dualityGap);
 
                     const auto localGap = (ub - lb) / ub;
                     if (localGap > m_Param.localEpsilon)
-                    {//Branching. Taking the smallest non compliant coordinate
+                    { // Branching. Taking the smallest non compliant coordinate
                         auto splitIndex = static_cast<Index>(-1);
                         auto minAbsXj = delta;
                         for (Index j = 0; j < n; ++j)
                         {
-                            if (branch.coordinateStates[j] == CoordinateState::L0)
+                            if (branch.coordinateStates[j] ==
+                                CoordinateState::L0)
                             {
-                                const auto absXj = std::abs(relaxationSolution.x[j]);
+                                const auto absXj =
+                                    std::abs(relaxationSolution.x[j]);
                                 if (Utils::epsilon < absXj && absXj < minAbsXj)
                                 {
                                     minAbsXj = absXj;
@@ -233,10 +232,13 @@ namespace l0l2
                         {
                             branch.lb = std::max(lowerBound, lb);
 
-                            branch.coordinateStates[splitIndex] = CoordinateState::ZERO;
-                            allBranches.emplace(branch.coordinateStates, branch.lb);
+                            branch.coordinateStates[splitIndex] =
+                                CoordinateState::ZERO;
+                            allBranches.emplace(branch.coordinateStates,
+                                                branch.lb);
 
-                            branch.coordinateStates[splitIndex] = CoordinateState::FREE;
+                            branch.coordinateStates[splitIndex] =
+                                CoordinateState::FREE;
                             allBranches.insert(std::move(branch));
                         }
                     }
@@ -249,14 +251,15 @@ namespace l0l2
 
                     ++numberOfIterations;
                     if (numberOfIterations > m_Param.maximumNumberOfIterations)
-                    {// leave too many branches
+                    { // leave too many branches
                         break;
                     }
                 }
 
-                std::cout << "\nNumber of iterates: " << numberOfIterations << "\n";
+                std::cout << "\nNumber of iterates: " << numberOfIterations
+                          << "\n";
                 return solution;
             }
-        }
-    }
+        } // namespace leastsquares
+    } // namespace linearmodel
 } // namespace l0l2

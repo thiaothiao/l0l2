@@ -1,10 +1,10 @@
 #pragma once
 
-#include <future>
-#include <cmath>
-#include <atomic>
 #include <algorithm>
+#include <atomic>
+#include <cmath>
 #include <concepts>
+#include <future>
 #include <utility>
 
 #include <l0l2/leastsquares/l2regressor/solver.hpp>
@@ -17,76 +17,88 @@ namespace l0l2
         namespace leastsquares
         {
             /*! \brief Cyclical Coordinate Descent Regressor Model concept.
-            */
+             */
             template <class ModelImplementationType>
-            concept ModelLike = requires(ModelImplementationType impl)
-            {
+            concept ModelLike = requires(ModelImplementationType impl) {
                 {
-                    std::as_const(impl).stepJ(typename ModelImplementationType::Scalar{},
+                    std::as_const(impl).stepJ(
+                        typename ModelImplementationType::Scalar{},
                         typename ModelImplementationType::Scalar{})
-                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+                } -> std::convertible_to<
+                    typename ModelImplementationType::Scalar>;
 
                 {
-                    std::as_const(impl).stepIntercept(typename ModelImplementationType::Scalar{},
+                    std::as_const(impl).stepIntercept(
+                        typename ModelImplementationType::Scalar{},
                         typename ModelImplementationType::Scalar{})
-                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+                } -> std::convertible_to<
+                    typename ModelImplementationType::Scalar>;
 
                 {
-                    std::as_const(impl).otherJ(typename ModelImplementationType::Scalar{},
+                    std::as_const(impl).otherJ(
+                        typename ModelImplementationType::Scalar{},
                         typename ModelImplementationType::Scalar{})
-                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+                } -> std::convertible_to<
+                    typename ModelImplementationType::Scalar>;
 
                 {
                     std::as_const(impl).computeDualityGap(
-                        Matrix<typename ModelImplementationType::Scalar>{}, 
+                        Matrix<typename ModelImplementationType::Scalar>{},
                         Vector<typename ModelImplementationType::Scalar>{},
-                        bool{},
                         CoordinateStates{},
                         Solution<typename ModelImplementationType::Scalar>{})
-                } ->std::convertible_to<typename ModelImplementationType::Scalar>;
+                } -> std::convertible_to<
+                    typename ModelImplementationType::Scalar>;
             };
 
             /*! \brief Cyclical Coordinate Descent Regressor class.
-            *
-            * It produces solutions using cyclical coordinate descent algorithm.
-            */
+             *
+             * It produces solutions using cyclical coordinate descent
+             * algorithm.
+             */
             template <ModelLike ModelImplementationType>
             class CyclicCoordinateDescent final
             {
-            public:
-                using ModelImplementation = ModelImplementationType;/*!< Alias for the model implementation type */
-                using Param = typename ModelImplementation::Param; /*!< Alias for the used parameter type */
-                using Scalar = typename ModelImplementation::Scalar; /*!< Alias for the used scalar type */
+              public:
+                using ModelImplementation =
+                    ModelImplementationType; /*!< Alias for the model
+                                                implementation type */
+                using Param =
+                    typename ModelImplementation::Param; /*!< Alias for the used
+                                                            parameter type */
+                using Scalar =
+                    typename ModelImplementation::Scalar; /*!< Alias for the
+                                                             used scalar type */
 
-                /*! \brief A cyclic coordinate descent solver object constructor.
+                /*! \brief A cyclic coordinate descent solver object
+                  constructor.
                   \param param regularization parameters.
-                  \param withIntercept boolean indicating with intercept or not. Default is false.
+                  \param withIntercept boolean indicating with intercept or not.
+                  Default is false.
                 */
-                CyclicCoordinateDescent(const Param& param)
-                    :m_Param{ param },
-                    m_FromBothConverged{}
+                CyclicCoordinateDescent(const Param &param)
+                    : m_Param{param}, m_FromBothConverged{}
                 {
                 }
 
                 /*! \brief Fit model.
-                   \param matData contiguous data container representing matrix in column major layout.
-                   \param vectData contiguous data container representing target vector.
-                   \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
+                   \param matData contiguous data container representing matrix
+                   in column major layout.
+                   \param vectData contiguous data container representing target
+                   vector.
                    \return a solution in the format Solution.
                  */
-                Solution<Scalar> fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    const CoordinateStates& coordinateStates = {});
+                Solution<Scalar>
+                fit(const Matrix<Scalar> &matData,
+                    const Vector<Scalar> &vectData,
+                    const CoordinateStates &coordinateStates = {});
 
-            private:
-                Solution<Scalar>  fitFrom(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Solution<Scalar>&& initialSolution,
-                    const CoordinateStates& coordinateStates);
+              private:
+                Solution<Scalar>
+                fitFrom(const Matrix<Scalar> &matData,
+                        const Vector<Scalar> &vectData,
+                        Solution<Scalar> &&initialSolution,
+                        const CoordinateStates &coordinateStates);
 
                 const Param m_Param;
 
@@ -94,13 +106,12 @@ namespace l0l2
             };
 
             template <ModelLike ModelImplementationType>
-            Solution<typename CyclicCoordinateDescent<ModelImplementationType>::Scalar>
-                CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Solution<Scalar>&& initialSolution,
-                    const CoordinateStates& coordinateStates)
+            Solution<typename CyclicCoordinateDescent<
+                ModelImplementationType>::Scalar>
+            CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                Solution<Scalar> &&initialSolution,
+                const CoordinateStates &coordinateStates)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
@@ -108,11 +119,12 @@ namespace l0l2
                 const auto n = static_cast<Index>(matData.cols());
 
                 Solution solution = std::move(initialSolution);
-                auto& x = solution.x;
-                auto& intercept = solution.intercept;
-                auto& dualityGap = solution.dualityGap;
+                auto &x = solution.x;
+                auto &intercept = solution.intercept;
+                auto &dualityGap = solution.dualityGap;
 
-                const auto subIndicesCase = static_cast<Index>(coordinateStates.size()) == n;
+                const auto subIndicesCase =
+                    static_cast<Index>(coordinateStates.size()) == n;
 
                 if (subIndicesCase)
                 {
@@ -125,38 +137,21 @@ namespace l0l2
                     }
                 }
 
-                const auto hasIntercept = !matrixIsCovariance && m_Param.hasIntercept;
+                const auto hasIntercept = m_Param.hasIntercept;
                 if (!hasIntercept)
                 {
                     intercept = static_cast<Scalar>(0);
                 }
 
-                Vector R;
-                if (matrixIsCovariance)
-                {
-                    R = matData * (vectData - x);
-                }
-                else
-                {
-                    R = vectData - matData * x;
-                }
-
+                Vector R = vectData - matData * x;
                 if (hasIntercept)
                 {
                     R.array() -= intercept;
                 }
 
-                Vector zJs;
-                if (matrixIsCovariance)
-                {
-                    zJs = matData.diagonal();
-                }
-                else
-                {
-                    zJs = matData.colwise().squaredNorm().transpose();
-                }
+                const Vector zJs = matData.colwise().squaredNorm().transpose();
 
-                const ModelImplementation modelImplementation{ m_Param };
+                const ModelImplementation modelImplementation{m_Param};
 
                 unsigned int numberOfIterations = 0U;
                 while (true)
@@ -172,7 +167,8 @@ namespace l0l2
 
                         const auto uIntercept = R.sum() + zJ * oldIntercept;
 
-                        intercept = modelImplementation.stepIntercept(zJ, uIntercept);
+                        intercept =
+                            modelImplementation.stepIntercept(zJ, uIntercept);
 
                         const auto interceptDiff = oldIntercept - intercept;
 
@@ -180,7 +176,8 @@ namespace l0l2
                         {
                             R.array() += interceptDiff;
 
-                            const auto interceptChange = std::abs(interceptDiff);
+                            const auto interceptChange =
+                                std::abs(interceptDiff);
 
                             if (interceptChange > globalChange)
                             {
@@ -191,8 +188,10 @@ namespace l0l2
 
                     for (Index j = 0; j < n; ++j)
                     {
-                        if (subIndicesCase && coordinateStates[j] == CoordinateState::ZERO)
-                        {//&& uses left first then right. short-circuiting iso standard [expr.log.and]
+                        if (subIndicesCase &&
+                            coordinateStates[j] == CoordinateState::ZERO)
+                        { //&& uses left first then right. short-circuiting iso
+                          // standard [expr.log.and]
                             continue;
                         }
 
@@ -205,11 +204,13 @@ namespace l0l2
 
                         const auto oldxJ = x[j];
 
-                        const auto uJ = matrixIsCovariance ? R[j] + zJ * oldxJ : matData.col(j).dot(R) + zJ * oldxJ;
+                        const auto uJ = matData.col(j).dot(R) + zJ * oldxJ;
 
-                        const auto newxJ = (subIndicesCase && coordinateStates[j] == CoordinateState::FREE)
-                            ? modelImplementation.otherJ(zJ, uJ)
-                            : modelImplementation.stepJ(zJ, uJ);
+                        const auto newxJ =
+                            (subIndicesCase &&
+                             coordinateStates[j] == CoordinateState::FREE)
+                                ? modelImplementation.otherJ(zJ, uJ)
+                                : modelImplementation.stepJ(zJ, uJ);
 
                         x[j] = newxJ;
 
@@ -230,12 +231,15 @@ namespace l0l2
 
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
-                        if (globalChange <= m_Param.tolerance
-                            || numberOfIterations >= m_Param.maximumNumberOfIterations)
+                        if (globalChange <= m_Param.tolerance ||
+                            numberOfIterations >=
+                                m_Param.maximumNumberOfIterations)
                         {
-                            m_FromBothConverged.test_and_set(std::memory_order_relaxed);
+                            m_FromBothConverged.test_and_set(
+                                std::memory_order_relaxed);
                         }
-                        else if (m_FromBothConverged.test(std::memory_order_relaxed))
+                        else if (m_FromBothConverged.test(
+                                     std::memory_order_relaxed))
                         {
                             break;
                         }
@@ -255,18 +259,17 @@ namespace l0l2
                 }
 
                 dualityGap = modelImplementation.computeDualityGap(
-                    matData, vectData, matrixIsCovariance, coordinateStates, solution);
+                    matData, vectData, coordinateStates, solution);
 
                 return solution;
             }
 
             template <ModelLike ModelImplementationType>
-            Solution<typename CyclicCoordinateDescent<ModelImplementationType>::Scalar>
-                CyclicCoordinateDescent<ModelImplementationType>::fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    const CoordinateStates& coordinateStates)
+            Solution<typename CyclicCoordinateDescent<
+                ModelImplementationType>::Scalar>
+            CyclicCoordinateDescent<ModelImplementationType>::fit(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                const CoordinateStates &coordinateStates)
             {
                 using Vector = Vector<Scalar>;
                 using L2Regressor = PCGL2Regressor<Scalar>;
@@ -274,47 +277,41 @@ namespace l0l2
 
                 const auto n = static_cast<Index>(matData.cols());
 
-                const auto hasIntercept = !matrixIsCovariance && m_Param.hasIntercept;
+                const auto hasIntercept = m_Param.hasIntercept;
 
                 if (m_Param.strategy != Strategy::FromBothSolutions)
                 {
-                    return fitFrom(matData,
-                        vectData,
-                        matrixIsCovariance,
+                    return fitFrom(
+                        matData, vectData,
                         m_Param.strategy == Strategy::FromZeroSolution
-                        ? Solution(Vector::Zero(n))
-                        : L2Regressor(m_Param.beta, hasIntercept).fit(matData, vectData, matrixIsCovariance,
-                            m_Param.innerEpsilon,
-                            m_Param.innerMaximumNumberOfIterations,
-                            {},
-                            coordinateStates),
+                            ? Solution(Vector::Zero(n))
+                            : L2Regressor(m_Param.beta, hasIntercept)
+                                  .fit(matData, vectData, m_Param.innerEpsilon,
+                                       m_Param.innerMaximumNumberOfIterations,
+                                       {}, coordinateStates),
                         coordinateStates);
                 }
                 else
                 {
                     m_FromBothConverged.clear(std::memory_order_relaxed);
 
-                    auto fromZeroFuture =
-                        std::async(std::launch::async, &CyclicCoordinateDescent::fitFrom, this,
-                            matData,
-                            vectData,
-                            matrixIsCovariance,
-                            Solution(Vector::Zero(n)),
-                            coordinateStates);
+                    auto fromZeroFuture = std::async(
+                        std::launch::async, &CyclicCoordinateDescent::fitFrom,
+                        this, matData, vectData, Solution(Vector::Zero(n)),
+                        coordinateStates);
 
-                    auto fromL2Solution = fitFrom(matData,
-                        vectData,
-                        matrixIsCovariance,
-                        L2Regressor(m_Param.beta, hasIntercept).fit(matData, vectData, matrixIsCovariance,
-                            m_Param.innerEpsilon,
-                            m_Param.innerMaximumNumberOfIterations,
-                            {},
-                            coordinateStates),
+                    auto fromL2Solution = fitFrom(
+                        matData, vectData,
+                        L2Regressor(m_Param.beta, hasIntercept)
+                            .fit(matData, vectData, m_Param.innerEpsilon,
+                                 m_Param.innerMaximumNumberOfIterations, {},
+                                 coordinateStates),
                         coordinateStates);
 
                     auto fromZeroSolution = fromZeroFuture.get();
 
-                    if (fromZeroSolution.dualityGap <= fromL2Solution.dualityGap)
+                    if (fromZeroSolution.dualityGap <=
+                        fromL2Solution.dualityGap)
                     {
                         return fromZeroSolution;
                     }
@@ -325,21 +322,22 @@ namespace l0l2
                 }
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             class ModelImplementationBase
             {
-            public:
+              public:
                 using Scalar = ScalarType;
 
                 Scalar stepIntercept(Scalar zJ, Scalar uIntercept) const;
             };
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             inline ModelImplementationBase<ScalarType>::Scalar
-                ModelImplementationBase<ScalarType>::stepIntercept(Scalar zJ, Scalar uIntercept) const
+            ModelImplementationBase<ScalarType>::stepIntercept(
+                Scalar zJ, Scalar uIntercept) const
             {
                 return uIntercept / zJ;
             }
-        }
-    }
+        } // namespace leastsquares
+    } // namespace linearmodel
 } // namespace l0l2

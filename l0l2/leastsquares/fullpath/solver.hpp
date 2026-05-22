@@ -1,17 +1,17 @@
 #pragma once
 
-#include <list>
-#include <limits>
-#include <mutex>
-#include <iostream>
-#include <ios>
-#include <iomanip>
-#include <future>
-#include <utility>
-#include <cmath>
 #include <algorithm>
-#include <cstdint>
+#include <cmath>
 #include <concepts>
+#include <cstdint>
+#include <future>
+#include <iomanip>
+#include <ios>
+#include <iostream>
+#include <limits>
+#include <list>
+#include <mutex>
+#include <utility>
 
 #include <l0l2/leastsquares/fullpath/step.hpp>
 #include <l0l2/leastsquares/l2regressor/solver.hpp>
@@ -24,29 +24,29 @@ namespace l0l2
         namespace leastsquares
         {
             /* \brief Full path solver class.
-            *
-            * It produces solutions from partial path or full path computations.
-            */
-            template<std::floating_point ScalarType>
-            class FullPathSolver final
+             *
+             * It produces solutions from partial path or full path
+             * computations.
+             */
+            template <std::floating_point ScalarType> class FullPathSolver final
             {
-            public:
-                using Scalar = ScalarType; /*!< Alias for the used scalar type */
+              public:
+                using Scalar =
+                    ScalarType; /*!< Alias for the used scalar type */
 
                 struct Param final
                 {
                     /*! \brief l0l2 model parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
-                      \param strategyInput enum indicating a strategy: from zero, or l2 or both solutions.
+                      \param strategyInput enum indicating a strategy: from
+                      zero, or l2 or both solutions.
                     */
-                    Param(
-                        Scalar deltaInput = static_cast<Scalar>(0),
-                        Scalar betaInput = static_cast<Scalar>(1),
-                        Strategy strategyInput = Strategy::FromZeroSolution)
-                        :delta{ deltaInput },
-                        beta{ betaInput },
-                        strategy{ strategyInput }
+                    Param(Scalar deltaInput = static_cast<Scalar>(0),
+                          Scalar betaInput = static_cast<Scalar>(1),
+                          Strategy strategyInput = Strategy::FromZeroSolution)
+                        : delta{deltaInput}, beta{betaInput},
+                          strategy{strategyInput}
                     {
                     }
 
@@ -57,69 +57,67 @@ namespace l0l2
 
                 /*! \brief A Full path solver object constructor.
                   \param param regularization parameters.
-                  \param withIntercept boolean indicating with intercept or not. Default is false.
+                  \param withIntercept boolean indicating with intercept or not.
+                  Default is false.
                 */
-                FullPathSolver(const Param& param,
-                    bool withIntercept = false) :
-                    m_Param{ param },
-                    m_WithIntercept{ withIntercept },
-                    m_DeltaFromZeroSolution{ std::numeric_limits<Scalar>::max() },
-                    m_DeltaFromL2Solution{ static_cast<Scalar>(0) }
+                FullPathSolver(const Param &param, bool withIntercept = false)
+                    : m_Param{param}, m_WithIntercept{withIntercept},
+                      m_DeltaFromZeroSolution{
+                          std::numeric_limits<Scalar>::max()},
+                      m_DeltaFromL2Solution{static_cast<Scalar>(0)}
                 {
                 }
 
                 /*! \brief Fit full path solutions.
-                   \param matData contiguous data container representing matrix in column major layout.
-                   \param vectData contiguous data container representing target vector.
-                   \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
+                   \param matData contiguous data container representing matrix
+                   in column major layout.
+                   \param vectData contiguous data container representing target
+                   vector.
                    \param beta l2 regularization parameter.
-                   \param strategy an enum indicating a strategy: from zero, or l2 or both solutions.
-                   \return a list of solutions generating entire piecewise linear path solutions
+                   \param strategy an enum indicating a strategy: from zero, or
+                   l2 or both solutions.
+                   \return a list of solutions generating entire piecewise
+                   linear path solutions
                  */
                 static std::list<Solution<Scalar>>
-                    fitAll(const Matrix<Scalar>& matData,
-                        const Vector<Scalar>& vectData,
-                        bool matrixIsCovariance,
-                        Scalar beta,
-                        bool withIntercept = false,
-                        Strategy strategy = Strategy::FromZeroSolution);
+                fitAll(const Matrix<Scalar> &matData,
+                       const Vector<Scalar> &vectData, Scalar beta,
+                       bool withIntercept = false,
+                       Strategy strategy = Strategy::FromZeroSolution);
 
                 /*! \brief Fit one solution.
-                   \param matData contiguous data container representing matrix in column major layout..
-                   \param vectData contiguous data container representing target vector.
-                   \param matrixIsCovariance a boolean indicating if matrix is covariance or not.
-                   \return a solution corresponding to the regularization parameters.
+                   \param matData contiguous data container representing matrix
+                   in column major layout..
+                   \param vectData contiguous data container representing target
+                   vector.
+                   \return a solution corresponding to the regularization
+                   parameters.
                  */
-                Solution<Scalar>  fit(const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance);
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData);
 
-            private:
-                static std::list<Solution<Scalar>>
-                    fitAllNoIntercept(const Matrix<Scalar>& matData,
-                        const Vector<Scalar>& vectData,
-                        bool matrixIsCovariance,
-                        Scalar beta,
-                        Strategy strategy = Strategy::FromZeroSolution);
+              private:
+                static std::list<Solution<Scalar>> fitAllNoIntercept(
+                    const Matrix<Scalar> &matData,
+                    const Vector<Scalar> &vectData, Scalar beta,
+                    Strategy strategy = Strategy::FromZeroSolution);
 
-                Solution<Scalar>  fitNoIntercept(const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance);
+                Solution<Scalar> fitNoIntercept(const Matrix<Scalar> &matData,
+                                                const Vector<Scalar> &vectData);
 
-                std::list<Solution<Scalar>> solveFromZero(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance);
+                std::list<Solution<Scalar>>
+                solveFromZero(const Matrix<Scalar> &matData,
+                              const Vector<Scalar> &vectData);
 
-                std::list<Solution<Scalar>> solveFromL2(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance);
+                std::list<Solution<Scalar>>
+                solveFromL2(const Matrix<Scalar> &matData,
+                            const Vector<Scalar> &vectData);
 
                 bool isDeltaTargetReachedFromZero(Scalar newDelta)
                 {
                     m_DeltaFromZeroSolution = newDelta;
-                    if (m_DeltaFromZeroSolution <= std::max(Utils<Scalar>::epsilon, m_Param.delta))
+                    if (m_DeltaFromZeroSolution <=
+                        std::max(Utils<Scalar>::epsilon, m_Param.delta))
                     {
                         return true;
                     }
@@ -130,9 +128,10 @@ namespace l0l2
                 bool isDeltaTargetReachedFromL2(Scalar newDelta)
                 {
                     m_DeltaFromL2Solution = newDelta;
-                    if (std::numeric_limits<Scalar>::max() <= m_DeltaFromL2Solution
-                        || static_cast<Scalar>(0) <= m_Param.delta &&
-                        m_Param.delta <= m_DeltaFromL2Solution)
+                    if (std::numeric_limits<Scalar>::max() <=
+                            m_DeltaFromL2Solution ||
+                        static_cast<Scalar>(0) <= m_Param.delta &&
+                            m_Param.delta <= m_DeltaFromL2Solution)
                     {
                         return true;
                     }
@@ -150,53 +149,47 @@ namespace l0l2
                 std::mutex m_DeltasMutex;
             };
 
-
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::fitAll(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Scalar beta,
-                    bool withIntercept,
-                    Strategy strategy)
+            FullPathSolver<ScalarType>::fitAll(const Matrix<Scalar> &matData,
+                                               const Vector<Scalar> &vectData,
+                                               Scalar beta, bool withIntercept,
+                                               Strategy strategy)
             {
-                if (withIntercept && !matrixIsCovariance)
+                if (withIntercept)
                 {
                     auto results = fitAllNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
-                        vectData.array() - vectData.mean(),
-                        matrixIsCovariance, beta, strategy);
+                        vectData.array() - vectData.mean(), beta, strategy);
 
-                    for (auto& result : results)
+                    for (auto &result : results)
                     {
-                        result.intercept = (vectData - matData * result.x).mean();// TODO use grad!
+                        result.intercept = (vectData - matData * result.x)
+                                               .mean(); // TODO use grad!
                     }
 
                     return results;
                 }
 
-                return fitAllNoIntercept(matData, vectData, matrixIsCovariance, beta, strategy);
+                return fitAllNoIntercept(matData, vectData, beta, strategy);
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::fitAllNoIntercept(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance,
-                    Scalar beta,
-                    Strategy strategy)
+            FullPathSolver<ScalarType>::fitAllNoIntercept(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                Scalar beta, Strategy strategy)
             {
                 using Solution = Solution<Scalar>;
                 using Vector = Vector<Scalar>;
                 using Utils = Utils<Scalar>;
 
-                FullPathSolver regressor{ Param{static_cast<Scalar>(-1), beta, strategy}, false };
+                FullPathSolver regressor{
+                    Param{static_cast<Scalar>(-1), beta, strategy}, false};
 
                 if (strategy == Strategy::FromZeroSolution)
                 {
-                    auto  results = regressor.solveFromZero(matData, vectData, matrixIsCovariance);
+                    auto results = regressor.solveFromZero(matData, vectData);
 
                     // remove delta infinity solution
                     if (!results.empty())
@@ -208,7 +201,7 @@ namespace l0l2
                 }
                 else if (strategy == Strategy::FromL2Solution)
                 {
-                    auto results = regressor.solveFromL2(matData, vectData, matrixIsCovariance);
+                    auto results = regressor.solveFromL2(matData, vectData);
 
                     // remove delta 0 solution
                     if (!results.empty())
@@ -220,28 +213,30 @@ namespace l0l2
                 }
                 else
                 {
-                    auto fromZeroFuture =
-                        std::async(std::launch::async, &FullPathSolver::solveFromZero, 
-                            &regressor, matData, vectData, matrixIsCovariance);
+                    auto fromZeroFuture = std::async(
+                        std::launch::async, &FullPathSolver::solveFromZero,
+                        &regressor, matData, vectData);
 
-                    auto fromL2SolutionResults = 
-                        regressor.solveFromL2(matData, vectData, matrixIsCovariance);
+                    auto fromL2SolutionResults =
+                        regressor.solveFromL2(matData, vectData);
 
                     auto fromZeroSolutionResults = fromZeroFuture.get();
 
                     if (!fromZeroSolutionResults.empty())
-                    {// clean delta infinity solution
+                    { // clean delta infinity solution
                         fromZeroSolutionResults.pop_front();
                     }
 
                     if (!fromL2SolutionResults.empty())
-                    {// clean delta 0 solution
+                    { // clean delta 0 solution
                         fromL2SolutionResults.pop_back();
                     }
 
-                    const auto fromZeroSmallestDelta = fromZeroSolutionResults.back().delta - Utils::epsilon;
+                    const auto fromZeroSmallestDelta =
+                        fromZeroSolutionResults.back().delta - Utils::epsilon;
 
-                    for (auto it = fromL2SolutionResults.begin(); it != fromL2SolutionResults.end(); ++it)
+                    for (auto it = fromL2SolutionResults.begin();
+                         it != fromL2SolutionResults.end(); ++it)
                     {
                         if (it->delta < fromZeroSmallestDelta)
                         {
@@ -249,38 +244,34 @@ namespace l0l2
                         }
                     }
 
-                    return fromZeroSolutionResults;// move
+                    return fromZeroSolutionResults; // move
                 }
             }
 
-
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             Solution<typename FullPathSolver<ScalarType>::Scalar>
-                FullPathSolver<ScalarType>::fit(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance)
+            FullPathSolver<ScalarType>::fit(const Matrix<Scalar> &matData,
+                                            const Vector<Scalar> &vectData)
             {
-                if (m_WithIntercept && !matrixIsCovariance)
+                if (m_WithIntercept)
                 {
                     auto solution = fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
-                        vectData.array() - vectData.mean(), matrixIsCovariance);
+                        vectData.array() - vectData.mean());
 
-                    solution.intercept = (vectData - matData * solution.x).mean();// TODO use grad!
+                    solution.intercept = (vectData - matData * solution.x)
+                                             .mean(); // TODO use grad!
 
                     return solution;
                 }
 
-                return fitNoIntercept(matData, vectData, matrixIsCovariance);
+                return fitNoIntercept(matData, vectData);
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             Solution<typename FullPathSolver<ScalarType>::Scalar>
-                FullPathSolver<ScalarType>::fitNoIntercept(
-                    const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance)
+            FullPathSolver<ScalarType>::fitNoIntercept(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
@@ -288,7 +279,8 @@ namespace l0l2
                 if (m_Param.delta < static_cast<Scalar>(0))
                 {
                     // Should throw an exception!!!
-                    std::cout << "\nNegative deltas not allowed: delta == " << m_Param.delta << "\n";
+                    std::cout << "\nNegative deltas not allowed: delta == "
+                              << m_Param.delta << "\n";
                     return Solution{};
                 }
 
@@ -297,7 +289,7 @@ namespace l0l2
 
                 if (m_Param.strategy == Strategy::FromZeroSolution)
                 {
-                    auto results = solveFromZero(matData, vectData, matrixIsCovariance);
+                    auto results = solveFromZero(matData, vectData);
                     if (!results.empty())
                     {
                         auto minBoundIt = results.rbegin();
@@ -309,7 +301,7 @@ namespace l0l2
                 }
                 else if (m_Param.strategy == Strategy::FromL2Solution)
                 {
-                    auto results = solveFromL2(matData, vectData, matrixIsCovariance);
+                    auto results = solveFromL2(matData, vectData);
                     if (!results.empty())
                     {
                         auto maxBoundIt = results.begin();
@@ -321,12 +313,11 @@ namespace l0l2
                 }
                 else
                 {
-                    auto fromZeroFuture =
-                        std::async(std::launch::async, &FullPathSolver::solveFromZero, 
-                            this, matData, vectData, matrixIsCovariance);
+                    auto fromZeroFuture = std::async(
+                        std::launch::async, &FullPathSolver::solveFromZero,
+                        this, matData, vectData);
 
-                    auto fromL2SolutionResults = 
-                        solveFromL2(matData, vectData, matrixIsCovariance);
+                    auto fromL2SolutionResults = solveFromL2(matData, vectData);
 
                     auto fromZeroSolutionResults = fromZeroFuture.get();
 
@@ -348,45 +339,52 @@ namespace l0l2
                     }
                 }
 
-                if (minBoundSolution.x.size() != 0 && maxBoundSolution.x.size() != 0)
+                if (minBoundSolution.x.size() != 0 &&
+                    maxBoundSolution.x.size() != 0)
                 {
-                    // interval found. minBoundSolution.delta <= delta <= maxBoundSolution.delta
-                    auto& deltaMin = minBoundSolution.delta;
+                    // interval found. minBoundSolution.delta <= delta <=
+                    // maxBoundSolution.delta
+                    auto &deltaMin = minBoundSolution.delta;
                     const auto deltaMax = maxBoundSolution.delta;
 
-                    const auto& maxBoundSolutionx = maxBoundSolution.x;
-                    const auto& maxBoundSolutiongrad = maxBoundSolution.grad;
+                    const auto &maxBoundSolutionx = maxBoundSolution.x;
+                    const auto &maxBoundSolutiongrad = maxBoundSolution.grad;
 
-                    auto& minBoundSolutionx = minBoundSolution.x;
-                    auto& minBoundSolutiongrad = minBoundSolution.grad;
+                    auto &minBoundSolutionx = minBoundSolution.x;
+                    auto &minBoundSolutiongrad = minBoundSolution.grad;
 
                     const auto diff = deltaMax - deltaMin;
                     const auto alpha = (diff > Utils::epsilon)
-                        ? (m_Param.delta - deltaMin) / diff : static_cast<Scalar>(0);
+                                           ? (m_Param.delta - deltaMin) / diff
+                                           : static_cast<Scalar>(0);
 
                     const auto oneMinusAlpha = static_cast<Scalar>(1) - alpha;
 
-                    const auto n = static_cast<Index>(minBoundSolution.x.size());
+                    const auto n =
+                        static_cast<Index>(minBoundSolution.x.size());
 
                     deltaMin = oneMinusAlpha * deltaMin + alpha * deltaMax;
 
-                    minBoundSolutionx = oneMinusAlpha * minBoundSolutionx + alpha * maxBoundSolutionx;
+                    minBoundSolutionx = oneMinusAlpha * minBoundSolutionx +
+                                        alpha * maxBoundSolutionx;
 
-                    minBoundSolutiongrad = oneMinusAlpha * minBoundSolutiongrad + alpha * maxBoundSolutiongrad;
+                    minBoundSolutiongrad =
+                        oneMinusAlpha * minBoundSolutiongrad +
+                        alpha * maxBoundSolutiongrad;
 
                     return minBoundSolution;
                 }
 
                 // Should throw an exception!!!
-                std::cout << "\nBad situation: delta == " << m_Param.delta << "\n";
+                std::cout << "\nBad situation: delta == " << m_Param.delta
+                          << "\n";
                 return Solution{};
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::solveFromZero(const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance)
+            FullPathSolver<ScalarType>::solveFromZero(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
@@ -400,25 +398,30 @@ namespace l0l2
 
                 std::list<Solution> results;
 
-                const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
+                const Vector ATb =
+                    matData.transpose() * vectData; // same as Q\alpha
                 {
-                    const auto deltaZero = ATb.cwiseAbs().maxCoeff() / m_Param.beta;
+                    const auto deltaZero =
+                        ATb.cwiseAbs().maxCoeff() / m_Param.beta;
+
+                    results.emplace_back(std::numeric_limits<Scalar>::max(),
+                                         Vector::Zero(n), -ATb);
 
                     results.emplace_back(
-                        std::numeric_limits<Scalar>::max(), Vector::Zero(n), -ATb);
+                        deltaZero, Vector::Zero(n),
+                        -ATb); // TODO avoid repeating and optimize
 
-                    results.emplace_back(
-                        deltaZero, Vector::Zero(n), -ATb);//TODO avoid repeating and optimize
-                    
                     bool deltaTargetReached = false;
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaZero);
+                        deltaTargetReached =
+                            isDeltaTargetReachedFromZero(deltaZero);
                     }
                     else
                     {
-                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaZero);
+                        deltaTargetReached =
+                            isDeltaTargetReachedFromZero(deltaZero);
                     }
 
                     if (deltaTargetReached)
@@ -443,7 +446,8 @@ namespace l0l2
                         }
                         else
                         {
-                            if (m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                            if (m_DeltaFromZeroSolution <=
+                                m_DeltaFromL2Solution)
                             {
                                 break;
                             }
@@ -453,20 +457,17 @@ namespace l0l2
                     ++numberIters;
 
                     {
-                        const auto& solutionMaam = *(++results.crbegin()) ;
+                        const auto &solutionMaam = *(++results.crbegin());
 
-                        const auto& solutionYaay = results.back();
+                        const auto &solutionYaay = results.back();
 
                         const auto step = FullPathStep(m_Param.beta);
 
-                        auto solutionNew = step.run(matData,
-                            ATb,
-                            solutionYaay,
-                            solutionMaam,
-                            matrixIsCovariance,
-                            tau);
+                        auto solutionNew = step.run(matData, ATb, solutionYaay,
+                                                    solutionMaam, tau);
 
-                        const auto gammaNew = tau * (solutionYaay.delta - solutionNew.delta);
+                        const auto gammaNew =
+                            tau * (solutionYaay.delta - solutionNew.delta);
 
                         if (gammaNew <= Utils::epsilon)
                         {
@@ -474,7 +475,8 @@ namespace l0l2
 
                             std::cout << std::fixed << std::setprecision(15);
                             std::cout << "\nGamma: " << gammaNew
-                                << " is less than " << Utils::epsilon << "\n";
+                                      << " is less than " << Utils::epsilon
+                                      << "\n";
 
                             break;
                         }
@@ -486,12 +488,15 @@ namespace l0l2
                         bool deltaTargetReached = false;
                         if (m_Param.strategy == Strategy::FromBothSolutions)
                         {
-                            const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                            deltaTargetReached = isDeltaTargetReachedFromZero(solutionNewDelta);
+                            const std::lock_guard<std::mutex> lock(
+                                m_DeltasMutex);
+                            deltaTargetReached =
+                                isDeltaTargetReachedFromZero(solutionNewDelta);
                         }
                         else
                         {
-                            deltaTargetReached = isDeltaTargetReachedFromZero(solutionNewDelta);
+                            deltaTargetReached =
+                                isDeltaTargetReachedFromZero(solutionNewDelta);
                         }
 
                         if (deltaTargetReached)
@@ -500,10 +505,11 @@ namespace l0l2
                         }
                     }
 
-                    const auto& solutionLast =  results.back();
+                    const auto &solutionLast = results.back();
                     {
-                        const auto fullPathDone = 
-                            solutionLast.x.cwiseAbs().minCoeff() >= solutionLast.delta - Utils::epsilon;
+                        const auto fullPathDone =
+                            solutionLast.x.cwiseAbs().minCoeff() >=
+                            solutionLast.delta - Utils::epsilon;
 
                         if (fullPathDone)
                         {
@@ -526,15 +532,19 @@ namespace l0l2
                         if (normMax < std::numeric_limits<Scalar>::max())
                         {
                             if (normMax >= solutionLast.delta - Utils::epsilon)
-                            {// constant for delta in [deltaCandidate, delta]. improve delta
+                            { // constant for delta in [deltaCandidate, delta].
+                              // improve delta
 
-                                auto absGradMax = std::numeric_limits<Scalar>::min();
+                                auto absGradMax =
+                                    std::numeric_limits<Scalar>::min();
                                 for (Index i = 0; i < n; ++i)
-                                {  // TODO optimize
-                                    const auto absXi = std::abs(solutionLast.x[i]);
+                                { // TODO optimize
+                                    const auto absXi =
+                                        std::abs(solutionLast.x[i]);
                                     if (absXi <= Utils::epsilon)
                                     {
-                                        const auto absGradi = std::abs(solutionLast.grad[i]);
+                                        const auto absGradi =
+                                            std::abs(solutionLast.grad[i]);
                                         if (absGradi > absGradMax)
                                         {
                                             absGradMax = absGradi;
@@ -542,22 +552,33 @@ namespace l0l2
                                     }
                                 }
 
-                                if (absGradMax > std::numeric_limits<Scalar>::min()
-                                    && absGradMax / m_Param.beta < solutionLast.delta - Utils::epsilon)
+                                if (absGradMax >
+                                        std::numeric_limits<Scalar>::min() &&
+                                    absGradMax / m_Param.beta <
+                                        solutionLast.delta - Utils::epsilon)
                                 {
-                                    const auto deltaCandidate = absGradMax / m_Param.beta;
+                                    const auto deltaCandidate =
+                                        absGradMax / m_Param.beta;
 
-                                    results.emplace_back(deltaCandidate, solutionLast.x, solutionLast.grad);
+                                    results.emplace_back(deltaCandidate,
+                                                         solutionLast.x,
+                                                         solutionLast.grad);
 
                                     bool deltaTargetReached = false;
-                                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                                    if (m_Param.strategy ==
+                                        Strategy::FromBothSolutions)
                                     {
-                                        const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaCandidate);
+                                        const std::lock_guard<std::mutex> lock(
+                                            m_DeltasMutex);
+                                        deltaTargetReached =
+                                            isDeltaTargetReachedFromZero(
+                                                deltaCandidate);
                                     }
                                     else
                                     {
-                                        deltaTargetReached = isDeltaTargetReachedFromZero(deltaCandidate);
+                                        deltaTargetReached =
+                                            isDeltaTargetReachedFromZero(
+                                                deltaCandidate);
                                     }
 
                                     if (deltaTargetReached)
@@ -565,16 +586,20 @@ namespace l0l2
                                         return results;
                                     }
 
-                                    // TODO try to optimize using minmax and avoid abs
-                                    const auto fullPathDone = results.back().x.cwiseAbs().minCoeff()
-                                        >= results.back().delta - Utils::epsilon;
+                                    // TODO try to optimize using minmax and
+                                    // avoid abs
+                                    const auto fullPathDone =
+                                        results.back()
+                                            .x.cwiseAbs()
+                                            .minCoeff() >=
+                                        results.back().delta - Utils::epsilon;
 
                                     if (fullPathDone)
                                     {
                                         return results;
                                     }
                                 }
-                            }                           
+                            }
                         }
                     }
                 }
@@ -582,11 +607,10 @@ namespace l0l2
                 return results;
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-                FullPathSolver<ScalarType>::solveFromL2(const Matrix<Scalar>& matData,
-                    const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance)
+            FullPathSolver<ScalarType>::solveFromL2(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
@@ -600,10 +624,12 @@ namespace l0l2
 
                 std::list<Solution> results;
 
-                const Vector ATb = matData.transpose() * vectData;// same as Q\alpha
+                const Vector ATb =
+                    matData.transpose() * vectData; // same as Q\alpha
 
                 {
-                    auto solutionBar = L2Regressor(m_Param.beta, false).fit(matData, vectData, matrixIsCovariance);
+                    auto solutionBar =
+                        L2Regressor(m_Param.beta, false).fit(matData, vectData);
 
                     auto deltaBar = std::numeric_limits<Scalar>::max();
                     for (Index i = 0; i < n; ++i)
@@ -616,9 +642,8 @@ namespace l0l2
                         }
                     }
 
-                    results.emplace_front(static_cast<Scalar>(0),
-                        solutionBar.x,
-                        solutionBar.grad);
+                    results.emplace_front(static_cast<Scalar>(0), solutionBar.x,
+                                          solutionBar.grad);
 
                     solutionBar.delta = deltaBar;
 
@@ -628,11 +653,13 @@ namespace l0l2
                     if (m_Param.strategy == Strategy::FromBothSolutions)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                        deltaTargetReached = isDeltaTargetReachedFromL2(deltaBar);
+                        deltaTargetReached =
+                            isDeltaTargetReachedFromL2(deltaBar);
                     }
                     else
                     {
-                        deltaTargetReached = isDeltaTargetReachedFromL2(deltaBar);
+                        deltaTargetReached =
+                            isDeltaTargetReachedFromL2(deltaBar);
                     }
 
                     if (deltaTargetReached)
@@ -657,7 +684,8 @@ namespace l0l2
                         }
                         else
                         {
-                            if (m_DeltaFromZeroSolution <= m_DeltaFromL2Solution)
+                            if (m_DeltaFromZeroSolution <=
+                                m_DeltaFromL2Solution)
                             {
                                 break;
                             }
@@ -667,20 +695,17 @@ namespace l0l2
                     ++numberIters;
 
                     {
-                        const auto& solutionMaam = *(++results.cbegin());
+                        const auto &solutionMaam = *(++results.cbegin());
 
-                        const auto& solutionYaay = results.front();
+                        const auto &solutionYaay = results.front();
 
                         const auto step = FullPathStep(m_Param.beta);
 
-                        auto solutionNew = step.run(matData,
-                            ATb,
-                            solutionYaay,
-                            solutionMaam,
-                            matrixIsCovariance,
-                            tau);
+                        auto solutionNew = step.run(matData, ATb, solutionYaay,
+                                                    solutionMaam, tau);
 
-                        const auto gammaNew = tau * (solutionYaay.delta - solutionNew.delta);
+                        const auto gammaNew =
+                            tau * (solutionYaay.delta - solutionNew.delta);
 
                         if (gammaNew <= Utils::epsilon)
                         {
@@ -688,7 +713,8 @@ namespace l0l2
 
                             std::cout << std::fixed << std::setprecision(15);
                             std::cout << "\nGamma: " << gammaNew
-                                << " is less than " << Utils::epsilon << "\n";
+                                      << " is less than " << Utils::epsilon
+                                      << "\n";
 
                             break;
                         }
@@ -700,12 +726,15 @@ namespace l0l2
                         bool deltaTargetReached = false;
                         if (m_Param.strategy == Strategy::FromBothSolutions)
                         {
-                            const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                            deltaTargetReached = isDeltaTargetReachedFromL2(deltaNew);
+                            const std::lock_guard<std::mutex> lock(
+                                m_DeltasMutex);
+                            deltaTargetReached =
+                                isDeltaTargetReachedFromL2(deltaNew);
                         }
                         else
                         {
-                            deltaTargetReached = isDeltaTargetReachedFromL2(deltaNew);
+                            deltaTargetReached =
+                                isDeltaTargetReachedFromL2(deltaNew);
                         }
 
                         if (deltaTargetReached)
@@ -714,9 +743,10 @@ namespace l0l2
                         }
                     }
 
-                    const auto& solutionLast = results.front();
+                    const auto &solutionLast = results.front();
                     {
-                        const auto fullPathDone = solutionLast.x.norm() <= Utils::epsilon;
+                        const auto fullPathDone =
+                            solutionLast.x.norm() <= Utils::epsilon;
 
                         if (fullPathDone)
                         {
@@ -739,21 +769,30 @@ namespace l0l2
                         if (normMax < std::numeric_limits<Scalar>::max())
                         {
                             if (normMax > solutionLast.delta + Utils::epsilon)
-                            {// constant for delta in [delta, normMax]. improve delta
+                            { // constant for delta in [delta, normMax]. improve
+                              // delta
 
                                 const auto deltaCandidate = normMax;
 
-                                results.emplace_front(deltaCandidate, solutionLast.x, solutionLast.grad);
+                                results.emplace_front(deltaCandidate,
+                                                      solutionLast.x,
+                                                      solutionLast.grad);
 
                                 bool deltaTargetReached = false;
-                                if (m_Param.strategy == Strategy::FromBothSolutions)
+                                if (m_Param.strategy ==
+                                    Strategy::FromBothSolutions)
                                 {
-                                    const std::lock_guard<std::mutex> lock(m_DeltasMutex);
-                                    deltaTargetReached = isDeltaTargetReachedFromL2(deltaCandidate);
+                                    const std::lock_guard<std::mutex> lock(
+                                        m_DeltasMutex);
+                                    deltaTargetReached =
+                                        isDeltaTargetReachedFromL2(
+                                            deltaCandidate);
                                 }
                                 else
                                 {
-                                    deltaTargetReached = isDeltaTargetReachedFromL2(deltaCandidate);
+                                    deltaTargetReached =
+                                        isDeltaTargetReachedFromL2(
+                                            deltaCandidate);
                                 }
 
                                 if (deltaTargetReached)
@@ -761,8 +800,10 @@ namespace l0l2
                                     return results;
                                 }
 
-                                // TODO Not necessary to check zero a second time!
-                                const auto fullPathDone = results.front().x.norm() <= Utils::epsilon;
+                                // TODO Not necessary to check zero a second
+                                // time!
+                                const auto fullPathDone =
+                                    results.front().x.norm() <= Utils::epsilon;
 
                                 if (fullPathDone)
                                 {
@@ -775,6 +816,6 @@ namespace l0l2
 
                 return results;
             }
-        }
-    }
+        } // namespace leastsquares
+    } // namespace linearmodel
 } // namespace l0l2
