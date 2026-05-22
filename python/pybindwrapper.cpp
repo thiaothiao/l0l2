@@ -101,52 +101,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("coordinateStates") = CoordinateStates{});
 
-    using L0L2SPCAf = l0l2::linearmodel::L0L2SPCA<float>;
-    using L0L2SPCAParamf = L0L2SPCAf::Param;
-    pybind11::class_<L0L2SPCAParamf>(m, "L0L2SPCAParamf")
-        .def(pybind11::init<float, float, Index, Strategy, float, unsigned int, float, unsigned int>(),
-            pybind11::arg("regressorDelta") = 0.f,
-            pybind11::arg("regressorBeta") = 1.f,
-            pybind11::arg("nbComponents") = static_cast<Index>(2),
-            pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
-            pybind11::arg("regressorTolerance") = 1e-4f,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
-            pybind11::arg("regressorInnerEpsilon") = 1e-6f,
-            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
-        .def_readonly("regressorParam", &L0L2SPCAParamf::regressorParam)
-        .def_readonly("nbComponents", &L0L2SPCAParamf::nbComponents);
-
-    pybind11::class_<L0L2SPCAf>(m, "L0L2SPCAf")
-        .def(pybind11::init<L0L2SPCAParamf, unsigned int, float, unsigned int>(),
-            pybind11::arg("param"),
-            pybind11::arg("nbJobs") = 1U,
-            pybind11::arg("epsilon") = 1e-5f,
-            pybind11::arg("numberOfTrialsMax") = 10000U)
-        .def("run", &L0L2SPCAf::run,
-            pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"));
-
-    using FullPathL0L2SPCAf = l0l2::linearmodel::FullPathL0L2SPCA<float>;
-    using FullPathL0L2SPCAParamf = FullPathL0L2SPCAf::Param;
-    pybind11::class_<FullPathL0L2SPCAParamf>(m, "FullPathL0L2SPCAParamf")
-        .def(pybind11::init<float, float, Index, Strategy>(),
-            pybind11::arg("regressorDelta") = 0.f,
-            pybind11::arg("regressorBeta") = 1.f,
-            pybind11::arg("nbComponents") = static_cast<Index>(2),
-            pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution)
-        .def_readonly("regressorParam", &FullPathL0L2SPCAParamf::regressorParam)
-        .def_readonly("nbComponents", &FullPathL0L2SPCAParamf::nbComponents);
-
-    pybind11::class_<FullPathL0L2SPCAf>(m, "FullPathL0L2SPCAf")
-        .def(pybind11::init<FullPathL0L2SPCAParamf, unsigned int, float, unsigned int>(),
-            pybind11::arg("param"),
-            pybind11::arg("nbJobs") = 1U,
-            pybind11::arg("epsilon") = 1e-5f,
-            pybind11::arg("numberOfTrialsMax") = 10000U)
-        .def("run", &FullPathL0L2SPCAf::run,
-            pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"));
-
     using SimpleBranchAndBoundf = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<float>;
     using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::Param;
     pybind11::class_<SimpleBranchAndBoundParamf>(m, "SimpleBranchAndBoundParamf")
@@ -241,52 +195,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("vectData"),
             pybind11::arg("matrixIsCovariance"),
             pybind11::arg("coordinateStates") = CoordinateStates{});
-
-    using L0L2SPCAd = l0l2::linearmodel::L0L2SPCA<double>;
-    using L0L2SPCAParamd = L0L2SPCAd::Param;
-    pybind11::class_<L0L2SPCAParamd>(m, "L0L2SPCAParamd")
-        .def(pybind11::init<double, double, Index, Strategy, double, unsigned int, double, unsigned int>(),
-            pybind11::arg("regressorDelta") = 0.0,
-            pybind11::arg("regressorBeta") = 1.0,
-            pybind11::arg("nbComponents") = static_cast<Index>(2),
-            pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution,
-            pybind11::arg("regressorTolerance") = 1e-4,
-            pybind11::arg("regressorMaximumNumberOfIterations") = 10000U,
-            pybind11::arg("regressorInnerEpsilon") = 1e-6,
-            pybind11::arg("regressorInnerMaximumNumberOfIterations") = 100000U)
-        .def_readonly("regressorParam", &L0L2SPCAParamd::regressorParam)
-        .def_readonly("nbComponents", &L0L2SPCAParamd::nbComponents);
-
-    pybind11::class_<L0L2SPCAd>(m, "L0L2SPCAd")
-        .def(pybind11::init<L0L2SPCAParamd, unsigned int, double, unsigned int>(),
-            pybind11::arg("param"),
-            pybind11::arg("nbJobs") = 1U,
-            pybind11::arg("epsilon") = 1e-5,
-            pybind11::arg("numberOfTrialsMax") = 10000U)
-        .def("run", &L0L2SPCAd::run, 
-            pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"));
-
-    using FullPathL0L2SPCAd = l0l2::linearmodel::FullPathL0L2SPCA<double>;
-    using FullPathL0L2SPCAParamd = FullPathL0L2SPCAd::Param;
-    pybind11::class_<FullPathL0L2SPCAParamd>(m, "FullPathL0L2SPCAParamd")
-        .def(pybind11::init<double, double, Index, Strategy>(),
-            pybind11::arg("regressorDelta") = 0.0,
-            pybind11::arg("regressorBeta") = 1.0,
-            pybind11::arg("nbComponents") = static_cast<Index>(2),
-            pybind11::arg("regressorStrategy") = Strategy::FromZeroSolution)
-        .def_readonly("regressorParam", &FullPathL0L2SPCAParamd::regressorParam)
-        .def_readonly("nbComponents", &FullPathL0L2SPCAParamd::nbComponents);
-
-    pybind11::class_<FullPathL0L2SPCAd>(m, "FullPathL0L2SPCAd")
-        .def(pybind11::init<FullPathL0L2SPCAParamd, unsigned int, double, unsigned int>(),
-            pybind11::arg("param"),
-            pybind11::arg("nbJobs") = 1U,
-            pybind11::arg("epsilon") = 1e-5,
-            pybind11::arg("numberOfTrialsMax") = 10000U)
-        .def("run", &FullPathL0L2SPCAd::run,
-            pybind11::arg("matData"),
-            pybind11::arg("matrixIsCovariance"));
 
     using SimpleBranchAndBoundd = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<double>;
     using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::Param;
