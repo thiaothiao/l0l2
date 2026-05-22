@@ -14,10 +14,11 @@ namespace l0l2
         namespace leastsquares
         {
             // L0L2 coordinate descent stepJ implementation
-            template<std::floating_point ScalarType>
-            class L0L2ModelImplementation final : public ModelImplementationBase<ScalarType>
+            template <std::floating_point ScalarType>
+            class L0L2ModelImplementation final
+                : public ModelImplementationBase<ScalarType>
             {
-            public:
+              public:
                 using Base = ModelImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
@@ -26,36 +27,39 @@ namespace l0l2
                     /*! \brief l0l2 model parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
-                      \param strategyInput enum indicating a strategy: from zero, or l2 or both solutions.
-                      \param toleranceInput covergence tolerance on the coordinates changes.
-                      \param maximumNumberOfIterationsInput maximum number of iterations allowed.
+                      \param strategyInput enum indicating a strategy: from
+                      zero, or l2 or both solutions.
+                      \param toleranceInput covergence tolerance on the
+                      coordinates changes.
+                      \param maximumNumberOfIterationsInput maximum number of
+                      iterations allowed.
                     */
-                    Param(
-                        Scalar deltaInput = static_cast<Scalar>(0),
-                        Scalar betaInput = static_cast<Scalar>(1),
-                        bool hasInterceptInput = false,
-                        Strategy strategyInput = Strategy::FromZeroSolution,
-                        Scalar toleranceInput = static_cast<Scalar>(1e-4),
-                        unsigned int maximumNumberOfIterationsInput = 10000U,
-                        Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
-                        unsigned int innerMaximumNumberOfIterationsInput = 100000U)
-                        :delta{ deltaInput },
-                        beta{ betaInput },
-                        hasIntercept{ hasInterceptInput },
-                        strategy{ strategyInput },
-                        tolerance{ toleranceInput },
-                        maximumNumberOfIterations{ maximumNumberOfIterationsInput },
-                        innerEpsilon{ innerEpsilonInput },
-                        innerMaximumNumberOfIterations{ innerMaximumNumberOfIterationsInput },
-                        deltaBeta{ deltaInput * betaInput }
+                    Param(Scalar deltaInput = static_cast<Scalar>(0),
+                          Scalar betaInput = static_cast<Scalar>(1),
+                          bool hasInterceptInput = false,
+                          Strategy strategyInput = Strategy::FromZeroSolution,
+                          Scalar toleranceInput = static_cast<Scalar>(1e-4),
+                          unsigned int maximumNumberOfIterationsInput = 10000U,
+                          Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
+                          unsigned int innerMaximumNumberOfIterationsInput =
+                              100000U)
+                        : delta{deltaInput}, beta{betaInput},
+                          hasIntercept{hasInterceptInput},
+                          strategy{strategyInput}, tolerance{toleranceInput},
+                          maximumNumberOfIterations{
+                              maximumNumberOfIterationsInput},
+                          innerEpsilon{innerEpsilonInput},
+                          innerMaximumNumberOfIterations{
+                              innerMaximumNumberOfIterationsInput},
+                          deltaBeta{deltaInput * betaInput}
                     {
                     }
 
-                    Param(const Param&) = default;
-                    Param& operator=(const Param&) = default;
+                    Param(const Param &) = default;
+                    Param &operator=(const Param &) = default;
 
-                    Param(Param&&) = default;
-                    Param& operator=(Param&&) = default;
+                    Param(Param &&) = default;
+                    Param &operator=(Param &&) = default;
 
                     const Scalar delta;
                     const Scalar beta;
@@ -68,8 +72,8 @@ namespace l0l2
                     const Scalar deltaBeta;
                 };
 
-                L0L2ModelImplementation(const Param& paramInput = {})
-                    :param{ paramInput }
+                L0L2ModelImplementation(const Param &paramInput = {})
+                    : param{paramInput}
                 {
                 }
 
@@ -79,71 +83,76 @@ namespace l0l2
 
                 Scalar otherJ(Scalar zJ, Scalar uJ) const;
 
-                Scalar computeDualityGap(const Matrix<Scalar>& matData, const Vector<Scalar>& vectData,
-                    bool matrixIsCovariance, const CoordinateStates& coordinateStates, 
-                    const Solution<Scalar>& solution) const;
+                Scalar
+                computeDualityGap(const Matrix<Scalar> &matData,
+                                  const Vector<Scalar> &vectData,
+                                  const CoordinateStates &coordinateStates,
+                                  const Solution<Scalar> &solution) const;
 
                 Param param;
             };
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             inline L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::stepJ(Scalar zJ, Scalar uJ) const
+            L0L2ModelImplementation<ScalarType>::stepJ(Scalar zJ,
+                                                       Scalar uJ) const
             {
-                return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta) ? (uJ / (param.beta + zJ))
-                    : ((std::abs(uJ) > param.deltaBeta) ? ((uJ - param.deltaBeta * Utils<Scalar>::sign(uJ)) / zJ)
-                        : static_cast<Scalar>(0));
+                return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
+                           ? (uJ / (param.beta + zJ))
+                           : ((std::abs(uJ) > param.deltaBeta)
+                                  ? ((uJ - param.deltaBeta *
+                                               Utils<Scalar>::sign(uJ)) /
+                                     zJ)
+                                  : static_cast<Scalar>(0));
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             inline L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ, Scalar uJ) const
+            L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ,
+                                                        Scalar uJ) const
             {
                 return uJ / (zJ + param.beta);
             }
 
-            template<std::floating_point ScalarType>
+            template <std::floating_point ScalarType>
             L0L2ModelImplementation<ScalarType>::Scalar
-                L0L2ModelImplementation<ScalarType>::computeDualityGap(const Matrix<Scalar>& matData, 
-                    const Vector<Scalar>& vectData, bool matrixIsCovariance, 
-                    const CoordinateStates& coordinateStates, const Solution<Scalar>& solution) const
+            L0L2ModelImplementation<ScalarType>::computeDualityGap(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
+                const CoordinateStates &coordinateStates,
+                const Solution<Scalar> &solution) const
             {
                 using Vector = Vector<Scalar>;
                 using Utils = Utils<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
 
-                const auto subIndicesCase = static_cast<Index>(coordinateStates.size()) == n;
+                const auto subIndicesCase =
+                    static_cast<Index>(coordinateStates.size()) == n;
 
-                const auto& x = solution.x;
+                const auto &x = solution.x;
                 const auto intercept = solution.intercept;
 
-                const auto hasIntercept = !matrixIsCovariance && param.hasIntercept;
+                const auto hasIntercept = param.hasIntercept;
 
-                Vector nu0;
-                if (matrixIsCovariance)
-                {
-                    nu0 = matData * (x - vectData);
-                }
-                else
-                {
-                    nu0 = matData * x - vectData;
-                }
-
+                Vector nu0 = matData * x - vectData;
                 if (hasIntercept)
                 {
                     nu0.array() += intercept;
                 }
 
-                const auto betaDeltaSquared = param.beta * param.delta * param.delta;
-                const auto twoDeltaBeta = static_cast<Scalar>(2) * param.deltaBeta;
-                const auto leastSquaresPartValue = matrixIsCovariance ? nu0.dot(x - vectData) : nu0.squaredNorm();
+                const auto betaDeltaSquared =
+                    param.beta * param.delta * param.delta;
+                const auto twoDeltaBeta =
+                    static_cast<Scalar>(2) * param.deltaBeta;
+                const auto leastSquaresPartValue = nu0.squaredNorm();
                 auto primal = leastSquaresPartValue;
                 for (auto xi : x)
                 {
                     const auto absxi = std::abs(xi);
-                    primal += (absxi > param.delta ? (param.beta * absxi * absxi + betaDeltaSquared)
-                        : twoDeltaBeta * absxi);
+                    primal +=
+                        (absxi > param.delta
+                             ? (param.beta * absxi * absxi + betaDeltaSquared)
+                             : twoDeltaBeta * absxi);
                 }
 
                 if (hasIntercept)
@@ -151,19 +160,13 @@ namespace l0l2
                     nu0.array() -= nu0.mean();
                 }
 
-                Vector theta;
-                if (matrixIsCovariance)
-                {
-                    theta = nu0.cwiseAbs() / twoDeltaBeta;
-                }
-                else
-                {
-                    theta = (matData.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
-                }
+                Vector theta =
+                    (matData.transpose() * nu0).cwiseAbs() / twoDeltaBeta;
 
-                auto aCoeff = - static_cast<Scalar>(0.25) * leastSquaresPartValue;
+                auto aCoeff =
+                    -static_cast<Scalar>(0.25) * leastSquaresPartValue;
                 if (subIndicesCase)
-                {// TODO try eigenlib select() method
+                { // TODO try eigenlib select() method
                     auto tmp = static_cast<Scalar>(0);
                     for (Index j = 0; j < n; ++j)
                     {
@@ -171,18 +174,23 @@ namespace l0l2
                         {
                             theta[j] = static_cast<Scalar>(0);
                         }
-                        else if(coordinateStates[j] == CoordinateState::FREE)
+                        else if (coordinateStates[j] == CoordinateState::FREE)
                         {
                             tmp += theta[j] * theta[j];
                             theta[j] = static_cast<Scalar>(0);
                         }
                     }
 
-                    aCoeff += betaDeltaSquared * (coordinateStates == CoordinateState::FREE).count() 
-                        -static_cast<Scalar>(0.25) * tmp * betaDeltaSquared * betaDeltaSquared / param.beta;
+                    aCoeff += betaDeltaSquared *
+                                  (coordinateStates == CoordinateState::FREE)
+                                      .count() -
+                              static_cast<Scalar>(0.25) * tmp *
+                                  betaDeltaSquared * betaDeltaSquared /
+                                  param.beta;
                 }
 
-                std::sort(theta.begin(), theta.end(), [](Scalar u, Scalar v) {return u > v; });
+                std::sort(theta.begin(), theta.end(),
+                          [](Scalar u, Scalar v) { return u > v; });
 
                 const auto bTnu0 = vectData.dot(nu0);
                 const auto bCoeff = std::abs(bTnu0);
@@ -190,11 +198,11 @@ namespace l0l2
                 auto cCoeff = static_cast<Scalar>(0);
 
                 // solve on [s0,s1]
-                auto dual = Utils::solveMaxConcaveQP1D(aCoeff, bCoeff, cCoeff, 
-                    static_cast<Scalar>(0), 
+                auto dual = Utils::solveMaxConcaveQP1D(
+                    aCoeff, bCoeff, cCoeff, static_cast<Scalar>(0),
                     theta[0] == static_cast<Scalar>(0)
-                    ? std::numeric_limits<Scalar>::max()
-                    : static_cast<Scalar>(1) / theta[0]);
+                        ? std::numeric_limits<Scalar>::max()
+                        : static_cast<Scalar>(1) / theta[0]);
 
                 Scalar thetaI = theta[0];
                 if (thetaI == static_cast<Scalar>(0))
@@ -206,7 +214,9 @@ namespace l0l2
 
                 bool accumulationTreated = false;
 
-                for (Index i = 1; i < theta.size() && theta[i] != static_cast<Scalar>(0); ++i)
+                for (Index i = 1;
+                     i < theta.size() && theta[i] != static_cast<Scalar>(0);
+                     ++i)
                 {
                     accumulationTreated = false;
 
@@ -222,7 +232,8 @@ namespace l0l2
 
                         ++i;
 
-                        if (i < theta.size() || theta[i] != static_cast<Scalar>(0))
+                        if (i < theta.size() ||
+                            theta[i] != static_cast<Scalar>(0))
                         {
                             thetaIPlus1 = theta[i];
                         }
@@ -237,8 +248,10 @@ namespace l0l2
                         accumulationTreated = true;
 
                         // solve on [s0,s1]
-                        const auto duali = Utils::solveMaxConcaveQP1D(aCoeff, bCoeff, cCoeff, 
-                            static_cast<Scalar>(1) / thetaI, static_cast<Scalar>(1) / thetaIPlus1);
+                        const auto duali = Utils::solveMaxConcaveQP1D(
+                            aCoeff, bCoeff, cCoeff,
+                            static_cast<Scalar>(1) / thetaI,
+                            static_cast<Scalar>(1) / thetaIPlus1);
 
                         if (duali > dual)
                         {
@@ -250,7 +263,7 @@ namespace l0l2
                             break;
                         }
 
-                        //s0 = s1;
+                        // s0 = s1;
                         thetaI = thetaIPlus1;
                     }
                 }
@@ -264,8 +277,9 @@ namespace l0l2
                     }
 
                     // solve on [s0,s1]
-                    auto duali = Utils::solveMaxConcaveQP1D(aCoeff, bCoeff, cCoeff, 
-                        static_cast<Scalar>(1) / thetaI, std::numeric_limits<Scalar>::max());
+                    auto duali = Utils::solveMaxConcaveQP1D(
+                        aCoeff, bCoeff, cCoeff, static_cast<Scalar>(1) / thetaI,
+                        std::numeric_limits<Scalar>::max());
 
                     if (duali > dual)
                     {
@@ -276,8 +290,9 @@ namespace l0l2
                 return (primal - dual) / primal;
             }
 
-            template<std::floating_point ScalarType>
-            using L0L2Regressor = CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
-        }
-    }
+            template <std::floating_point ScalarType>
+            using L0L2Regressor =
+                CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
+        } // namespace leastsquares
+    } // namespace linearmodel
 } // namespace l0l2
