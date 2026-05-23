@@ -25,7 +25,7 @@ int main()
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     using SimpleBranchAndBound =
         l0l2::linearmodel::leastsquares::SimpleBranchAndBound<Scalar>;
-    using SimpleBranchAndBoundParam = SimpleBranchAndBound::Param;
+    using SimpleBranchAndBoundParam = SimpleBranchAndBound::BBParam;
     using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
     using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
 
@@ -216,8 +216,7 @@ int main()
                 tolerance,     maximumNumberOfIterations,
                 innerEpsilon,  innerMaximumNumberOfIterations};
 
-            const auto solution =
-                L0L2Regressor{param}.fit(mat, vect, coordinateStates);
+            const auto solution = L0L2Regressor{param}.fit(mat, vect);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -243,8 +242,7 @@ int main()
                 tolerance,     maximumNumberOfIterations,
                 innerEpsilon,  innerMaximumNumberOfIterations};
 
-            const auto solution =
-                L0L2Regressor{param}.fit(mat, vect, coordinateStates);
+            const auto solution = L0L2Regressor{param}.fit(mat, vect);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -270,8 +268,7 @@ int main()
                 tolerance,     maximumNumberOfIterations,
                 innerEpsilon,  innerMaximumNumberOfIterations};
 
-            const auto solution =
-                L0L2Regressor{param}.fit(mat, vect, coordinateStates);
+            const auto solution = L0L2Regressor{param}.fit(mat, vect);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 

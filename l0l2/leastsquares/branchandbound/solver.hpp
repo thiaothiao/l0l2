@@ -6,6 +6,7 @@
 #include <set>
 #include <utility>
 
+#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
 #include <l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
@@ -18,12 +19,55 @@ namespace l0l2
             // L0L2 branch and bound implementation
             template <std::floating_point ScalarType>
             class SimpleBranchAndBound final
+                : public CyclicCoordinateDescentDetails<
+                      L0L2Implementation<ScalarType>>
             {
               public:
-                using Scalar = ScalarType;
-                using Regressor = L0L2Regressor<Scalar>;
-                using RegressorParam = L0L2Regressor<Scalar>::Param;
+                using Base = CyclicCoordinateDescentDetails<
+                    L0L2Implementation<ScalarType>>;
+                using Scalar = Base::Scalar;
+                using Regressor = Base;
+                using RegressorParam = Regressor::Param;
 
+                struct BBParam final
+                {
+                    BBParam(
+                        const RegressorParam &regressorParamInput,
+                        Scalar globalEpsilonInput = static_cast<Scalar>(1e-8),
+                        Scalar localEpsilonInput = static_cast<Scalar>(1e-8),
+                        unsigned int maximumNumberOfIterationsInput = 1000000U)
+                        : regressorParam{regressorParamInput},
+                          globalEpsilon{globalEpsilonInput},
+                          localEpsilon{localEpsilonInput},
+                          maximumNumberOfIterations{
+                              maximumNumberOfIterationsInput}
+                    {
+                    }
+
+                    BBParam(const BBParam &) = default;
+                    BBParam &operator=(const BBParam &) = default;
+
+                    BBParam(BBParam &&) = default;
+                    BBParam &operator=(BBParam &&) = default;
+
+                    const RegressorParam regressorParam;
+                    const Scalar globalEpsilon;
+                    const Scalar localEpsilon;
+                    const unsigned int maximumNumberOfIterations;
+                };
+
+                SimpleBranchAndBound(const BBParam &param)
+                    : Base{param.regressorParam}, m_Param{param}
+                {
+                }
+
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData);
+
+                Scalar objectiveValue(const Matrix<Scalar> &matData,
+                                      const Vector<Scalar> &vectData,
+                                      const Solution<Scalar> &solution) const;
+              private:
                 class Branch
                 {
                   public:
@@ -51,53 +95,16 @@ namespace l0l2
                     }
                 };
 
-                struct Param final
-                {
-                    Param(
-                        const RegressorParam &regressorParamInput,
-                        Scalar globalEpsilonInput = static_cast<Scalar>(1e-8),
-                        Scalar localEpsilonInput = static_cast<Scalar>(1e-8),
-                        unsigned int maximumNumberOfIterationsInput = 1000000U)
-                        : regressorParam{regressorParamInput},
-                          globalEpsilon{globalEpsilonInput},
-                          localEpsilon{localEpsilonInput},
-                          maximumNumberOfIterations{
-                              maximumNumberOfIterationsInput}
-                    {
-                    }
-
-                    Param(const Param &) = default;
-                    Param &operator=(const Param &) = default;
-
-                    Param(Param &&) = default;
-                    Param &operator=(Param &&) = default;
-
-                    const RegressorParam regressorParam;
-                    const Scalar globalEpsilon;
-                    const Scalar localEpsilon;
-                    const unsigned int maximumNumberOfIterations;
-                };
-
-                SimpleBranchAndBound(const Param &param) : m_Param{param} {}
-
-                Solution<Scalar> fit(const Matrix<Scalar> &matData,
-                                     const Vector<Scalar> &vectData);
-
-                Scalar objectiveValue(const Matrix<Scalar> &matData,
-                                      const Vector<Scalar> &vectData,
-                                      const Solution<Scalar> &solution) const;
-
                 Scalar relaxationValue(const Matrix<Scalar> &matData,
                                        const Vector<Scalar> &vectData,
                                        const CoordinateStates &coordinateStates,
                                        const Solution<Scalar> &solution) const;
 
-              private:
-                const Param m_Param;
+                const BBParam m_Param;
             };
 
             template <std::floating_point ScalarType>
-            inline SimpleBranchAndBound<ScalarType>::Scalar
+            inline typename SimpleBranchAndBound<ScalarType>::Scalar
             SimpleBranchAndBound<ScalarType>::objectiveValue(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const Solution<Scalar> &solution) const
@@ -116,7 +123,7 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            SimpleBranchAndBound<ScalarType>::Scalar
+            typename SimpleBranchAndBound<ScalarType>::Scalar
             SimpleBranchAndBound<ScalarType>::relaxationValue(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates,
@@ -195,8 +202,7 @@ namespace l0l2
                     }
 
                     auto relaxationSolution =
-                        Regressor{m_Param.regressorParam}.fit(
-                            matData, vectData, branch.coordinateStates);
+                        Base::fit(matData, vectData, branch.coordinateStates);
 
                     const auto ub =
                         objectiveValue(matData, vectData, relaxationSolution);

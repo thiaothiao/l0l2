@@ -62,25 +62,18 @@ namespace l0l2
                 } -> std::convertible_to<typename ImplementationType::Scalar>;
             };
 
-            /*! \brief Cyclical Coordinate Descent Regressor class.
-             *
-             * It produces solutions using cyclical coordinate descent
-             * algorithm.
-             */
             template <
                 CyclicCoordinateDescentImplementationLike ImplementationType>
-            class CyclicCoordinateDescent final
+            class CyclicCoordinateDescentDetails
             {
-              public:
+              protected:
                 using Implementation =
                     ImplementationType; /*!< Alias for the implementation type
                                          */
-                using Param =
-                    typename Implementation::Param; /*!< Alias for the used
-                                                       parameter type */
-                using Scalar =
-                    typename Implementation::Scalar; /*!< Alias for the used
-                                                        scalar type */
+                using Param = typename Implementation::Param; /*!< Alias for the
+                                 used parameter type */
+                using Scalar = typename Implementation::Scalar; /*!< Alias for
+                                  the used scalar type */
 
                 /*! \brief A cyclic coordinate descent solver object
                   constructor.
@@ -88,7 +81,7 @@ namespace l0l2
                   \param withIntercept boolean indicating with intercept or not.
                   Default is false.
                 */
-                CyclicCoordinateDescent(const Param &param)
+                CyclicCoordinateDescentDetails(const Param &param)
                     : m_Param{param}, m_ParallelConverged{}
                 {
                 }
@@ -100,12 +93,10 @@ namespace l0l2
                    vector.
                    \return a solution in the format Solution.
                  */
-                Solution<Scalar>
-                fit(const Matrix<Scalar> &matData,
-                    const Vector<Scalar> &vectData,
-                    const CoordinateStates &coordinateStates = {});
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData,
+                                     const CoordinateStates &coordinateStates);
 
-              private:
                 Solution<Scalar> fit(const Matrix<Scalar> &matData,
                                      const Vector<Scalar> &vectData,
                                      Solution<Scalar> initialSolution,
@@ -118,9 +109,9 @@ namespace l0l2
 
             template <
                 CyclicCoordinateDescentImplementationLike ImplementationType>
-            Solution<
-                typename CyclicCoordinateDescent<ImplementationType>::Scalar>
-            CyclicCoordinateDescent<ImplementationType>::fit(
+            Solution<typename CyclicCoordinateDescentDetails<
+                ImplementationType>::Scalar>
+            CyclicCoordinateDescentDetails<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 Solution<Scalar> initialSolution,
                 const CoordinateStates &coordinateStates)
@@ -277,9 +268,9 @@ namespace l0l2
 
             template <
                 CyclicCoordinateDescentImplementationLike ImplementationType>
-            Solution<
-                typename CyclicCoordinateDescent<ImplementationType>::Scalar>
-            CyclicCoordinateDescent<ImplementationType>::fit(
+            Solution<typename CyclicCoordinateDescentDetails<
+                ImplementationType>::Scalar>
+            CyclicCoordinateDescentDetails<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates)
             {
@@ -308,14 +299,15 @@ namespace l0l2
                 {
                     m_ParallelConverged.clear(std::memory_order_relaxed);
 
-                    auto fromZeroFuture = std::async(
-                        std::launch::async,
-                        static_cast<Solution (CyclicCoordinateDescent::*)(
-                            const Matrix &, const Vector &, Solution,
-                            const CoordinateStates &)>(
-                            &CyclicCoordinateDescent::fit),
-                        this, matData, vectData, Solution(Vector::Zero(n)),
-                        coordinateStates);
+                    auto fromZeroFuture =
+                        std::async(std::launch::async,
+                                   static_cast<Solution (
+                                       CyclicCoordinateDescentDetails::*)(
+                                       const Matrix &, const Vector &, Solution,
+                                       const CoordinateStates &)>(
+                                       &CyclicCoordinateDescentDetails::fit),
+                                   this, matData, vectData,
+                                   Solution(Vector::Zero(n)), coordinateStates);
 
                     auto fromL2Solution =
                         fit(matData, vectData,

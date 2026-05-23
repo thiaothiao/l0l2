@@ -14,13 +14,6 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     auto m = mainmodule.def_submodule("linearmodel", "Linear model module.");
 
-    using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
-    pybind11::enum_<CoordinateState>(m, "CoordinateState", pybind11::arithmetic(), "State of a coordinate")
-        .value("Unknown", CoordinateState::Unknown, "Concerned by l0")
-        .value("Nonzero", CoordinateState::Nonzero, "Freed from l0")
-        .value("Zero", CoordinateState::Zero, "Forced to zero")
-        .export_values();
-
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     pybind11::enum_<Strategy>(m, "Strategy", pybind11::arithmetic(), "Choosen strategy")
         .value("SequentialFromZeroSolution", Strategy::SequentialFromZeroSolution, "From zero solution")
@@ -85,19 +78,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("innerEpsilon", &L0L2RegressorParamf::innerEpsilon)
         .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamf::innerMaximumNumberOfIterations);
 
-    using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
-
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
         .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
         .def("fit",
-             pybind11::overload_cast<const Matrixf &, const Vectorf &,
-                                     const CoordinateStates &>(
+             pybind11::overload_cast<const Matrixf &, const Vectorf &>(
                  &L0L2Regressorf::fit),
-             pybind11::arg("matData"), pybind11::arg("vectData"),
-             pybind11::arg("coordinateStates") = CoordinateStates{});
+             pybind11::arg("matData"), pybind11::arg("vectData"));
 
     using SimpleBranchAndBoundf = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<float>;
-    using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::Param;
+    using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::BBParam;
     pybind11::class_<SimpleBranchAndBoundParamf>(m,
                                                  "SimpleBranchAndBoundParamf")
         .def(pybind11::init<L0L2RegressorParamf, float, float, unsigned int>(),
@@ -181,14 +170,12 @@ PYBIND11_MODULE(l0l2, mainmodule)
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
         .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
         .def("fit",
-             pybind11::overload_cast<const Matrixd &, const Vectord &,
-                                     const CoordinateStates &>(
+             pybind11::overload_cast<const Matrixd &, const Vectord &>(
                  &L0L2Regressord::fit),
-             pybind11::arg("matData"), pybind11::arg("vectData"),
-             pybind11::arg("coordinateStates") = CoordinateStates{});
+             pybind11::arg("matData"), pybind11::arg("vectData"));
 
     using SimpleBranchAndBoundd = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<double>;
-    using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::Param;
+    using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::BBParam;
     pybind11::class_<SimpleBranchAndBoundParamd>(m, "SimpleBranchAndBoundParamd")
         .def(pybind11::init<L0L2RegressorParamd, double, double, unsigned int>(),
             pybind11::arg("regressorParam"),

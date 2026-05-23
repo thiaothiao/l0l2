@@ -4,7 +4,7 @@
 #include <concepts>
 #include <utility>
 
-#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
+#include <l0l2/leastsquares/cycliccoordinatedescent/solver.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
