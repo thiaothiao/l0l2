@@ -24,24 +24,19 @@ PYBIND11_MODULE(l0l2, mainmodule)
     using FullPathSolverf = l0l2::linearmodel::leastsquares::FullPathSolver<float>;
     using FullPathSolverParamf = FullPathSolverf::Param;
     pybind11::class_<FullPathSolverParamf>(m, "FullPathSolverParamf")
-        .def(pybind11::init<float, float, Strategy>(),
-            pybind11::arg("delta") = 0.f,
-            pybind11::arg("beta") = 1.f,
-            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
+        .def(pybind11::init<float, float, bool, Strategy>(),
+             pybind11::arg("delta") = 0.f, pybind11::arg("beta") = 1.f,
+             pybind11::arg("withIntercept") = false,
+             pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
         .def_readonly("delta", &FullPathSolverParamf::delta)
         .def_readonly("beta", &FullPathSolverParamf::beta)
+        .def_readonly("withIntercept", &FullPathSolverParamf::withIntercept)
         .def_readonly("strategy", &FullPathSolverParamf::strategy);
 
     pybind11::class_<FullPathSolverf>(m, "FullPathSolverf")
-        .def(pybind11::init<FullPathSolverParamf, bool>(),
-             pybind11::arg("param"), pybind11::arg("withintercept") = false)
+        .def(pybind11::init<FullPathSolverParamf>(), pybind11::arg("param"))
         .def("fit", &FullPathSolverf::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"))
-        .def_static("fitAll", &FullPathSolverf::fitAll,
-                    pybind11::arg("matData"), pybind11::arg("vectData"),
-                    pybind11::arg("beta"),
-                    pybind11::arg("withintercept") = false,
-                    pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution);
+             pybind11::arg("vectData"));
 
     using Index = l0l2::Index;
     using Vectorf = l0l2::Vector<float>;
@@ -114,24 +109,19 @@ PYBIND11_MODULE(l0l2, mainmodule)
     using FullPathSolverd = l0l2::linearmodel::leastsquares::FullPathSolver<double>;
     using FullPathSolverParamd = FullPathSolverd::Param;
     pybind11::class_<FullPathSolverParamd>(m, "FullPathSolverParamd")
-        .def(pybind11::init<double, double, Strategy>(),
-            pybind11::arg("delta") = 0.0,
-            pybind11::arg("beta") = 1.0,
-            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
+        .def(pybind11::init<double, double, bool, Strategy>(),
+             pybind11::arg("delta") = 0.0, pybind11::arg("beta") = 1.0,
+             pybind11::arg("withIntercept") = false,
+             pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
         .def_readonly("delta", &FullPathSolverParamd::delta)
         .def_readonly("beta", &FullPathSolverParamd::beta)
+        .def_readonly("withIntercept", &FullPathSolverParamd::withIntercept)
         .def_readonly("strategy", &FullPathSolverParamd::strategy);
 
     pybind11::class_<FullPathSolverd>(m, "FullPathSolverd")
-        .def(pybind11::init<FullPathSolverParamd, bool>(),
-             pybind11::arg("param"), pybind11::arg("withintercept") = false)
+        .def(pybind11::init<FullPathSolverParamd>(), pybind11::arg("param"))
         .def("fit", &FullPathSolverd::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"))
-        .def_static("fitAll", &FullPathSolverd::fitAll,
-                    pybind11::arg("matData"), pybind11::arg("vectData"),
-                    pybind11::arg("beta"),
-                    pybind11::arg("withintercept") = false,
-                    pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution);
+             pybind11::arg("vectData"));
 
     using Vectord = l0l2::Vector<double>;
     using Matrixd = l0l2::Matrix<double>;
