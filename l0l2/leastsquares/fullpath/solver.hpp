@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <concepts>
-#include <cstdint>
 #include <future>
 #include <iomanip>
 #include <ios>
@@ -31,79 +30,65 @@ namespace l0l2
             template <std::floating_point ScalarType> class FullPathSolver final
             {
               public:
-                using Scalar =
-                    ScalarType; /*!< Alias for the used scalar type */
+                using Scalar = ScalarType;
 
                 struct Param final
                 {
                     /*! \brief l0l2 model parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
+                      \param withInterceptInput consider intercept or not.
                       \param strategyInput enum indicating a strategy: from
-                      zero, or l2 or both solutions.
+                      zero, or l2 or parallel.
                     */
                     Param(Scalar deltaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
-                          Strategy strategyInput = Strategy::SequentialFromZeroSolution)
+                          bool withInterceptInput = false,
+                          Strategy strategyInput =
+                              Strategy::SequentialFromZeroSolution)
                         : delta{deltaInput}, beta{betaInput},
+                          withIntercept{withInterceptInput},
                           strategy{strategyInput}
                     {
                     }
 
                     const Scalar delta;
                     const Scalar beta;
+                    const bool withIntercept;
                     const Strategy strategy;
                 };
 
                 /*! \brief A Full path solver object constructor.
-                  \param param regularization parameters.
-                  \param withIntercept boolean indicating with intercept or not.
-                  Default is false.
+                  \param param regularization and other parameters.
                 */
-                FullPathSolver(const Param &param, bool withIntercept = false)
-                    : m_Param{param}, m_WithIntercept{withIntercept},
+                FullPathSolver(const Param &param)
+                    : m_Param{param},
                       m_DeltaFromZeroSolution{
                           std::numeric_limits<Scalar>::max()},
                       m_DeltaFromL2Solution{static_cast<Scalar>(0)}
                 {
                 }
 
-                /*! \brief Fit full path solutions.
-                   \param matData contiguous data container representing matrix
-                   in column major layout.
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \param beta l2 regularization parameter.
-                   \param strategy an enum indicating a strategy: from zero, or
-                   l2 or both solutions.
-                   \return a list of solutions generating entire piecewise
-                   linear path solutions
+                /*! \brief Fit model.
+                   \param matData matrix containing the features data, #columns
+                   = #features, #rows = #samples.
+                   \param vectData vector containing the targets.
+                   \return a list containing one solution corresponding to the
+                   regularization parameters if delta > 0 and a list of
+                   solutions generating entire piecewise linear path solutions
+                   otherwise.
                  */
-                static std::list<Solution<Scalar>>
-                fitAll(const Matrix<Scalar> &matData,
-                       const Vector<Scalar> &vectData, Scalar beta,
-                       bool withIntercept = false,
-                       Strategy strategy = Strategy::SequentialFromZeroSolution);
-
-                /*! \brief Fit one solution.
-                   \param matData contiguous data container representing matrix
-                   in column major layout..
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \return a solution corresponding to the regularization
-                   parameters.
-                 */
-                Solution<Scalar> fit(const Matrix<Scalar> &matData,
-                                     const Vector<Scalar> &vectData);
+                std::list<Solution<Scalar>> fit(const Matrix<Scalar> &matData,
+                                                const Vector<Scalar> &vectData);
 
               private:
-                static std::list<Solution<Scalar>> fitAllNoIntercept(
-                    const Matrix<Scalar> &matData,
-                    const Vector<Scalar> &vectData, Scalar beta,
-                    Strategy strategy = Strategy::SequentialFromZeroSolution);
+                std::list<Solution<Scalar>>
+                fitNoIntercept(const Matrix<Scalar> &matData,
+                               const Vector<Scalar> &vectData);
 
-                Solution<Scalar> fitNoIntercept(const Matrix<Scalar> &matData,
-                                                const Vector<Scalar> &vectData);
+                std::list<Solution<Scalar>>
+                fitAllNoIntercept(const Matrix<Scalar> &matData,
+                                  const Vector<Scalar> &vectData);
 
                 std::list<Solution<Scalar>>
                 solveFromZero(const Matrix<Scalar> &matData,
@@ -141,8 +126,6 @@ namespace l0l2
 
                 const Param m_Param;
 
-                const bool m_WithIntercept;
-
                 volatile Scalar m_DeltaFromZeroSolution;
                 volatile Scalar m_DeltaFromL2Solution;
 
@@ -150,17 +133,16 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAll(const Matrix<Scalar> &matData,
-                                               const Vector<Scalar> &vectData,
-                                               Scalar beta, bool withIntercept,
-                                               Strategy strategy)
+            inline std::list<
+                Solution<typename FullPathSolver<ScalarType>::Scalar>>
+            FullPathSolver<ScalarType>::fit(const Matrix<Scalar> &matData,
+                                            const Vector<Scalar> &vectData)
             {
-                if (withIntercept)
+                if (m_Param.withIntercept)
                 {
-                    auto results = fitAllNoIntercept(
+                    auto results = fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
-                        vectData.array() - vectData.mean(), beta, strategy);
+                        vectData.array() - vectData.mean());
 
                     for (auto &result : results)
                     {
@@ -171,118 +153,21 @@ namespace l0l2
                     return results;
                 }
 
-                return fitAllNoIntercept(matData, vectData, beta, strategy);
-            }
-
-            template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAllNoIntercept(
-                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
-                Scalar beta, Strategy strategy)
-            {
-                using Solution = Solution<Scalar>;
-                using Vector = Vector<Scalar>;
-                using Utils = Utils<Scalar>;
-
-                FullPathSolver regressor{
-                    Param{static_cast<Scalar>(-1), beta, strategy}, false};
-
-                if (strategy == Strategy::SequentialFromZeroSolution)
-                {
-                    auto results = regressor.solveFromZero(matData, vectData);
-
-                    // remove delta infinity solution
-                    if (!results.empty())
-                    {
-                        results.pop_front();
-                    }
-
-                    return results;
-                }
-                else if (strategy == Strategy::SequentialFromL2Solution)
-                {
-                    auto results = regressor.solveFromL2(matData, vectData);
-
-                    // remove delta 0 solution
-                    if (!results.empty())
-                    {
-                        results.pop_back();
-                    }
-
-                    return results;
-                }
-                else
-                {
-                    auto fromZeroFuture = std::async(
-                        std::launch::async, &FullPathSolver::solveFromZero,
-                        &regressor, matData, vectData);
-
-                    auto fromL2SolutionResults =
-                        regressor.solveFromL2(matData, vectData);
-
-                    auto fromZeroSolutionResults = fromZeroFuture.get();
-
-                    if (!fromZeroSolutionResults.empty())
-                    { // clean delta infinity solution
-                        fromZeroSolutionResults.pop_front();
-                    }
-
-                    if (!fromL2SolutionResults.empty())
-                    { // clean delta 0 solution
-                        fromL2SolutionResults.pop_back();
-                    }
-
-                    const auto fromZeroSmallestDelta =
-                        fromZeroSolutionResults.back().delta - Utils::epsilon;
-
-                    for (auto it = fromL2SolutionResults.begin();
-                         it != fromL2SolutionResults.end(); ++it)
-                    {
-                        if (it->delta < fromZeroSmallestDelta)
-                        {
-                            fromZeroSolutionResults.push_back(std::move(*it));
-                        }
-                    }
-
-                    return fromZeroSolutionResults; // move
-                }
-            }
-
-            template <std::floating_point ScalarType>
-            Solution<typename FullPathSolver<ScalarType>::Scalar>
-            FullPathSolver<ScalarType>::fit(const Matrix<Scalar> &matData,
-                                            const Vector<Scalar> &vectData)
-            {
-                if (m_WithIntercept)
-                {
-                    auto solution = fitNoIntercept(
-                        matData.rowwise() - matData.colwise().mean(),
-                        vectData.array() - vectData.mean());
-
-                    solution.intercept = (vectData - matData * solution.x)
-                                             .mean(); // TODO use grad!
-
-                    return solution;
-                }
-
                 return fitNoIntercept(matData, vectData);
             }
 
             template <std::floating_point ScalarType>
-            Solution<typename FullPathSolver<ScalarType>::Scalar>
+            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
             FullPathSolver<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
-                using Solution = Solution<Scalar>;
-                using Utils = Utils<Scalar>;
-
                 if (m_Param.delta < static_cast<Scalar>(0))
                 {
-                    // Should throw an exception!!!
-                    std::cout << "\nNegative deltas not allowed: delta == "
-                              << m_Param.delta << "\n";
-                    return Solution{};
+                    return fitAllNoIntercept(matData, vectData);
                 }
+
+                using Solution = Solution<Scalar>;
+                using Utils = Utils<Scalar>;
 
                 Solution minBoundSolution{};
                 Solution maxBoundSolution{};
@@ -372,13 +257,84 @@ namespace l0l2
                         oneMinusAlpha * minBoundSolutiongrad +
                         alpha * maxBoundSolutiongrad;
 
-                    return minBoundSolution;
+                    return {minBoundSolution};
                 }
 
                 // Should throw an exception!!!
-                std::cout << "\nBad situation: delta == " << m_Param.delta
-                          << "\n";
-                return Solution{};
+                return {Solution{}};
+            }
+
+            template <std::floating_point ScalarType>
+            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+            FullPathSolver<ScalarType>::fitAllNoIntercept(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
+            {
+                using Solution = Solution<Scalar>;
+                using Vector = Vector<Scalar>;
+                using Utils = Utils<Scalar>;
+
+                FullPathSolver regressor{Param{m_Param.delta, m_Param.beta,
+                                               false, m_Param.strategy}};
+
+                if (m_Param.strategy == Strategy::SequentialFromZeroSolution)
+                {
+                    auto results = regressor.solveFromZero(matData, vectData);
+
+                    // remove delta infinity solution
+                    if (!results.empty())
+                    {
+                        results.pop_front();
+                    }
+
+                    return results;
+                }
+                else if (m_Param.strategy == Strategy::SequentialFromL2Solution)
+                {
+                    auto results = regressor.solveFromL2(matData, vectData);
+
+                    // remove delta 0 solution
+                    if (!results.empty())
+                    {
+                        results.pop_back();
+                    }
+
+                    return results;
+                }
+                else
+                {
+                    auto fromZeroFuture = std::async(
+                        std::launch::async, &FullPathSolver::solveFromZero,
+                        &regressor, matData, vectData);
+
+                    auto fromL2SolutionResults =
+                        regressor.solveFromL2(matData, vectData);
+
+                    auto fromZeroSolutionResults = fromZeroFuture.get();
+
+                    if (!fromZeroSolutionResults.empty())
+                    { // remove delta infinity solution
+                        fromZeroSolutionResults.pop_front();
+                    }
+
+                    if (!fromL2SolutionResults.empty())
+                    { // remove delta 0 solution
+                        fromL2SolutionResults.pop_back();
+                    }
+
+                    const auto fromZeroSmallestDelta =
+                        fromZeroSolutionResults.back().delta - Utils::epsilon;
+
+                    for (auto it = fromL2SolutionResults.begin();
+                         it != fromL2SolutionResults.end(); ++it)
+                    {
+                        if (it->delta < fromZeroSmallestDelta)
+                        {
+                            fromZeroSolutionResults.push_back(std::move(*it));
+                        }
+                    }
+
+                    return fromZeroSolutionResults;
+                }
             }
 
             template <std::floating_point ScalarType>

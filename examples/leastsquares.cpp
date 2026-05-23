@@ -61,9 +61,10 @@ int main()
     if (fullpath)
     {
         const auto start = std::chrono::high_resolution_clock::now();
+        FullPathSolverParam param{delta, beta, withIntercept,
+                                  Strategy::SequentialFromL2Solution};
 
-        auto results = FullPathSolver::fitAll(mat, vect, beta, withIntercept,
-                                              Strategy::SequentialFromL2Solution);
+        auto results = FullPathSolver{param}.fit(mat, vect);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -286,9 +287,10 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            FullPathSolverParam param{delta, beta, Strategy::SequentialFromZeroSolution};
+            FullPathSolverParam param{delta, beta, withIntercept,
+                                      Strategy::SequentialFromZeroSolution};
 
-            auto solution = FullPathSolver{param, withIntercept}.fit(mat, vect);
+            auto solutions = FullPathSolver{param}.fit(mat, vect);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -299,16 +301,18 @@ int main()
             std::cout << "\n\njob done in " << durationUs.count()
                       << " microseconds!\n\n";
             std::cout << "\nsolution\n"
-                      << l0l2::linearmodel::toString(solution, streamSize)
+                      << l0l2::linearmodel::toString(solutions.front(),
+                                                     streamSize)
                       << "\n";
         }
 
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            FullPathSolverParam param{delta, beta, Strategy::SequentialFromL2Solution};
+            FullPathSolverParam param{delta, beta, withIntercept,
+                                      Strategy::SequentialFromL2Solution};
 
-            auto solution = FullPathSolver{param, withIntercept}.fit(mat, vect);
+            auto solutions = FullPathSolver{param}.fit(mat, vect);
 
             const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -319,7 +323,8 @@ int main()
             std::cout << "\n\njob done in " << durationUs.count()
                       << " microseconds!\n\n";
             std::cout << "\nsolution\n"
-                      << l0l2::linearmodel::toString(solution, streamSize)
+                      << l0l2::linearmodel::toString(solutions.front(),
+                                                     streamSize)
                       << "\n";
         }
     }
