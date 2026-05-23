@@ -16,39 +16,50 @@ namespace l0l2
     {
         namespace leastsquares
         {
-            /*! \brief Cyclical Coordinate Descent Regressor Model concept.
+            /**
+             * @brief Concept for a type that can be used as coordinate descent
+             * concrete implementation in the generic solver.
+             * @details This concept ensures the type supports
+             * @param Scalar an inner type used as scalar type.
+             * @param stepJ a const member function that produces a scalar as a
+             * new value for coordinate j.
+             * @param stepIntercept a const member function that produces a
+             * scalar as a new value for the intercept.
+             * @param otherJ a const member function that produces a scalar as a
+             * new value for coordinate j if not concerned by the coordinate
+             * descent scheme.
+             * @param computeDualityGap a const member function that produces a
+             * scalar representing a duality gap.
+             * @tparam ImplementationType The type to check.
              */
-            template <class ModelImplementationType>
-            concept ModelLike = requires(ModelImplementationType impl) {
+            template <class ImplementationType>
+            concept CyclicCoordinateDescentImplementationLike = requires(
+                ImplementationType impl) {
                 {
                     std::as_const(impl).stepJ(
-                        typename ModelImplementationType::Scalar{},
-                        typename ModelImplementationType::Scalar{})
-                } -> std::convertible_to<
-                    typename ModelImplementationType::Scalar>;
+                        typename ImplementationType::Scalar{},
+                        typename ImplementationType::Scalar{})
+                } -> std::convertible_to<typename ImplementationType::Scalar>;
 
                 {
                     std::as_const(impl).stepIntercept(
-                        typename ModelImplementationType::Scalar{},
-                        typename ModelImplementationType::Scalar{})
-                } -> std::convertible_to<
-                    typename ModelImplementationType::Scalar>;
+                        typename ImplementationType::Scalar{},
+                        typename ImplementationType::Scalar{})
+                } -> std::convertible_to<typename ImplementationType::Scalar>;
 
                 {
                     std::as_const(impl).otherJ(
-                        typename ModelImplementationType::Scalar{},
-                        typename ModelImplementationType::Scalar{})
-                } -> std::convertible_to<
-                    typename ModelImplementationType::Scalar>;
+                        typename ImplementationType::Scalar{},
+                        typename ImplementationType::Scalar{})
+                } -> std::convertible_to<typename ImplementationType::Scalar>;
 
                 {
                     std::as_const(impl).computeDualityGap(
-                        Matrix<typename ModelImplementationType::Scalar>{},
-                        Vector<typename ModelImplementationType::Scalar>{},
+                        Matrix<typename ImplementationType::Scalar>{},
+                        Vector<typename ImplementationType::Scalar>{},
                         CoordinateStates{},
-                        Solution<typename ModelImplementationType::Scalar>{})
-                } -> std::convertible_to<
-                    typename ModelImplementationType::Scalar>;
+                        Solution<typename ImplementationType::Scalar>{})
+                } -> std::convertible_to<typename ImplementationType::Scalar>;
             };
 
             /*! \brief Cyclical Coordinate Descent Regressor class.
@@ -56,19 +67,20 @@ namespace l0l2
              * It produces solutions using cyclical coordinate descent
              * algorithm.
              */
-            template <ModelLike ModelImplementationType>
+            template <
+                CyclicCoordinateDescentImplementationLike ImplementationType>
             class CyclicCoordinateDescent final
             {
               public:
-                using ModelImplementation =
-                    ModelImplementationType; /*!< Alias for the model
-                                                implementation type */
+                using Implementation =
+                    ImplementationType; /*!< Alias for the implementation type
+                                         */
                 using Param =
-                    typename ModelImplementation::Param; /*!< Alias for the used
-                                                            parameter type */
+                    typename Implementation::Param; /*!< Alias for the used
+                                                       parameter type */
                 using Scalar =
-                    typename ModelImplementation::Scalar; /*!< Alias for the
-                                                             used scalar type */
+                    typename Implementation::Scalar; /*!< Alias for the used
+                                                        scalar type */
 
                 /*! \brief A cyclic coordinate descent solver object
                   constructor.
@@ -105,10 +117,10 @@ namespace l0l2
                 std::atomic_flag m_ParallelConverged;
             };
 
-            template <ModelLike ModelImplementationType>
-            Solution<typename CyclicCoordinateDescent<
-                ModelImplementationType>::Scalar>
-            CyclicCoordinateDescent<ModelImplementationType>::fitFrom(
+            template <
+                CyclicCoordinateDescentImplementationLike ImplementationType>
+            Solution<
+                typename CyclicCoordinateDescent<ImplementationType>::Scalar>
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 Solution<Scalar> &&initialSolution,
                 const CoordinateStates &coordinateStates)
@@ -151,7 +163,7 @@ namespace l0l2
 
                 const Vector zJs = matData.colwise().squaredNorm().transpose();
 
-                const ModelImplementation modelImplementation{m_Param};
+                const Implementation Implementation{m_Param};
 
                 unsigned int numberOfIterations = 0U;
                 while (true)
@@ -168,7 +180,7 @@ namespace l0l2
                         const auto uIntercept = R.sum() + zJ * oldIntercept;
 
                         intercept =
-                            modelImplementation.stepIntercept(zJ, uIntercept);
+                            Implementation.stepIntercept(zJ, uIntercept);
 
                         const auto interceptDiff = oldIntercept - intercept;
 
@@ -257,16 +269,17 @@ namespace l0l2
                     ++numberOfIterations;
                 }
 
-                dualityGap = modelImplementation.computeDualityGap(
+                dualityGap = Implementation.computeDualityGap(
                     matData, vectData, coordinateStates, solution);
 
                 return solution;
             }
 
-            template <ModelLike ModelImplementationType>
-            Solution<typename CyclicCoordinateDescent<
-                ModelImplementationType>::Scalar>
-            CyclicCoordinateDescent<ModelImplementationType>::fit(
+            template <
+                CyclicCoordinateDescentImplementationLike ImplementationType>
+            Solution<
+                typename CyclicCoordinateDescent<ImplementationType>::Scalar>
+            CyclicCoordinateDescent<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates)
             {
@@ -321,8 +334,7 @@ namespace l0l2
                 }
             }
 
-            template <std::floating_point ScalarType>
-            class ModelImplementationBase
+            template <std::floating_point ScalarType> class ImplementationBase
             {
               public:
                 using Scalar = ScalarType;
@@ -331,8 +343,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            inline ModelImplementationBase<ScalarType>::Scalar
-            ModelImplementationBase<ScalarType>::stepIntercept(
+            inline ImplementationBase<ScalarType>::Scalar
+            ImplementationBase<ScalarType>::stepIntercept(
                 Scalar zJ, Scalar uIntercept) const
             {
                 return uIntercept / zJ;

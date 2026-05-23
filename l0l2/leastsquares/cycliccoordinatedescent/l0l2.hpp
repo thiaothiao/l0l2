@@ -15,11 +15,11 @@ namespace l0l2
         {
             // L0L2 coordinate descent stepJ implementation
             template <std::floating_point ScalarType>
-            class L0L2ModelImplementation final
-                : public ModelImplementationBase<ScalarType>
+            class L0L2Implementation final
+                : public ImplementationBase<ScalarType>
             {
               public:
-                using Base = ModelImplementationBase<ScalarType>;
+                using Base = ImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
                 struct Param final
@@ -72,7 +72,7 @@ namespace l0l2
                     const Scalar deltaBeta;
                 };
 
-                L0L2ModelImplementation(const Param &paramInput = {})
+                L0L2Implementation(const Param &paramInput = {})
                     : param{paramInput}
                 {
                 }
@@ -93,8 +93,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            inline L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::stepJ(Scalar zJ,
+            inline L0L2Implementation<ScalarType>::Scalar
+            L0L2Implementation<ScalarType>::stepJ(Scalar zJ,
                                                        Scalar uJ) const
             {
                 return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
@@ -107,16 +107,16 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            inline L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ,
+            inline L0L2Implementation<ScalarType>::Scalar
+            L0L2Implementation<ScalarType>::otherJ(Scalar zJ,
                                                         Scalar uJ) const
             {
                 return uJ / (zJ + param.beta);
             }
 
             template <std::floating_point ScalarType>
-            L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::computeDualityGap(
+            L0L2Implementation<ScalarType>::Scalar
+            L0L2Implementation<ScalarType>::computeDualityGap(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates,
                 const Solution<Scalar> &solution) const
@@ -292,7 +292,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using L0L2Regressor =
-                CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
+                CyclicCoordinateDescent<L0L2Implementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2

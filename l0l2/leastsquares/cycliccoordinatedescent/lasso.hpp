@@ -14,11 +14,11 @@ namespace l0l2
         {
             // LASSO coordinate descent stepJ implementation
             template <std::floating_point ScalarType>
-            class LASSOModelImplementation final
-                : public ModelImplementationBase<ScalarType>
+            class LASSOImplementation final
+                : public ImplementationBase<ScalarType>
             {
               public:
-                using Base = ModelImplementationBase<ScalarType>;
+                using Base = ImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
                 struct Param final
@@ -58,7 +58,7 @@ namespace l0l2
                     const Scalar gammaOver2;
                 };
 
-                LASSOModelImplementation(const Param &paramInput = {})
+                LASSOImplementation(const Param &paramInput = {})
                     : param{paramInput}
                 {
                 }
@@ -79,8 +79,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            inline LASSOModelImplementation<ScalarType>::Scalar
-            LASSOModelImplementation<ScalarType>::stepJ(Scalar zJ,
+            inline LASSOImplementation<ScalarType>::Scalar
+            LASSOImplementation<ScalarType>::stepJ(Scalar zJ,
                                                         Scalar uJ) const
             {
                 return (std::abs(uJ) > param.gammaOver2)
@@ -91,16 +91,16 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            inline LASSOModelImplementation<ScalarType>::Scalar
-            LASSOModelImplementation<ScalarType>::otherJ(
+            inline LASSOImplementation<ScalarType>::Scalar
+            LASSOImplementation<ScalarType>::otherJ(
                 [[maybe_unused]] Scalar zJ, [[maybe_unused]] Scalar uJ) const
             {
                 return static_cast<Scalar>(0);
             }
 
             template <std::floating_point ScalarType>
-            LASSOModelImplementation<ScalarType>::Scalar
-            LASSOModelImplementation<ScalarType>::computeDualityGap(
+            LASSOImplementation<ScalarType>::Scalar
+            LASSOImplementation<ScalarType>::computeDualityGap(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 [[maybe_unused]] const CoordinateStates &coordinateStates,
                 const Solution<Scalar> &solution) const
@@ -157,7 +157,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using LASSORegressor =
-                CyclicCoordinateDescent<LASSOModelImplementation<ScalarType>>;
+                CyclicCoordinateDescent<LASSOImplementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2

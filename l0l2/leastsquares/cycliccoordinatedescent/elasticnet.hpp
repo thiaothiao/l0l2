@@ -14,11 +14,11 @@ namespace l0l2
         {
             // ELASTICNET coordinate descent stepJ implementation
             template <std::floating_point ScalarType>
-            class ELASTICNETModelImplementation final
-                : public ModelImplementationBase<ScalarType>
+            class ELASTICNETImplementation final
+                : public ImplementationBase<ScalarType>
             {
               public:
-                using Base = ModelImplementationBase<ScalarType>;
+                using Base = ImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
                 struct Param final
@@ -61,7 +61,7 @@ namespace l0l2
                     const Scalar gammaOver2;
                 };
 
-                ELASTICNETModelImplementation(const Param &paramInput = {})
+                ELASTICNETImplementation(const Param &paramInput = {})
                     : param{paramInput}
                 {
                 }
@@ -82,8 +82,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            inline ELASTICNETModelImplementation<ScalarType>::Scalar
-            ELASTICNETModelImplementation<ScalarType>::stepJ(Scalar zJ,
+            inline ELASTICNETImplementation<ScalarType>::Scalar
+            ELASTICNETImplementation<ScalarType>::stepJ(Scalar zJ,
                                                              Scalar uJ) const
             {
                 return (std::abs(uJ) > param.gammaOver2)
@@ -94,16 +94,16 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            inline ELASTICNETModelImplementation<ScalarType>::Scalar
-            ELASTICNETModelImplementation<ScalarType>::otherJ(
+            inline ELASTICNETImplementation<ScalarType>::Scalar
+            ELASTICNETImplementation<ScalarType>::otherJ(
                 [[maybe_unused]] Scalar zJ, [[maybe_unused]] Scalar uJ) const
             {
                 return static_cast<Scalar>(0);
             }
 
             template <std::floating_point ScalarType>
-            ELASTICNETModelImplementation<ScalarType>::Scalar
-            ELASTICNETModelImplementation<ScalarType>::computeDualityGap(
+            ELASTICNETImplementation<ScalarType>::Scalar
+            ELASTICNETImplementation<ScalarType>::computeDualityGap(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 [[maybe_unused]] const CoordinateStates &coordinateStates,
                 const Solution<Scalar> &solution) const
@@ -165,7 +165,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using ELASTICNETRegressor = CyclicCoordinateDescent<
-                ELASTICNETModelImplementation<ScalarType>>;
+                ELASTICNETImplementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2

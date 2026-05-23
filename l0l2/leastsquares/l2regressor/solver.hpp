@@ -13,38 +13,38 @@ namespace l0l2
     {
         namespace leastsquares
         {
-            template <class ModelImplementationType>
+            template <class ImplementationType>
             concept NoInterceptDirectL2RegressorLike =
-                requires(ModelImplementationType impl) {
+                requires(ImplementationType impl) {
                     {
                         std::as_const(impl).fitNoIntercept(
-                            Matrix<typename ModelImplementationType::Scalar>{},
-                            Vector<typename ModelImplementationType::Scalar>{},
+                            Matrix<typename ImplementationType::Scalar>{},
+                            Vector<typename ImplementationType::Scalar>{},
                             CoordinateStates{})
                     } -> std::convertible_to<
-                        Solution<typename ModelImplementationType::Scalar>>;
+                        Solution<typename ImplementationType::Scalar>>;
                 };
 
-            template <class ModelImplementationType>
-            concept NoInterceptIterativeL2RegressorLike = requires(
-                ModelImplementationType impl) {
-                {
-                    std::as_const(impl).fitNoIntercept(
-                        Matrix<typename ModelImplementationType::Scalar>{},
-                        Vector<typename ModelImplementationType::Scalar>{},
-                        typename ModelImplementationType::Scalar{}, 0U,
-                        Solution<typename ModelImplementationType::Scalar>{},
-                        CoordinateStates{})
-                } -> std::convertible_to<
-                    Solution<typename ModelImplementationType::Scalar>>;
-            };
+            template <class ImplementationType>
+            concept NoInterceptIterativeL2RegressorLike =
+                requires(ImplementationType impl) {
+                    {
+                        std::as_const(impl).fitNoIntercept(
+                            Matrix<typename ImplementationType::Scalar>{},
+                            Vector<typename ImplementationType::Scalar>{},
+                            typename ImplementationType::Scalar{}, 0U,
+                            Solution<typename ImplementationType::Scalar>{},
+                            CoordinateStates{})
+                    } -> std::convertible_to<
+                        Solution<typename ImplementationType::Scalar>>;
+                };
 
-            template <NoInterceptDirectL2RegressorLike ModelImplementationType>
+            template <NoInterceptDirectL2RegressorLike ImplementationType>
             class L2RegressorDirect final
             {
               public:
-                using ModelImplementation = ModelImplementationType;
-                using Scalar = typename ModelImplementation::Scalar;
+                using Implementation = ImplementationType;
+                using Scalar = typename Implementation::Scalar;
 
                 L2RegressorDirect(Scalar beta, bool hasIntercept)
                     : m_Beta{beta}, m_HasIntercept{hasIntercept}
@@ -61,18 +61,17 @@ namespace l0l2
                 const bool m_HasIntercept;
             };
 
-            template <NoInterceptDirectL2RegressorLike ModelImplementationType>
-            Solution<
-                typename L2RegressorDirect<ModelImplementationType>::Scalar>
-            L2RegressorDirect<ModelImplementationType>::fit(
+            template <NoInterceptDirectL2RegressorLike ImplementationType>
+            Solution<typename L2RegressorDirect<ImplementationType>::Scalar>
+            L2RegressorDirect<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates) const
             {
-                const ModelImplementation modelImplementation{m_Beta};
+                const Implementation implementation{m_Beta};
 
                 if (m_HasIntercept)
                 {
-                    auto solution = modelImplementation.fitNoIntercept(
+                    auto solution = implementation.fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
                         vectData.array() - vectData.mean(), coordinateStates);
 
@@ -82,17 +81,16 @@ namespace l0l2
                     return solution;
                 }
 
-                return modelImplementation.fitNoIntercept(matData, vectData,
+                return implementation.fitNoIntercept(matData, vectData,
                                                           coordinateStates);
             }
 
-            template <
-                NoInterceptIterativeL2RegressorLike ModelImplementationType>
+            template <NoInterceptIterativeL2RegressorLike ImplementationType>
             class L2RegressorIterative final
             {
               public:
-                using ModelImplementation = ModelImplementationType;
-                using Scalar = typename ModelImplementation::Scalar;
+                using Implementation = ImplementationType;
+                using Scalar = typename Implementation::Scalar;
 
                 L2RegressorIterative(Scalar beta, bool hasIntercept)
                     : m_Beta{beta}, m_HasIntercept{hasIntercept}
@@ -111,21 +109,19 @@ namespace l0l2
                 const bool m_HasIntercept;
             };
 
-            template <
-                NoInterceptIterativeL2RegressorLike ModelImplementationType>
-            Solution<
-                typename L2RegressorIterative<ModelImplementationType>::Scalar>
-            L2RegressorIterative<ModelImplementationType>::fit(
+            template <NoInterceptIterativeL2RegressorLike ImplementationType>
+            Solution<typename L2RegressorIterative<ImplementationType>::Scalar>
+            L2RegressorIterative<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 Scalar epsilon, unsigned int maxNumberOfIterations,
                 const Solution<Scalar> &guess,
                 const CoordinateStates &coordinateStates) const
             {
-                const ModelImplementation modelImplementation{m_Beta};
+                const Implementation implementation{m_Beta};
 
                 if (m_HasIntercept)
                 {
-                    auto solution = modelImplementation.fitNoIntercept(
+                    auto solution = implementation.fitNoIntercept(
                         matData.rowwise() - matData.colwise().mean(),
                         vectData.array() - vectData.mean(), epsilon,
                         maxNumberOfIterations, guess, coordinateStates);
@@ -136,18 +132,18 @@ namespace l0l2
                     return solution;
                 }
 
-                return modelImplementation.fitNoIntercept(
+                return implementation.fitNoIntercept(
                     matData, vectData, epsilon, maxNumberOfIterations, guess,
                     coordinateStates);
             }
 
             template <std::floating_point ScalarType>
-            class LDLTModelImplementation final
+            class LDLTImplementation final
             {
               public:
                 using Scalar = ScalarType;
 
-                LDLTModelImplementation(Scalar beta) : m_Beta{beta} {}
+                LDLTImplementation(Scalar beta) : m_Beta{beta} {}
 
                 Solution<Scalar>
                 fitNoIntercept(const Matrix<Scalar> &matData,
@@ -159,8 +155,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            Solution<typename LDLTModelImplementation<ScalarType>::Scalar>
-            LDLTModelImplementation<ScalarType>::fitNoIntercept(
+            Solution<typename LDLTImplementation<ScalarType>::Scalar>
+            LDLTImplementation<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 [[maybe_unused]] const CoordinateStates &coordinateStates) const
             {
@@ -176,12 +172,12 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            class QRModelImplementation final
+            class QRImplementation final
             {
               public:
                 using Scalar = ScalarType;
 
-                QRModelImplementation(Scalar beta) : m_Beta{beta} {}
+                QRImplementation(Scalar beta) : m_Beta{beta} {}
 
                 Solution<Scalar>
                 fitNoIntercept(const Matrix<Scalar> &matData,
@@ -193,8 +189,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            Solution<typename QRModelImplementation<ScalarType>::Scalar>
-            QRModelImplementation<ScalarType>::fitNoIntercept(
+            Solution<typename QRImplementation<ScalarType>::Scalar>
+            QRImplementation<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 [[maybe_unused]] const CoordinateStates &coordinateStates) const
             {
@@ -211,11 +207,11 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using LDLTL2Regressor =
-                L2RegressorDirect<LDLTModelImplementation<ScalarType>>;
+                L2RegressorDirect<LDLTImplementation<ScalarType>>;
 
             template <std::floating_point ScalarType>
             using QRL2Regressor =
-                L2RegressorDirect<QRModelImplementation<ScalarType>>;
+                L2RegressorDirect<QRImplementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2
@@ -386,12 +382,12 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            class PCGModelImplementation final
+            class PCGImplementation final
             {
               public:
                 using Scalar = ScalarType;
 
-                PCGModelImplementation(Scalar beta) : m_Beta{beta} {}
+                PCGImplementation(Scalar beta) : m_Beta{beta} {}
 
                 Solution<Scalar>
                 fitNoIntercept(const Matrix<Scalar> &matData,
@@ -405,8 +401,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            Solution<typename PCGModelImplementation<ScalarType>::Scalar>
-            PCGModelImplementation<ScalarType>::fitNoIntercept(
+            Solution<typename PCGImplementation<ScalarType>::Scalar>
+            PCGImplementation<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 Scalar epsilon, unsigned int maxNumberOfIterations,
                 [[maybe_unused]] const Solution<Scalar> &guess,
@@ -435,7 +431,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using PCGL2Regressor =
-                L2RegressorIterative<PCGModelImplementation<ScalarType>>;
+                L2RegressorIterative<PCGImplementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2
