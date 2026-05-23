@@ -79,9 +79,21 @@ namespace l0l2
 
                 using Base::stepIntercept;
 
-                Scalar stepJ(Scalar zJ, Scalar uJ) const;
+                Scalar stepJ(Scalar zJ, Scalar uJ) const
+                {
+                    return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
+                               ? (uJ / (param.beta + zJ))
+                               : ((std::abs(uJ) > param.deltaBeta)
+                                      ? ((uJ - param.deltaBeta *
+                                                   Utils<Scalar>::sign(uJ)) /
+                                         zJ)
+                                      : static_cast<Scalar>(0));
+                }
 
-                Scalar otherJ(Scalar zJ, Scalar uJ) const;
+                Scalar otherJ(Scalar zJ, Scalar uJ) const
+                {
+                    return uJ / (zJ + param.beta);
+                }
 
                 Scalar
                 computeDualityGap(const Matrix<Scalar> &matData,
@@ -91,28 +103,6 @@ namespace l0l2
 
                 Param param;
             };
-
-            template <std::floating_point ScalarType>
-            inline L0L2Implementation<ScalarType>::Scalar
-            L0L2Implementation<ScalarType>::stepJ(Scalar zJ,
-                                                       Scalar uJ) const
-            {
-                return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
-                           ? (uJ / (param.beta + zJ))
-                           : ((std::abs(uJ) > param.deltaBeta)
-                                  ? ((uJ - param.deltaBeta *
-                                               Utils<Scalar>::sign(uJ)) /
-                                     zJ)
-                                  : static_cast<Scalar>(0));
-            }
-
-            template <std::floating_point ScalarType>
-            inline L0L2Implementation<ScalarType>::Scalar
-            L0L2Implementation<ScalarType>::otherJ(Scalar zJ,
-                                                        Scalar uJ) const
-            {
-                return uJ / (zJ + param.beta);
-            }
 
             template <std::floating_point ScalarType>
             L0L2Implementation<ScalarType>::Scalar

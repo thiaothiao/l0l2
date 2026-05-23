@@ -68,9 +68,20 @@ namespace l0l2
 
                 using Base::stepIntercept;
 
-                Scalar stepJ(Scalar zJ, Scalar uJ) const;
+                Scalar stepJ(Scalar zJ, Scalar uJ) const
+                {
+                    return (std::abs(uJ) > param.gammaOver2)
+                               ? ((uJ -
+                                   Utils<Scalar>::sign(uJ) * param.gammaOver2) /
+                                  (param.beta + zJ))
+                               : static_cast<Scalar>(0);
+                }
 
-                Scalar otherJ(Scalar zJ, Scalar uJ) const;
+                Scalar otherJ([[maybe_unused]] Scalar zJ,
+                              [[maybe_unused]] Scalar uJ) const
+                {
+                    return static_cast<Scalar>(0);
+                }
 
                 Scalar
                 computeDualityGap(const Matrix<Scalar> &matData,
@@ -80,26 +91,6 @@ namespace l0l2
 
                 Param param;
             };
-
-            template <std::floating_point ScalarType>
-            inline ELASTICNETImplementation<ScalarType>::Scalar
-            ELASTICNETImplementation<ScalarType>::stepJ(Scalar zJ,
-                                                             Scalar uJ) const
-            {
-                return (std::abs(uJ) > param.gammaOver2)
-                           ? ((uJ -
-                               Utils<Scalar>::sign(uJ) * param.gammaOver2) /
-                              (param.beta + zJ))
-                           : static_cast<Scalar>(0);
-            }
-
-            template <std::floating_point ScalarType>
-            inline ELASTICNETImplementation<ScalarType>::Scalar
-            ELASTICNETImplementation<ScalarType>::otherJ(
-                [[maybe_unused]] Scalar zJ, [[maybe_unused]] Scalar uJ) const
-            {
-                return static_cast<Scalar>(0);
-            }
 
             template <std::floating_point ScalarType>
             ELASTICNETImplementation<ScalarType>::Scalar
