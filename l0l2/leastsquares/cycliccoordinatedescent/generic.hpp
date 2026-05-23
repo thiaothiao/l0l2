@@ -106,11 +106,10 @@ namespace l0l2
                     const CoordinateStates &coordinateStates = {});
 
               private:
-                Solution<Scalar>
-                fitFrom(const Matrix<Scalar> &matData,
-                        const Vector<Scalar> &vectData,
-                        Solution<Scalar> &&initialSolution,
-                        const CoordinateStates &coordinateStates);
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData,
+                                     Solution<Scalar> initialSolution,
+                                     const CoordinateStates &coordinateStates);
 
                 const Param m_Param;
 
@@ -121,8 +120,9 @@ namespace l0l2
                 CyclicCoordinateDescentImplementationLike ImplementationType>
             Solution<
                 typename CyclicCoordinateDescent<ImplementationType>::Scalar>
+            CyclicCoordinateDescent<ImplementationType>::fit(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
-                Solution<Scalar> &&initialSolution,
+                Solution<Scalar> initialSolution,
                 const CoordinateStates &coordinateStates)
             {
                 using Vector = Vector<Scalar>;
@@ -283,6 +283,7 @@ namespace l0l2
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates)
             {
+                using Matrix = Matrix<Scalar>;
                 using Vector = Vector<Scalar>;
                 using L2Regressor = PCGL2Regressor<Scalar>;
                 using Solution = Solution<Scalar>;
@@ -293,7 +294,7 @@ namespace l0l2
 
                 if (m_Param.strategy != Strategy::Parallel)
                 {
-                    return fitFrom(
+                    return fit(
                         matData, vectData,
                         m_Param.strategy == Strategy::SequentialFromZeroSolution
                             ? Solution(Vector::Zero(n))
@@ -308,17 +309,21 @@ namespace l0l2
                     m_ParallelConverged.clear(std::memory_order_relaxed);
 
                     auto fromZeroFuture = std::async(
-                        std::launch::async, &CyclicCoordinateDescent::fitFrom,
+                        std::launch::async,
+                        static_cast<Solution (CyclicCoordinateDescent::*)(
+                            const Matrix &, const Vector &, Solution,
+                            const CoordinateStates &)>(
+                            &CyclicCoordinateDescent::fit),
                         this, matData, vectData, Solution(Vector::Zero(n)),
                         coordinateStates);
 
-                    auto fromL2Solution = fitFrom(
-                        matData, vectData,
-                        L2Regressor(m_Param.beta, hasIntercept)
-                            .fit(matData, vectData, m_Param.innerEpsilon,
-                                 m_Param.innerMaximumNumberOfIterations, {},
-                                 coordinateStates),
-                        coordinateStates);
+                    auto fromL2Solution =
+                        fit(matData, vectData,
+                            L2Regressor(m_Param.beta, hasIntercept)
+                                .fit(matData, vectData, m_Param.innerEpsilon,
+                                     m_Param.innerMaximumNumberOfIterations, {},
+                                     coordinateStates),
+                            coordinateStates);
 
                     auto fromZeroSolution = fromZeroFuture.get();
 

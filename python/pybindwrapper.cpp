@@ -52,6 +52,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     using Index = l0l2::Index;
     using Vectorf = l0l2::Vector<float>;
+    using Matrixf = l0l2::Matrix<float>;
 
     using Solutionf = l0l2::linearmodel::leastsquares::Solution<float>;
     pybind11::class_<Solutionf>(m, "Solutionf")
@@ -88,8 +89,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
         .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
-        .def("fit", &L0L2Regressorf::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"),
+        .def("fit",
+             pybind11::overload_cast<const Matrixf &, const Vectorf &,
+                                     const CoordinateStates &>(
+                 &L0L2Regressorf::fit),
+             pybind11::arg("matData"), pybind11::arg("vectData"),
              pybind11::arg("coordinateStates") = CoordinateStates{});
 
     using SimpleBranchAndBoundf = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<float>;
@@ -141,6 +145,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
                     pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution);
 
     using Vectord = l0l2::Vector<double>;
+    using Matrixd = l0l2::Matrix<double>;
 
     using Solutiond = l0l2::linearmodel::leastsquares::Solution<double>;
     pybind11::class_<Solutiond>(m, "Solutiond")
@@ -175,8 +180,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
         .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
-        .def("fit", &L0L2Regressord::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"),
+        .def("fit",
+             pybind11::overload_cast<const Matrixd &, const Vectord &,
+                                     const CoordinateStates &>(
+                 &L0L2Regressord::fit),
+             pybind11::arg("matData"), pybind11::arg("vectData"),
              pybind11::arg("coordinateStates") = CoordinateStates{});
 
     using SimpleBranchAndBoundd = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<double>;
