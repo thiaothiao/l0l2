@@ -23,11 +23,12 @@ namespace l0l2
 
                 struct Param final
                 {
-                    /*! \brief l0l2 model parameter object constructor.
+                    /*! \brief l0l2 method parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
-                      \param strategyInput enum indicating a strategy: from
-                      zero, or l2 or both solutions.
+                      \param hasInterceptInput consider intercept or not.
+                      \param strategyInput enum indicating a strategy:
+                      sequential from zero, or l2 or parallel.
                       \param toleranceInput covergence tolerance on the
                       coordinates changes.
                       \param maximumNumberOfIterationsInput maximum number of

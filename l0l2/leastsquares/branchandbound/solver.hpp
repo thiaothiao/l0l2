@@ -16,7 +16,8 @@ namespace l0l2
     {
         namespace leastsquares
         {
-            // L0L2 branch and bound implementation
+            // L0L2 convex biconjugate relaxation based branch and bound
+            // implementation
             template <std::floating_point ScalarType>
             class SimpleBranchAndBound final
                 : public CyclicCoordinateDescentDetails<
@@ -61,6 +62,12 @@ namespace l0l2
                 {
                 }
 
+                /*! \brief Fit model.
+                   \param matData matrix containing the features data, #columns
+                   = #features, #rows = #samples.
+                   \param vectData vector containing the targets.
+                   \return a result containing computed solution informations.
+                 */
                 Solution<Scalar> fit(const Matrix<Scalar> &matData,
                                      const Vector<Scalar> &vectData);
 

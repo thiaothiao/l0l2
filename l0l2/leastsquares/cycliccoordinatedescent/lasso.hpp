@@ -21,6 +21,16 @@ namespace l0l2
                 using Base = ImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
+                /*! \brief lasso method parameter object constructor.
+                  \param gammaInput lasso regularization parameter.
+                  \param hasInterceptInput has intercept or not.
+                  \param strategyInput enum indicating a strategy:
+                  sequential from zero, or l2 or parallel.
+                  \param toleranceInput covergence tolerance on the
+                  coordinates changes.
+                  \param maximumNumberOfIterationsInput maximum number of
+                  iterations allowed.
+                */
                 struct Param final
                 {
                     Param(Scalar gammaInput = static_cast<Scalar>(0),

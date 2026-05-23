@@ -23,6 +23,17 @@ namespace l0l2
 
                 struct Param final
                 {
+                    /*! \brief lasso method parameter object constructor.
+                      \param gammaInput lasso regularization parameter.
+                      \param betaInput l2 regularization parameter.
+                      \param hasInterceptInput has intercept or not.
+                      \param strategyInput enum indicating a strategy:
+                      sequential from zero, or l2 or parallel.
+                      \param toleranceInput covergence tolerance on the
+                      coordinates changes.
+                      \param maximumNumberOfIterationsInput maximum number of
+                      iterations allowed.
+                    */
                     Param(Scalar gammaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
                           bool hasInterceptInput = false,

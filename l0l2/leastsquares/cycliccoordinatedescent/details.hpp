@@ -67,32 +67,15 @@ namespace l0l2
             class CyclicCoordinateDescentDetails
             {
               protected:
-                using Implementation =
-                    ImplementationType; /*!< Alias for the implementation type
-                                         */
-                using Param = typename Implementation::Param; /*!< Alias for the
-                                 used parameter type */
-                using Scalar = typename Implementation::Scalar; /*!< Alias for
-                                  the used scalar type */
+                using Implementation = ImplementationType;
+                using Param = typename Implementation::Param;
+                using Scalar = typename Implementation::Scalar;
 
-                /*! \brief A cyclic coordinate descent solver object
-                  constructor.
-                  \param param regularization parameters.
-                  \param withIntercept boolean indicating with intercept or not.
-                  Default is false.
-                */
                 CyclicCoordinateDescentDetails(const Param &param)
                     : m_Param{param}, m_ParallelConverged{}
                 {
                 }
 
-                /*! \brief Fit model.
-                   \param matData contiguous data container representing matrix
-                   in column major layout.
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \return a solution in the format Solution.
-                 */
                 Solution<Scalar> fit(const Matrix<Scalar> &matData,
                                      const Vector<Scalar> &vectData,
                                      const CoordinateStates &coordinateStates);

@@ -31,19 +31,18 @@ namespace l0l2
 
                 /*! \brief A cyclic coordinate descent solver object
                   constructor.
-                  \param param underlying implregularization parameters.
+                  \param param underlying implementation parameters.
                 */
                 GenericCyclicCoordinateDescent(const Param &param) : Base{param} {}
 
                 /*! \brief Fit model.
-                   \param matData contiguous data container representing matrix
-                   in column major layout.
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \return a solution in the format Solution.
+                   \param matData matrix containing the features data, #columns
+                   = #features, #rows = #samples.
+                   \param vectData vector containing the targets.
+                   \return a result containing computed solution informations.
                  */
-                auto fit(const Matrix<Scalar> &matData,
-                         const Vector<Scalar> &vectData)
+                Solution<Scalar> fit(const Matrix<Scalar> &matData,
+                                     const Vector<Scalar> &vectData)
                 {
                     return Base::fit(matData, vectData, {});
                 }
