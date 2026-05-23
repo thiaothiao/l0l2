@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <concepts>
-#include <utility>
 
 #include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
 #include <l0l2/leastsquares/utils.hpp>
@@ -15,20 +14,21 @@ namespace l0l2
         {
             // L0L2 coordinate descent stepJ implementation
             template <std::floating_point ScalarType>
-            class L0L2ModelImplementation final
-                : public ModelImplementationBase<ScalarType>
+            class L0L2Implementation final
+                : public ImplementationBase<ScalarType>
             {
               public:
-                using Base = ModelImplementationBase<ScalarType>;
+                using Base = ImplementationBase<ScalarType>;
                 using typename Base::Scalar;
 
                 struct Param final
                 {
-                    /*! \brief l0l2 model parameter object constructor.
+                    /*! \brief l0l2 method parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
-                      \param strategyInput enum indicating a strategy: from
-                      zero, or l2 or both solutions.
+                      \param hasInterceptInput consider intercept or not.
+                      \param strategyInput enum indicating a strategy:
+                      sequential from zero, or l2 or parallel.
                       \param toleranceInput covergence tolerance on the
                       coordinates changes.
                       \param maximumNumberOfIterationsInput maximum number of
@@ -37,7 +37,7 @@ namespace l0l2
                     Param(Scalar deltaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
                           bool hasInterceptInput = false,
-                          Strategy strategyInput = Strategy::FromZeroSolution,
+                          Strategy strategyInput = Strategy::SequentialFromZeroSolution,
                           Scalar toleranceInput = static_cast<Scalar>(1e-4),
                           unsigned int maximumNumberOfIterationsInput = 10000U,
                           Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
@@ -72,16 +72,28 @@ namespace l0l2
                     const Scalar deltaBeta;
                 };
 
-                L0L2ModelImplementation(const Param &paramInput = {})
+                L0L2Implementation(const Param &paramInput = {})
                     : param{paramInput}
                 {
                 }
 
                 using Base::stepIntercept;
 
-                Scalar stepJ(Scalar zJ, Scalar uJ) const;
+                Scalar stepJ(Scalar zJ, Scalar uJ) const
+                {
+                    return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
+                               ? (uJ / (param.beta + zJ))
+                               : ((std::abs(uJ) > param.deltaBeta)
+                                      ? ((uJ - param.deltaBeta *
+                                                   Utils<Scalar>::sign(uJ)) /
+                                         zJ)
+                                      : static_cast<Scalar>(0));
+                }
 
-                Scalar otherJ(Scalar zJ, Scalar uJ) const;
+                Scalar otherJ(Scalar zJ, Scalar uJ) const
+                {
+                    return uJ / (zJ + param.beta);
+                }
 
                 Scalar
                 computeDualityGap(const Matrix<Scalar> &matData,
@@ -93,30 +105,8 @@ namespace l0l2
             };
 
             template <std::floating_point ScalarType>
-            inline L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::stepJ(Scalar zJ,
-                                                       Scalar uJ) const
-            {
-                return (std::abs(uJ) >= param.deltaBeta + zJ * param.delta)
-                           ? (uJ / (param.beta + zJ))
-                           : ((std::abs(uJ) > param.deltaBeta)
-                                  ? ((uJ - param.deltaBeta *
-                                               Utils<Scalar>::sign(uJ)) /
-                                     zJ)
-                                  : static_cast<Scalar>(0));
-            }
-
-            template <std::floating_point ScalarType>
-            inline L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::otherJ(Scalar zJ,
-                                                        Scalar uJ) const
-            {
-                return uJ / (zJ + param.beta);
-            }
-
-            template <std::floating_point ScalarType>
-            L0L2ModelImplementation<ScalarType>::Scalar
-            L0L2ModelImplementation<ScalarType>::computeDualityGap(
+            L0L2Implementation<ScalarType>::Scalar
+            L0L2Implementation<ScalarType>::computeDualityGap(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData,
                 const CoordinateStates &coordinateStates,
                 const Solution<Scalar> &solution) const
@@ -170,11 +160,11 @@ namespace l0l2
                     auto tmp = static_cast<Scalar>(0);
                     for (Index j = 0; j < n; ++j)
                     {
-                        if (coordinateStates[j] == CoordinateState::ZERO)
+                        if (coordinateStates[j] == CoordinateState::Zero)
                         {
                             theta[j] = static_cast<Scalar>(0);
                         }
-                        else if (coordinateStates[j] == CoordinateState::FREE)
+                        else if (coordinateStates[j] == CoordinateState::Nonzero)
                         {
                             tmp += theta[j] * theta[j];
                             theta[j] = static_cast<Scalar>(0);
@@ -182,7 +172,7 @@ namespace l0l2
                     }
 
                     aCoeff += betaDeltaSquared *
-                                  (coordinateStates == CoordinateState::FREE)
+                                  (coordinateStates == CoordinateState::Nonzero)
                                       .count() -
                               static_cast<Scalar>(0.25) * tmp *
                                   betaDeltaSquared * betaDeltaSquared /
@@ -292,7 +282,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using L0L2Regressor =
-                CyclicCoordinateDescent<L0L2ModelImplementation<ScalarType>>;
+                GenericCyclicCoordinateDescent<L0L2Implementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2

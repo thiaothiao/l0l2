@@ -44,7 +44,7 @@ namespace l0l2
                     */
                     Param(Scalar deltaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
-                          Strategy strategyInput = Strategy::FromZeroSolution)
+                          Strategy strategyInput = Strategy::SequentialFromZeroSolution)
                         : delta{deltaInput}, beta{betaInput},
                           strategy{strategyInput}
                     {
@@ -83,7 +83,7 @@ namespace l0l2
                 fitAll(const Matrix<Scalar> &matData,
                        const Vector<Scalar> &vectData, Scalar beta,
                        bool withIntercept = false,
-                       Strategy strategy = Strategy::FromZeroSolution);
+                       Strategy strategy = Strategy::SequentialFromZeroSolution);
 
                 /*! \brief Fit one solution.
                    \param matData contiguous data container representing matrix
@@ -100,7 +100,7 @@ namespace l0l2
                 static std::list<Solution<Scalar>> fitAllNoIntercept(
                     const Matrix<Scalar> &matData,
                     const Vector<Scalar> &vectData, Scalar beta,
-                    Strategy strategy = Strategy::FromZeroSolution);
+                    Strategy strategy = Strategy::SequentialFromZeroSolution);
 
                 Solution<Scalar> fitNoIntercept(const Matrix<Scalar> &matData,
                                                 const Vector<Scalar> &vectData);
@@ -187,7 +187,7 @@ namespace l0l2
                 FullPathSolver regressor{
                     Param{static_cast<Scalar>(-1), beta, strategy}, false};
 
-                if (strategy == Strategy::FromZeroSolution)
+                if (strategy == Strategy::SequentialFromZeroSolution)
                 {
                     auto results = regressor.solveFromZero(matData, vectData);
 
@@ -199,7 +199,7 @@ namespace l0l2
 
                     return results;
                 }
-                else if (strategy == Strategy::FromL2Solution)
+                else if (strategy == Strategy::SequentialFromL2Solution)
                 {
                     auto results = regressor.solveFromL2(matData, vectData);
 
@@ -287,7 +287,7 @@ namespace l0l2
                 Solution minBoundSolution{};
                 Solution maxBoundSolution{};
 
-                if (m_Param.strategy == Strategy::FromZeroSolution)
+                if (m_Param.strategy == Strategy::SequentialFromZeroSolution)
                 {
                     auto results = solveFromZero(matData, vectData);
                     if (!results.empty())
@@ -299,7 +299,7 @@ namespace l0l2
                         maxBoundSolution = std::move(*++minBoundIt);
                     }
                 }
-                else if (m_Param.strategy == Strategy::FromL2Solution)
+                else if (m_Param.strategy == Strategy::SequentialFromL2Solution)
                 {
                     auto results = solveFromL2(matData, vectData);
                     if (!results.empty())
@@ -412,7 +412,7 @@ namespace l0l2
                         -ATb); // TODO avoid repeating and optimize
 
                     bool deltaTargetReached = false;
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    if (m_Param.strategy == Strategy::Parallel)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                         deltaTargetReached =
@@ -434,7 +434,7 @@ namespace l0l2
 
                 while (true)
                 {
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    if (m_Param.strategy == Strategy::Parallel)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                         if (m_Param.delta >= static_cast<Scalar>(0))
@@ -486,7 +486,7 @@ namespace l0l2
                         results.push_back(std::move(solutionNew));
 
                         bool deltaTargetReached = false;
-                        if (m_Param.strategy == Strategy::FromBothSolutions)
+                        if (m_Param.strategy == Strategy::Parallel)
                         {
                             const std::lock_guard<std::mutex> lock(
                                 m_DeltasMutex);
@@ -566,7 +566,7 @@ namespace l0l2
 
                                     bool deltaTargetReached = false;
                                     if (m_Param.strategy ==
-                                        Strategy::FromBothSolutions)
+                                        Strategy::Parallel)
                                     {
                                         const std::lock_guard<std::mutex> lock(
                                             m_DeltasMutex);
@@ -650,7 +650,7 @@ namespace l0l2
                     results.push_front(std::move(solutionBar));
 
                     bool deltaTargetReached = false;
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    if (m_Param.strategy == Strategy::Parallel)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                         deltaTargetReached =
@@ -672,7 +672,7 @@ namespace l0l2
 
                 while (true)
                 {
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    if (m_Param.strategy == Strategy::Parallel)
                     {
                         const std::lock_guard<std::mutex> lock(m_DeltasMutex);
                         if (m_Param.delta >= static_cast<Scalar>(0))
@@ -724,7 +724,7 @@ namespace l0l2
                         results.push_front(std::move(solutionNew));
 
                         bool deltaTargetReached = false;
-                        if (m_Param.strategy == Strategy::FromBothSolutions)
+                        if (m_Param.strategy == Strategy::Parallel)
                         {
                             const std::lock_guard<std::mutex> lock(
                                 m_DeltasMutex);
@@ -780,7 +780,7 @@ namespace l0l2
 
                                 bool deltaTargetReached = false;
                                 if (m_Param.strategy ==
-                                    Strategy::FromBothSolutions)
+                                    Strategy::Parallel)
                                 {
                                     const std::lock_guard<std::mutex> lock(
                                         m_DeltasMutex);

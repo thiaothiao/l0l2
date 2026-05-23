@@ -14,18 +14,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     auto m = mainmodule.def_submodule("linearmodel", "Linear model module.");
 
-    using CoordinateState = l0l2::linearmodel::leastsquares::CoordinateState;
-    pybind11::enum_<CoordinateState>(m, "CoordinateState", pybind11::arithmetic(), "State of a coordinate")
-        .value("L0", CoordinateState::L0, "Concerned by l0")
-        .value("FREE", CoordinateState::FREE, "Freed from l0")
-        .value("ZERO", CoordinateState::ZERO, "Forced to zero")
-        .export_values();
-
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
     pybind11::enum_<Strategy>(m, "Strategy", pybind11::arithmetic(), "Choosen strategy")
-        .value("FromZeroSolution", Strategy::FromZeroSolution, "From zero solution")
-        .value("FromL2Solution", Strategy::FromL2Solution, "From l2 solution")
-        .value("FromBothSolutions", Strategy::FromBothSolutions, "From both sides")
+        .value("SequentialFromZeroSolution", Strategy::SequentialFromZeroSolution, "From zero solution")
+        .value("SequentialFromL2Solution", Strategy::SequentialFromL2Solution, "From l2 solution")
+        .value("Parallel", Strategy::Parallel, "From both sides")
         .export_values();
 
     using FullPathSolverf = l0l2::linearmodel::leastsquares::FullPathSolver<float>;
@@ -34,7 +27,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<float, float, Strategy>(),
             pybind11::arg("delta") = 0.f,
             pybind11::arg("beta") = 1.f,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution)
+            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
         .def_readonly("delta", &FullPathSolverParamf::delta)
         .def_readonly("beta", &FullPathSolverParamf::beta)
         .def_readonly("strategy", &FullPathSolverParamf::strategy);
@@ -48,10 +41,11 @@ PYBIND11_MODULE(l0l2, mainmodule)
                     pybind11::arg("matData"), pybind11::arg("vectData"),
                     pybind11::arg("beta"),
                     pybind11::arg("withintercept") = false,
-                    pybind11::arg("strategy") = Strategy::FromZeroSolution);
+                    pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution);
 
     using Index = l0l2::Index;
     using Vectorf = l0l2::Vector<float>;
+    using Matrixf = l0l2::Matrix<float>;
 
     using Solutionf = l0l2::linearmodel::leastsquares::Solution<float>;
     pybind11::class_<Solutionf>(m, "Solutionf")
@@ -70,7 +64,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("delta") = 0.f,
             pybind11::arg("beta") = 1.f,
             pybind11::arg("hasIntercept") = false,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution,
+            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution,
             pybind11::arg("tolerance") = 1e-4f,
             pybind11::arg("maximumNumberOfIterations") = 10000U, 
             pybind11::arg("innerEpsilon") = 1e-6f,
@@ -84,16 +78,15 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def_readonly("innerEpsilon", &L0L2RegressorParamf::innerEpsilon)
         .def_readonly("innerMaximumNumberOfIterations", &L0L2RegressorParamf::innerMaximumNumberOfIterations);
 
-    using CoordinateStates = l0l2::linearmodel::leastsquares::CoordinateStates;
-
     pybind11::class_<L0L2Regressorf>(m, "L0L2Regressorf")
         .def(pybind11::init<L0L2RegressorParamf>(), pybind11::arg("param"))
-        .def("fit", &L0L2Regressorf::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"),
-             pybind11::arg("coordinateStates") = CoordinateStates{});
+        .def("fit",
+             pybind11::overload_cast<const Matrixf &, const Vectorf &>(
+                 &L0L2Regressorf::fit),
+             pybind11::arg("matData"), pybind11::arg("vectData"));
 
     using SimpleBranchAndBoundf = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<float>;
-    using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::Param;
+    using SimpleBranchAndBoundParamf = SimpleBranchAndBoundf::BBParam;
     pybind11::class_<SimpleBranchAndBoundParamf>(m,
                                                  "SimpleBranchAndBoundParamf")
         .def(pybind11::init<L0L2RegressorParamf, float, float, unsigned int>(),
@@ -124,7 +117,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .def(pybind11::init<double, double, Strategy>(),
             pybind11::arg("delta") = 0.0,
             pybind11::arg("beta") = 1.0,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution)
+            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
         .def_readonly("delta", &FullPathSolverParamd::delta)
         .def_readonly("beta", &FullPathSolverParamd::beta)
         .def_readonly("strategy", &FullPathSolverParamd::strategy);
@@ -138,9 +131,10 @@ PYBIND11_MODULE(l0l2, mainmodule)
                     pybind11::arg("matData"), pybind11::arg("vectData"),
                     pybind11::arg("beta"),
                     pybind11::arg("withintercept") = false,
-                    pybind11::arg("strategy") = Strategy::FromZeroSolution);
+                    pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution);
 
     using Vectord = l0l2::Vector<double>;
+    using Matrixd = l0l2::Matrix<double>;
 
     using Solutiond = l0l2::linearmodel::leastsquares::Solution<double>;
     pybind11::class_<Solutiond>(m, "Solutiond")
@@ -159,7 +153,7 @@ PYBIND11_MODULE(l0l2, mainmodule)
             pybind11::arg("delta") = 0.0,
             pybind11::arg("beta") = 1.0,
             pybind11::arg("hasIntercept") = false,
-            pybind11::arg("strategy") = Strategy::FromZeroSolution,
+            pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution,
             pybind11::arg("tolerance") = 1e-4,
             pybind11::arg("maximumNumberOfIterations") = 10000U,
             pybind11::arg("innerEpsilon") = 1e-6,
@@ -175,12 +169,13 @@ PYBIND11_MODULE(l0l2, mainmodule)
 
     pybind11::class_<L0L2Regressord>(m, "L0L2Regressord")
         .def(pybind11::init<L0L2RegressorParamd>(), pybind11::arg("param"))
-        .def("fit", &L0L2Regressord::fit, pybind11::arg("matData"),
-             pybind11::arg("vectData"),
-             pybind11::arg("coordinateStates") = CoordinateStates{});
+        .def("fit",
+             pybind11::overload_cast<const Matrixd &, const Vectord &>(
+                 &L0L2Regressord::fit),
+             pybind11::arg("matData"), pybind11::arg("vectData"));
 
     using SimpleBranchAndBoundd = l0l2::linearmodel::leastsquares::SimpleBranchAndBound<double>;
-    using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::Param;
+    using SimpleBranchAndBoundParamd = SimpleBranchAndBoundd::BBParam;
     pybind11::class_<SimpleBranchAndBoundParamd>(m, "SimpleBranchAndBoundParamd")
         .def(pybind11::init<L0L2RegressorParamd, double, double, unsigned int>(),
             pybind11::arg("regressorParam"),
