@@ -138,7 +138,7 @@ namespace l0l2
 
                 for (Index j = 0; j < n; ++j)
                 {
-                    if (coordinateStates[j] == CoordinateState::L0)
+                    if (coordinateStates[j] == CoordinateState::Unknown)
                     {
                         if (std::abs(x[j]) >= delta)
                         {
@@ -172,7 +172,7 @@ namespace l0l2
                 std::set<Branch, BranchCompare> allBranches;
 
                 allBranches.emplace(
-                    CoordinateStates::Constant(n, CoordinateState::L0),
+                    CoordinateStates::Constant(n, CoordinateState::Unknown),
                     static_cast<Scalar>(0));
 
                 auto solution = Solution(n);
@@ -216,7 +216,7 @@ namespace l0l2
                         for (Index j = 0; j < n; ++j)
                         {
                             if (branch.coordinateStates[j] ==
-                                CoordinateState::L0)
+                                CoordinateState::Unknown)
                             {
                                 const auto absXj =
                                     std::abs(relaxationSolution.x[j]);
@@ -233,12 +233,12 @@ namespace l0l2
                             branch.lb = std::max(lowerBound, lb);
 
                             branch.coordinateStates[splitIndex] =
-                                CoordinateState::ZERO;
+                                CoordinateState::Zero;
                             allBranches.emplace(branch.coordinateStates,
                                                 branch.lb);
 
                             branch.coordinateStates[splitIndex] =
-                                CoordinateState::FREE;
+                                CoordinateState::Nonzero;
                             allBranches.insert(std::move(branch));
                         }
                     }

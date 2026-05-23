@@ -103,9 +103,9 @@ namespace l0l2
         {
             enum class CoordinateState : std::uint8_t
             {
-                L0 = 0U,
-                FREE,
-                ZERO
+                Unknown = 0U,
+                Nonzero,
+                Zero
             };
 
             using CoordinateStates =
@@ -113,9 +113,9 @@ namespace l0l2
 
             enum class Strategy : std::uint8_t
             {
-                FromZeroSolution = 0U,
-                FromL2Solution,
-                FromBothSolutions
+                SequentialFromZeroSolution = 0U,
+                SequentialFromL2Solution,
+                Parallel
             };
 
             template <std::floating_point ScalarType> struct Solution

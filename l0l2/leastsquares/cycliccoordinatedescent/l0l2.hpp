@@ -37,7 +37,7 @@ namespace l0l2
                     Param(Scalar deltaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
                           bool hasInterceptInput = false,
-                          Strategy strategyInput = Strategy::FromZeroSolution,
+                          Strategy strategyInput = Strategy::SequentialFromZeroSolution,
                           Scalar toleranceInput = static_cast<Scalar>(1e-4),
                           unsigned int maximumNumberOfIterationsInput = 10000U,
                           Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),
@@ -170,11 +170,11 @@ namespace l0l2
                     auto tmp = static_cast<Scalar>(0);
                     for (Index j = 0; j < n; ++j)
                     {
-                        if (coordinateStates[j] == CoordinateState::ZERO)
+                        if (coordinateStates[j] == CoordinateState::Zero)
                         {
                             theta[j] = static_cast<Scalar>(0);
                         }
-                        else if (coordinateStates[j] == CoordinateState::FREE)
+                        else if (coordinateStates[j] == CoordinateState::Nonzero)
                         {
                             tmp += theta[j] * theta[j];
                             theta[j] = static_cast<Scalar>(0);
@@ -182,7 +182,7 @@ namespace l0l2
                     }
 
                     aCoeff += betaDeltaSquared *
-                                  (coordinateStates == CoordinateState::FREE)
+                                  (coordinateStates == CoordinateState::Nonzero)
                                       .count() -
                               static_cast<Scalar>(0.25) * tmp *
                                   betaDeltaSquared * betaDeltaSquared /

@@ -25,7 +25,7 @@ namespace l0l2
                 {
                     Param(Scalar gammaInput = static_cast<Scalar>(0),
                           bool hasInterceptInput = false,
-                          Strategy strategyInput = Strategy::FromZeroSolution,
+                          Strategy strategyInput = Strategy::SequentialFromZeroSolution,
                           Scalar toleranceInput = static_cast<Scalar>(1e-4),
                           unsigned int maximumNumberOfIterationsInput = 10000U,
                           Scalar innerEpsilonInput = static_cast<Scalar>(1e-6),

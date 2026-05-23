@@ -56,14 +56,14 @@ int main()
     const Scalar innerEpsilon = static_cast<Scalar>(1e-6);
     const unsigned int innerMaximumNumberOfIterations = 100000U;
 
-    auto coordinateStates = CoordinateStates::Constant(n, CoordinateState::L0);
+    auto coordinateStates = CoordinateStates::Constant(n, CoordinateState::Unknown);
 
     if (fullpath)
     {
         const auto start = std::chrono::high_resolution_clock::now();
 
         auto results = FullPathSolver::fitAll(mat, vect, beta, withIntercept,
-                                              Strategy::FromL2Solution);
+                                              Strategy::SequentialFromL2Solution);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -85,7 +85,7 @@ int main()
         const auto branchAndBoundStart =
             std::chrono::high_resolution_clock::now();
 
-        const Strategy branchAndBoundStrategy = Strategy::FromZeroSolution;
+        const Strategy branchAndBoundStrategy = Strategy::SequentialFromZeroSolution;
 
         SimpleBranchAndBound::RegressorParam regressorParam{
             delta,         beta,
@@ -127,7 +127,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromZeroSolution;
+            const Strategy strategy = Strategy::SequentialFromZeroSolution;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -156,7 +156,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromL2Solution;
+            const Strategy strategy = Strategy::SequentialFromL2Solution;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -182,7 +182,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromBothSolutions;
+            const Strategy strategy = Strategy::Parallel;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -208,7 +208,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromZeroSolution;
+            const Strategy strategy = Strategy::SequentialFromZeroSolution;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -235,7 +235,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromL2Solution;
+            const Strategy strategy = Strategy::SequentialFromL2Solution;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -262,7 +262,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            const Strategy strategy = Strategy::FromBothSolutions;
+            const Strategy strategy = Strategy::Parallel;
 
             L0L2RegressorParam param{
                 delta,         beta,
@@ -289,7 +289,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            FullPathSolverParam param{delta, beta, Strategy::FromZeroSolution};
+            FullPathSolverParam param{delta, beta, Strategy::SequentialFromZeroSolution};
 
             auto solution = FullPathSolver{param, withIntercept}.fit(mat, vect);
 
@@ -309,7 +309,7 @@ int main()
         {
             const auto start = std::chrono::high_resolution_clock::now();
 
-            FullPathSolverParam param{delta, beta, Strategy::FromL2Solution};
+            FullPathSolverParam param{delta, beta, Strategy::SequentialFromL2Solution};
 
             auto solution = FullPathSolver{param, withIntercept}.fit(mat, vect);
 

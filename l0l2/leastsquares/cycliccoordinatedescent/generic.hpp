@@ -77,7 +77,7 @@ namespace l0l2
                   Default is false.
                 */
                 CyclicCoordinateDescent(const Param &param)
-                    : m_Param{param}, m_FromBothConverged{}
+                    : m_Param{param}, m_ParallelConverged{}
                 {
                 }
 
@@ -102,7 +102,7 @@ namespace l0l2
 
                 const Param m_Param;
 
-                std::atomic_flag m_FromBothConverged;
+                std::atomic_flag m_ParallelConverged;
             };
 
             template <ModelLike ModelImplementationType>
@@ -130,7 +130,7 @@ namespace l0l2
                 {
                     for (Index j = 0; j < n; ++j)
                     {
-                        if (coordinateStates[j] == CoordinateState::ZERO)
+                        if (coordinateStates[j] == CoordinateState::Zero)
                         {
                             x[j] = static_cast<Scalar>(0);
                         }
@@ -189,9 +189,8 @@ namespace l0l2
                     for (Index j = 0; j < n; ++j)
                     {
                         if (subIndicesCase &&
-                            coordinateStates[j] == CoordinateState::ZERO)
-                        { //&& uses left first then right. short-circuiting iso
-                          // standard [expr.log.and]
+                            coordinateStates[j] == CoordinateState::Zero)
+                        {
                             continue;
                         }
 
@@ -208,9 +207,9 @@ namespace l0l2
 
                         const auto newxJ =
                             (subIndicesCase &&
-                             coordinateStates[j] == CoordinateState::FREE)
-                                ? modelImplementation.otherJ(zJ, uJ)
-                                : modelImplementation.stepJ(zJ, uJ);
+                             coordinateStates[j] == CoordinateState::Nonzero)
+                                ? Implementation.otherJ(zJ, uJ)
+                                : Implementation.stepJ(zJ, uJ);
 
                         x[j] = newxJ;
 
@@ -229,16 +228,16 @@ namespace l0l2
                         }
                     }
 
-                    if (m_Param.strategy == Strategy::FromBothSolutions)
+                    if (m_Param.strategy == Strategy::Parallel)
                     {
                         if (globalChange <= m_Param.tolerance ||
                             numberOfIterations >=
                                 m_Param.maximumNumberOfIterations)
                         {
-                            m_FromBothConverged.test_and_set(
+                            m_ParallelConverged.test_and_set(
                                 std::memory_order_relaxed);
                         }
-                        else if (m_FromBothConverged.test(
+                        else if (m_ParallelConverged.test(
                                      std::memory_order_relaxed))
                         {
                             break;
@@ -279,11 +278,11 @@ namespace l0l2
 
                 const auto hasIntercept = m_Param.hasIntercept;
 
-                if (m_Param.strategy != Strategy::FromBothSolutions)
+                if (m_Param.strategy != Strategy::Parallel)
                 {
                     return fitFrom(
                         matData, vectData,
-                        m_Param.strategy == Strategy::FromZeroSolution
+                        m_Param.strategy == Strategy::SequentialFromZeroSolution
                             ? Solution(Vector::Zero(n))
                             : L2Regressor(m_Param.beta, hasIntercept)
                                   .fit(matData, vectData, m_Param.innerEpsilon,
@@ -293,7 +292,7 @@ namespace l0l2
                 }
                 else
                 {
-                    m_FromBothConverged.clear(std::memory_order_relaxed);
+                    m_ParallelConverged.clear(std::memory_order_relaxed);
 
                     auto fromZeroFuture = std::async(
                         std::launch::async, &CyclicCoordinateDescent::fitFrom,
