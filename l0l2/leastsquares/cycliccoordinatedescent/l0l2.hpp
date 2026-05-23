@@ -2,9 +2,8 @@
 
 #include <cmath>
 #include <concepts>
-#include <utility>
 
-#include <l0l2/leastsquares/cycliccoordinatedescent/solver.hpp>
+#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
@@ -282,7 +281,7 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             using L0L2Regressor =
-                CyclicCoordinateDescent<L0L2Implementation<ScalarType>>;
+                GenericCyclicCoordinateDescent<L0L2Implementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
 } // namespace l0l2

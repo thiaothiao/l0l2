@@ -6,7 +6,7 @@
 #include <set>
 #include <utility>
 
-#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
+#include <l0l2/leastsquares/cycliccoordinatedescent/details.hpp>
 #include <l0l2/leastsquares/cycliccoordinatedescent/l0l2.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
@@ -67,6 +67,7 @@ namespace l0l2
                 Scalar objectiveValue(const Matrix<Scalar> &matData,
                                       const Vector<Scalar> &vectData,
                                       const Solution<Scalar> &solution) const;
+
               private:
                 class Branch
                 {

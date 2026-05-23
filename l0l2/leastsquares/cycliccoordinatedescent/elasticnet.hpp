@@ -3,7 +3,7 @@
 #include <cmath>
 #include <concepts>
 
-#include <l0l2/leastsquares/cycliccoordinatedescent/solver.hpp>
+#include <l0l2/leastsquares/cycliccoordinatedescent/generic.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
@@ -155,7 +155,7 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            using ELASTICNETRegressor = CyclicCoordinateDescent<
+            using ELASTICNETRegressor = GenericCyclicCoordinateDescent<
                 ELASTICNETImplementation<ScalarType>>;
         } // namespace leastsquares
     } // namespace linearmodel
