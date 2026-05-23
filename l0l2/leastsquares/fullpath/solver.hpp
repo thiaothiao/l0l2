@@ -30,16 +30,16 @@ namespace l0l2
             template <std::floating_point ScalarType> class FullPathSolver final
             {
               public:
-                using Scalar =
-                    ScalarType; /*!< Alias for the used scalar type */
+                using Scalar = ScalarType;
 
                 struct Param final
                 {
                     /*! \brief l0l2 model parameter object constructor.
                       \param deltaInput sparsity regularization parameter.
                       \param betaInput l2 regularization parameter.
+                      \param withInterceptInput consider intercept or not.
                       \param strategyInput enum indicating a strategy: from
-                      zero, or l2 or both solutions.
+                      zero, or l2 or parallel.
                     */
                     Param(Scalar deltaInput = static_cast<Scalar>(0),
                           Scalar betaInput = static_cast<Scalar>(1),
@@ -59,9 +59,7 @@ namespace l0l2
                 };
 
                 /*! \brief A Full path solver object constructor.
-                  \param param regularization parameters.
-                  \param withIntercept boolean indicating with intercept or not.
-                  Default is false.
+                  \param param regularization and other parameters.
                 */
                 FullPathSolver(const Param &param)
                     : m_Param{param},
@@ -71,25 +69,14 @@ namespace l0l2
                 {
                 }
 
-                /*! \brief Fit full path solutions.
-                   \param matData contiguous data container representing matrix
-                   in column major layout.
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \param beta l2 regularization parameter.
-                   \param strategy an enum indicating a strategy: from zero, or
-                   l2 or both solutions.
-                   \return a list of solutions generating entire piecewise
-                   linear path solutions
-                 */
-
-                /*! \brief Fit one solution.
-                   \param matData contiguous data container representing matrix
-                   in column major layout..
-                   \param vectData contiguous data container representing target
-                   vector.
-                   \return a solution corresponding to the regularization
-                   parameters.
+                /*! \brief Fit model.
+                   \param matData matrix containing the features data, #columns
+                   = #features, #rows = #samples.
+                   \param vectData vector containing the targets.
+                   \return a list containing one solution corresponding to the
+                   regularization parameters if delta > 0 and a list of
+                   solutions generating entire piecewise linear path solutions
+                   otherwise.
                  */
                 std::list<Solution<Scalar>> fit(const Matrix<Scalar> &matData,
                                                 const Vector<Scalar> &vectData);
@@ -144,79 +131,6 @@ namespace l0l2
 
                 std::mutex m_DeltasMutex;
             };
-
-            template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAllNoIntercept(
-                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
-            {
-                using Solution = Solution<Scalar>;
-                using Vector = Vector<Scalar>;
-                using Utils = Utils<Scalar>;
-
-                FullPathSolver regressor{Param{m_Param.delta, m_Param.beta,
-                                               false, m_Param.strategy}};
-
-                if (m_Param.strategy == Strategy::SequentialFromZeroSolution)
-                {
-                    auto results = regressor.solveFromZero(matData, vectData);
-
-                    // remove delta infinity solution
-                    if (!results.empty())
-                    {
-                        results.pop_front();
-                    }
-
-                    return results;
-                }
-                else if (m_Param.strategy == Strategy::SequentialFromL2Solution)
-                {
-                    auto results = regressor.solveFromL2(matData, vectData);
-
-                    // remove delta 0 solution
-                    if (!results.empty())
-                    {
-                        results.pop_back();
-                    }
-
-                    return results;
-                }
-                else
-                {
-                    auto fromZeroFuture = std::async(
-                        std::launch::async, &FullPathSolver::solveFromZero,
-                        &regressor, matData, vectData);
-
-                    auto fromL2SolutionResults =
-                        regressor.solveFromL2(matData, vectData);
-
-                    auto fromZeroSolutionResults = fromZeroFuture.get();
-
-                    if (!fromZeroSolutionResults.empty())
-                    { // remove delta infinity solution
-                        fromZeroSolutionResults.pop_front();
-                    }
-
-                    if (!fromL2SolutionResults.empty())
-                    { // remove delta 0 solution
-                        fromL2SolutionResults.pop_back();
-                    }
-
-                    const auto fromZeroSmallestDelta =
-                        fromZeroSolutionResults.back().delta - Utils::epsilon;
-
-                    for (auto it = fromL2SolutionResults.begin();
-                         it != fromL2SolutionResults.end(); ++it)
-                    {
-                        if (it->delta < fromZeroSmallestDelta)
-                        {
-                            fromZeroSolutionResults.push_back(std::move(*it));
-                        }
-                    }
-
-                    return fromZeroSolutionResults; // move
-                }
-            }
 
             template <std::floating_point ScalarType>
             inline std::list<
@@ -347,9 +261,80 @@ namespace l0l2
                 }
 
                 // Should throw an exception!!!
-                std::cout << "\nBad situation: delta == " << m_Param.delta
-                          << "\n";
                 return {Solution{}};
+            }
+
+            template <std::floating_point ScalarType>
+            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
+            FullPathSolver<ScalarType>::fitAllNoIntercept(
+                const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
+            {
+                using Solution = Solution<Scalar>;
+                using Vector = Vector<Scalar>;
+                using Utils = Utils<Scalar>;
+
+                FullPathSolver regressor{Param{m_Param.delta, m_Param.beta,
+                                               false, m_Param.strategy}};
+
+                if (m_Param.strategy == Strategy::SequentialFromZeroSolution)
+                {
+                    auto results = regressor.solveFromZero(matData, vectData);
+
+                    // remove delta infinity solution
+                    if (!results.empty())
+                    {
+                        results.pop_front();
+                    }
+
+                    return results;
+                }
+                else if (m_Param.strategy == Strategy::SequentialFromL2Solution)
+                {
+                    auto results = regressor.solveFromL2(matData, vectData);
+
+                    // remove delta 0 solution
+                    if (!results.empty())
+                    {
+                        results.pop_back();
+                    }
+
+                    return results;
+                }
+                else
+                {
+                    auto fromZeroFuture = std::async(
+                        std::launch::async, &FullPathSolver::solveFromZero,
+                        &regressor, matData, vectData);
+
+                    auto fromL2SolutionResults =
+                        regressor.solveFromL2(matData, vectData);
+
+                    auto fromZeroSolutionResults = fromZeroFuture.get();
+
+                    if (!fromZeroSolutionResults.empty())
+                    { // remove delta infinity solution
+                        fromZeroSolutionResults.pop_front();
+                    }
+
+                    if (!fromL2SolutionResults.empty())
+                    { // remove delta 0 solution
+                        fromL2SolutionResults.pop_back();
+                    }
+
+                    const auto fromZeroSmallestDelta =
+                        fromZeroSolutionResults.back().delta - Utils::epsilon;
+
+                    for (auto it = fromL2SolutionResults.begin();
+                         it != fromL2SolutionResults.end(); ++it)
+                    {
+                        if (it->delta < fromZeroSmallestDelta)
+                        {
+                            fromZeroSolutionResults.push_back(std::move(*it));
+                        }
+                    }
+
+                    return fromZeroSolutionResults;
+                }
             }
 
             template <std::floating_point ScalarType>
