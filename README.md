@@ -13,15 +13,11 @@ The considered Biconjugate Convex Relaxation is given by
 (\mathbb{Q}^{\beta, \delta}) \min \left\|Ax-b\right\|^2_2 + \beta\delta^2(\left\|.\right\|_0 + \frac{1}{\delta^2}\left\|.\right\|_2^2)^{**}(x),\;x\in\mathbb{R}^n.
 ```
 Implemented solutions:
-- Full path solutions using a Gauss-Jordan elimination and the piecewise linearity of the solutions with respect to $\delta$.
-- Cyclic Coordinate Descent.
-- Interior Point Method. WIP
+- Linear solver and full regularization path solver via Gauss-Jordan eliminations and the piecewise linearity of the solutions with respect to $\delta$.
+- Cyclic Coordinate Descent solver.
+- Interior Point Method solver. WIP
 
-![description](https://github.com/thiaothiao/l0l2/blob/develop/examples/python/diabetes_path_0.png)
-
-![description](https://github.com/thiaothiao/l0l2/blob/develop/examples/python/diabetes_path_1.png)
-
-Interfaces for Sparse PCA cases are also availlable.
+![Full regularization path illustrations within images folder](images/illustration.png)
 
 For the technical details see the technical report and references therein.
 
