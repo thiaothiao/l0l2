@@ -19,12 +19,12 @@ namespace l0l2
     {
         namespace leastsquares
         {
-            template <std::floating_point ScalarType> class FullPathStep final
+            template <std::floating_point ScalarType> class PathStep final
             {
               public:
                 using Scalar = ScalarType;
 
-                FullPathStep(Scalar beta) : m_Beta{beta} {}
+                PathStep(Scalar beta) : m_Beta{beta} {}
 
                 Solution<Scalar> run(const Matrix<Scalar> &matData,
                                      const Vector<Scalar> &vectData,
@@ -175,8 +175,8 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            Solution<typename FullPathStep<ScalarType>::Scalar>
-            FullPathStep<ScalarType>::run(const Matrix<Scalar> &matData,
+            Solution<typename PathStep<ScalarType>::Scalar>
+            PathStep<ScalarType>::run(const Matrix<Scalar> &matData,
                                           const Vector<Scalar> &vectData,
                                           const Solution<Scalar> &solutionYaay,
                                           const Solution<Scalar> &solutionMaam,

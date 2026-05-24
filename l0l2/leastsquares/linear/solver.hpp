@@ -12,8 +12,8 @@
 #include <mutex>
 #include <utility>
 
-#include <l0l2/leastsquares/fullpath/step.hpp>
 #include <l0l2/leastsquares/l2regressor/solver.hpp>
+#include <l0l2/leastsquares/linear/step.hpp>
 #include <l0l2/leastsquares/utils.hpp>
 
 namespace l0l2
@@ -22,12 +22,12 @@ namespace l0l2
     {
         namespace leastsquares
         {
-            /* \brief Full path solver class.
+            /* \brief Linear solver class.
              *
              * It produces solutions from partial path or full path
              * computations.
              */
-            template <std::floating_point ScalarType> class FullPathSolver final
+            template <std::floating_point ScalarType> class LinearSolver final
             {
               public:
                 using Scalar = ScalarType;
@@ -58,10 +58,10 @@ namespace l0l2
                     const Strategy strategy;
                 };
 
-                /*! \brief A Full path solver object constructor.
+                /*! \brief A linear solver object constructor.
                   \param param regularization and other parameters.
                 */
-                FullPathSolver(const Param &param)
+                LinearSolver(const Param &param)
                     : m_Param{param},
                       m_DeltaFromZeroSolution{
                           std::numeric_limits<Scalar>::max()},
@@ -134,8 +134,8 @@ namespace l0l2
 
             template <std::floating_point ScalarType>
             inline std::list<
-                Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fit(const Matrix<Scalar> &matData,
+                Solution<typename LinearSolver<ScalarType>::Scalar>>
+            LinearSolver<ScalarType>::fit(const Matrix<Scalar> &matData,
                                             const Vector<Scalar> &vectData)
             {
                 if (m_Param.withIntercept)
@@ -157,8 +157,8 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitNoIntercept(
+            std::list<Solution<typename LinearSolver<ScalarType>::Scalar>>
+            LinearSolver<ScalarType>::fitNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 if (m_Param.delta < static_cast<Scalar>(0))
@@ -199,7 +199,7 @@ namespace l0l2
                 else
                 {
                     auto fromZeroFuture = std::async(
-                        std::launch::async, &FullPathSolver::solveFromZero,
+                        std::launch::async, &LinearSolver::solveFromZero,
                         this, matData, vectData);
 
                     auto fromL2SolutionResults = solveFromL2(matData, vectData);
@@ -265,15 +265,15 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::fitAllNoIntercept(
+            std::list<Solution<typename LinearSolver<ScalarType>::Scalar>>
+            LinearSolver<ScalarType>::fitAllNoIntercept(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Solution = Solution<Scalar>;
                 using Vector = Vector<Scalar>;
                 using Utils = Utils<Scalar>;
 
-                FullPathSolver regressor{Param{m_Param.delta, m_Param.beta,
+                LinearSolver regressor{Param{m_Param.delta, m_Param.beta,
                                                false, m_Param.strategy}};
 
                 if (m_Param.strategy == Strategy::SequentialFromZeroSolution)
@@ -303,7 +303,7 @@ namespace l0l2
                 else
                 {
                     auto fromZeroFuture = std::async(
-                        std::launch::async, &FullPathSolver::solveFromZero,
+                        std::launch::async, &LinearSolver::solveFromZero,
                         &regressor, matData, vectData);
 
                     auto fromL2SolutionResults =
@@ -338,15 +338,15 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::solveFromZero(
+            std::list<Solution<typename LinearSolver<ScalarType>::Scalar>>
+            LinearSolver<ScalarType>::solveFromZero(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
                 using L2Regressor = LDLTL2Regressor<Scalar>;
-                using FullPathStep = FullPathStep<Scalar>;
+                using PathStep = PathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
 
@@ -417,7 +417,7 @@ namespace l0l2
 
                         const auto &solutionYaay = results.back();
 
-                        const auto step = FullPathStep(m_Param.beta);
+                        const auto step = PathStep(m_Param.beta);
 
                         auto solutionNew = step.run(matData, ATb, solutionYaay,
                                                     solutionMaam, tau);
@@ -564,15 +564,15 @@ namespace l0l2
             }
 
             template <std::floating_point ScalarType>
-            std::list<Solution<typename FullPathSolver<ScalarType>::Scalar>>
-            FullPathSolver<ScalarType>::solveFromL2(
+            std::list<Solution<typename LinearSolver<ScalarType>::Scalar>>
+            LinearSolver<ScalarType>::solveFromL2(
                 const Matrix<Scalar> &matData, const Vector<Scalar> &vectData)
             {
                 using Vector = Vector<Scalar>;
                 using Solution = Solution<Scalar>;
                 using Utils = Utils<Scalar>;
                 using L2Regressor = LDLTL2Regressor<Scalar>;
-                using FullPathStep = FullPathStep<Scalar>;
+                using PathStep = PathStep<Scalar>;
 
                 const auto n = static_cast<Index>(matData.cols());
 
@@ -655,7 +655,7 @@ namespace l0l2
 
                         const auto &solutionYaay = results.front();
 
-                        const auto step = FullPathStep(m_Param.beta);
+                        const auto step = PathStep(m_Param.beta);
 
                         auto solutionNew = step.run(matData, ATb, solutionYaay,
                                                     solutionMaam, tau);

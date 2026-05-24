@@ -24,7 +24,7 @@ for i in np.arange(2):
 
             beta = betas[i,j]
             
-            results = l0l2.linearmodel.FullPathSolverd.fitAll(
+            results = l0l2.linearmodel.LinearSolverd.fitAll(
                 matData=X, vectData=y, matrixIsCovariance=False, beta=beta)
 
             coefs = []

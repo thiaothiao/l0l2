@@ -1,2 +1,2 @@
-add_subdirectory(branchandbound)
-add_subdirectory(relaxations)
+add_subdirectory(branchandboundsolver)
+add_subdirectory(relaxationsolvers)
