@@ -23,9 +23,11 @@ for i in np.arange(2):
         for j in np.arange(n):
 
             beta = betas[i,j]
+
+            param = l0l2.linearmodel.LinearSolverParamd(delta=-1, beta=beta)
             
-            results = l0l2.linearmodel.LinearSolverd.fitAll(
-                matData=X, vectData=y, matrixIsCovariance=False, beta=beta)
+            results = l0l2.linearmodel.LinearSolverd(param).fit(
+                matData=X, vectData=y)
 
             coefs = []
             deltas = []
