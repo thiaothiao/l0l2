@@ -1,5 +1,5 @@
 # l0l2
-**Sparse Modeling via Biconjugate Convex Relaxation Solver Techniques**\
+**Sparse Modeling via Biconjugate Convex Relaxation Techniques**\
 The solver addresses solutions for sparse linear least squares problems via $l_0$, $l_2$  combined regularizations.
 ```math
 \min \left\|Ax-b\right\|^2_2 + \rho\left\|x\right\|_0 + \beta\left\|x\right\|^2_2,\;x\in\mathbb{R}^n.
