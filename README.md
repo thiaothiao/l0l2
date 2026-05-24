@@ -19,7 +19,7 @@ Implemented solutions:
 
 ![Full regularization path illustrations within images folder](images/illustration.png)
 
-For the technical details see the technical report and references therein.
+Technical details are exposed in the report and references therein.
 
 We use c++ 23 and later.
 
