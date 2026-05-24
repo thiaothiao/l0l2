@@ -1,0 +1,2 @@
+add_subdirectory(coordinatedescentsolver)
+add_subdirectory(linearsolver)

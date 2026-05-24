@@ -1,2 +1,0 @@
-add_subdirectory(coordinatedescent)
-add_subdirectory(piecewiselinear)

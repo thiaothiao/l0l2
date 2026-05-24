@@ -21,21 +21,21 @@ PYBIND11_MODULE(l0l2, mainmodule)
         .value("Parallel", Strategy::Parallel, "From both sides")
         .export_values();
 
-    using FullPathSolverf = l0l2::linearmodel::leastsquares::FullPathSolver<float>;
-    using FullPathSolverParamf = FullPathSolverf::Param;
-    pybind11::class_<FullPathSolverParamf>(m, "FullPathSolverParamf")
+    using LinearSolverf = l0l2::linearmodel::leastsquares::LinearSolver<float>;
+    using LinearSolverParamf = LinearSolverf::Param;
+    pybind11::class_<LinearSolverParamf>(m, "LinearSolverParamf")
         .def(pybind11::init<float, float, bool, Strategy>(),
              pybind11::arg("delta") = 0.f, pybind11::arg("beta") = 1.f,
              pybind11::arg("withIntercept") = false,
              pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
-        .def_readonly("delta", &FullPathSolverParamf::delta)
-        .def_readonly("beta", &FullPathSolverParamf::beta)
-        .def_readonly("withIntercept", &FullPathSolverParamf::withIntercept)
-        .def_readonly("strategy", &FullPathSolverParamf::strategy);
+        .def_readonly("delta", &LinearSolverParamf::delta)
+        .def_readonly("beta", &LinearSolverParamf::beta)
+        .def_readonly("withIntercept", &LinearSolverParamf::withIntercept)
+        .def_readonly("strategy", &LinearSolverParamf::strategy);
 
-    pybind11::class_<FullPathSolverf>(m, "FullPathSolverf")
-        .def(pybind11::init<FullPathSolverParamf>(), pybind11::arg("param"))
-        .def("fit", &FullPathSolverf::fit, pybind11::arg("matData"),
+    pybind11::class_<LinearSolverf>(m, "LinearSolverf")
+        .def(pybind11::init<LinearSolverParamf>(), pybind11::arg("param"))
+        .def("fit", &LinearSolverf::fit, pybind11::arg("matData"),
              pybind11::arg("vectData"));
 
     using Index = l0l2::Index;
@@ -106,21 +106,21 @@ PYBIND11_MODULE(l0l2, mainmodule)
              pybind11::arg("matData"), pybind11::arg("vectData"),
              pybind11::arg("solution"));
 
-    using FullPathSolverd = l0l2::linearmodel::leastsquares::FullPathSolver<double>;
-    using FullPathSolverParamd = FullPathSolverd::Param;
-    pybind11::class_<FullPathSolverParamd>(m, "FullPathSolverParamd")
+    using LinearSolverd = l0l2::linearmodel::leastsquares::LinearSolver<double>;
+    using LinearSolverParamd = LinearSolverd::Param;
+    pybind11::class_<LinearSolverParamd>(m, "LinearSolverParamd")
         .def(pybind11::init<double, double, bool, Strategy>(),
              pybind11::arg("delta") = 0.0, pybind11::arg("beta") = 1.0,
              pybind11::arg("withIntercept") = false,
              pybind11::arg("strategy") = Strategy::SequentialFromZeroSolution)
-        .def_readonly("delta", &FullPathSolverParamd::delta)
-        .def_readonly("beta", &FullPathSolverParamd::beta)
-        .def_readonly("withIntercept", &FullPathSolverParamd::withIntercept)
-        .def_readonly("strategy", &FullPathSolverParamd::strategy);
+        .def_readonly("delta", &LinearSolverParamd::delta)
+        .def_readonly("beta", &LinearSolverParamd::beta)
+        .def_readonly("withIntercept", &LinearSolverParamd::withIntercept)
+        .def_readonly("strategy", &LinearSolverParamd::strategy);
 
-    pybind11::class_<FullPathSolverd>(m, "FullPathSolverd")
-        .def(pybind11::init<FullPathSolverParamd>(), pybind11::arg("param"))
-        .def("fit", &FullPathSolverd::fit, pybind11::arg("matData"),
+    pybind11::class_<LinearSolverd>(m, "LinearSolverd")
+        .def(pybind11::init<LinearSolverParamd>(), pybind11::arg("param"))
+        .def("fit", &LinearSolverd::fit, pybind11::arg("matData"),
              pybind11::arg("vectData"));
 
     using Vectord = l0l2::Vector<double>;

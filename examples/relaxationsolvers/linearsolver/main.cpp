@@ -12,9 +12,9 @@ int main()
 {
     using Scalar = double;
 
-    using FullPathSolver =
-        l0l2::linearmodel::leastsquares::FullPathSolver<Scalar>;
-    using FullPathSolverParam = FullPathSolver::Param;
+    using LinearSolver =
+        l0l2::linearmodel::leastsquares::LinearSolver<Scalar>;
+    using LinearSolverParam = LinearSolver::Param;
 
     using Strategy = l0l2::linearmodel::leastsquares::Strategy;
 
@@ -45,9 +45,9 @@ int main()
 
         const Strategy strategy = Strategy::SequentialFromL2Solution;
 
-        FullPathSolverParam param{delta, beta, withIntercept, strategy};
+        LinearSolverParam param{delta, beta, withIntercept, strategy};
 
-        auto results = FullPathSolver{param}.fit(mat, vect);
+        auto results = LinearSolver{param}.fit(mat, vect);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -72,9 +72,9 @@ int main()
 
         const Strategy strategy = Strategy::SequentialFromZeroSolution;
 
-        FullPathSolverParam param{delta, beta, withIntercept, strategy};
+        LinearSolverParam param{delta, beta, withIntercept, strategy};
 
-        auto results = FullPathSolver{param}.fit(mat, vect);
+        auto results = LinearSolver{param}.fit(mat, vect);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -98,9 +98,9 @@ int main()
 
         const Strategy strategy = Strategy::SequentialFromZeroSolution;
 
-        FullPathSolverParam param{delta, beta, withIntercept, strategy};
+        LinearSolverParam param{delta, beta, withIntercept, strategy};
 
-        auto solutions = FullPathSolver{param}.fit(mat, vect);
+        auto solutions = LinearSolver{param}.fit(mat, vect);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
@@ -120,9 +120,9 @@ int main()
 
         const Strategy strategy = Strategy::SequentialFromL2Solution;
 
-        FullPathSolverParam param{delta, beta, withIntercept, strategy};
+        LinearSolverParam param{delta, beta, withIntercept, strategy};
 
-        auto solutions = FullPathSolver{param}.fit(mat, vect);
+        auto solutions = LinearSolver{param}.fit(mat, vect);
 
         const auto stop = std::chrono::high_resolution_clock::now();
 
