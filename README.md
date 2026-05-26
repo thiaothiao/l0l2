@@ -18,7 +18,7 @@ Implemented solutions:
 - Interior Point Method solver. WIP
 - Branch and Bound solver. WIP
 
-![l0l2 approximation illustrations within images folder](images/l0l2approximations.png)
+![l0l2 towards l0 illustrations within images folder](images/l0l2towardsl0.png)
 
 ![Full regularization path illustrations within images folder](images/illustration.png)
 
