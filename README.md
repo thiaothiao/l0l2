@@ -16,6 +16,9 @@ Implemented solutions:
 - Linear solver and full regularization path solver via Gauss-Jordan eliminations and the piecewise linearity of the solutions with respect to $\delta$.
 - Cyclic Coordinate Descent solver.
 - Interior Point Method solver. WIP
+- Branch and Bound solver. WIP
+
+![l0l2 approximation illustrations within images folder](images/l0l2approximations.png)
 
 ![Full regularization path illustrations within images folder](images/illustration.png)
 
