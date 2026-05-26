@@ -21,6 +21,7 @@
 \newtheorem{thm}{Proposition}[subsection]
 \newenvironment{proof}{\paragraph{Proof:}}{\hfill$\square$}
 \newtheorem{crly}{Corollary}[subsection]
+\graphicspath{ {../images/} } 
 
 % The preamble ends with the command \begin{document}
 \begin{document} % All begin commands must be paired with an end command somewhere
@@ -36,6 +37,12 @@ $\left\|x\right\|_0 $: the number of nonzero components of the vector  $x\in\mat
  $\frac{1}{\delta^2} \left\|x\right\|_2^2$: an elastic potential energy?Is there an interpretation?(Bernoulli-gaussien from Soussen and references therein)
     \section{$l_0$ vs $l_0$, $l_2$  combined} % creates a section
 $\left\|.\right\|_0 + \frac{1}{\delta^2} \left\|.\right\|_2^2$ is an upper approximation of $\left\|.\right\|_0 $ and it converges toward it in some "sense"(Soussen, Bertsimas et al.) when $\delta\rightarrow +\infty$.
+\begin{figure}[h]               % [h] suggests placing the image "here"
+    \centering                  % Centers the image on the page
+    \includegraphics[width=0.9\textwidth]{l0l2towardsl0} % Resizes to 50% of text width
+    \caption{$l_0l_2$ towards $l_0$.} % Adds a numbered caption
+    \label{fig:l0l2towardsl0}        % Unique ID for cross-referencing
+\end{figure}
     \section{Questions} % creates a section
 \begin{itemize}
 \item Is there cases where sparse modeling with $\left\|.\right\|_0 + \frac{1}{\delta^2} \left\|.\right\|_2^2$ is "better" or "more appropriate" than $\left\|.\right\|_0 $  solely? In what sense? Where?  When? How?
