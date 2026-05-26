@@ -17,6 +17,8 @@ Implemented solutions:
 - Cyclic Coordinate Descent solver.
 - Interior Point Method solver. WIP
 
+![l0l2 approximation illustrations within images folder](images/l0l2approximations.png)
+
 ![Full regularization path illustrations within images folder](images/illustration.png)
 
 Technical details are exposed in the report and references therein.
