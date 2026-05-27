@@ -20,8 +20,6 @@ Implemented solutions:
 
 ![l0l2 towards l0 illustrations within images folder](images/l0l2towardsl0.png)
 
-![Full regularization path illustrations within images folder](images/illustration.png)
-
 Technical details are exposed in the report and references therein.
 
 We use c++ 23 and later.
